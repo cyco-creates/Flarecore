@@ -17,6 +17,7 @@ import numpy as np
 import torch
 from PIL import Image
 
+from ..flare.colorspace import luminance
 from ..flare.texture_prep import prepare_element
 from .library import ELEMENTS_DIR, list_elements
 
@@ -119,9 +120,7 @@ class FlareTexturePrepare:
             for frame in image
         ]
         out = torch.stack(frames, dim=0)
-        alpha = (out * torch.tensor([0.2126, 0.7152, 0.0722],
-                                    device=out.device, dtype=out.dtype)).sum(-1)
-        return (out, alpha.clamp(0.0, 1.0))
+        return (out, luminance(out).clamp(0.0, 1.0))
 
 
 class FlareElementSave:
@@ -148,19 +147,25 @@ class FlareElementSave:
         folder = ELEMENTS_DIR / cat
         folder.mkdir(parents=True, exist_ok=True)
 
-        path = folder / f"{base}.png"
-        if path.exists() and not overwrite:
-            i = 2
-            while (folder / f"{base}_{i:02d}.png").exists():
-                i += 1
-            path = folder / f"{base}_{i:02d}.png"
+        # every frame of the batch is saved — the forge often generates
+        # several variations at once, and dropping all but the first was a
+        # silent data loss
+        refs = []
+        for b in range(texture.shape[0]):
+            stem = base if b == 0 else f"{base}_v{b + 1:02d}"
+            path = folder / f"{stem}.png"
+            if path.exists() and not overwrite:
+                i = 2
+                while (folder / f"{stem}_{i:02d}.png").exists():
+                    i += 1
+                path = folder / f"{stem}_{i:02d}.png"
 
-        frame = texture[0][..., :3].clamp(0.0, 1.0)
-        arr = (frame.cpu().numpy() * 255).astype(np.uint8)
-        Image.fromarray(arr).save(path)
+            frame = texture[b][..., :3].clamp(0.0, 1.0)
+            arr = (frame.cpu().numpy() * 255).astype(np.uint8)
+            Image.fromarray(arr).save(path)
+            refs.append(path.relative_to(ELEMENTS_DIR).as_posix())
 
-        ref = path.relative_to(ELEMENTS_DIR).as_posix()
-        return {"ui": {"text": [ref]}, "result": (ref, texture)}
+        return {"ui": {"text": refs}, "result": (refs[0], texture)}
 
 
 class FlareElementPicker:

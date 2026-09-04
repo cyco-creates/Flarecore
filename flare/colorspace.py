@@ -9,6 +9,17 @@ power branch without clamping; clamping is the caller's decision.
 import torch
 
 
+# Rec.709 luminance weights — the single definition; every module that needs
+# luminance imports this instead of restating the constants.
+LUMA_WEIGHTS = (0.2126, 0.7152, 0.0722)
+
+
+def luminance(rgb: torch.Tensor) -> torch.Tensor:
+    """Rec.709 luminance of a (..., 3) tensor, in whatever domain it is in."""
+    w = torch.tensor(LUMA_WEIGHTS, device=rgb.device, dtype=rgb.dtype)
+    return (rgb * w).sum(dim=-1)
+
+
 def srgb_to_linear(x: torch.Tensor) -> torch.Tensor:
     """Decode sRGB-encoded values to linear light. Preserves values > 1."""
     # torch.where evaluates both branches, so the pow input is clamped to keep

@@ -25,6 +25,8 @@ import math
 
 import torch
 
+from .elements import _smoothstep
+
 # Depth margin by which a sample must beat the light to count as occluding.
 # Guards against depth-map noise and soft edges around the light.
 DEFAULT_MARGIN = 0.1
@@ -34,12 +36,7 @@ _FRACTION_LO = 0.15
 _FRACTION_HI = 0.85
 
 
-def _smoothstep(edge0: float, edge1: float, x: torch.Tensor) -> torch.Tensor:
-    t = ((x - edge0) / (edge1 - edge0)).clamp(0.0, 1.0)
-    return t * t * (3.0 - 2.0 * t)
-
-
-def _disk_offsets(n: int = 24) -> list[tuple[float, float]]:
+def _disk_offsets(n: int = 48) -> list[tuple[float, float]]:
     """Fixed golden-spiral sample offsets within the unit disk."""
     golden = math.pi * (3.0 - math.sqrt(5.0))
     pts = []
@@ -51,6 +48,19 @@ def _disk_offsets(n: int = 24) -> list[tuple[float, float]]:
 
 
 _OFFSETS = _disk_offsets()
+
+# The offsets never change; upload them to each device once, not per call —
+# on video batches that is one H2D copy per light per frame otherwise.
+_OFFSETS_CACHE: dict = {}
+
+
+def _offsets_on(device) -> torch.Tensor:
+    key = str(device)
+    hit = _OFFSETS_CACHE.get(key)
+    if hit is None:
+        hit = torch.tensor(_OFFSETS, device=device, dtype=torch.float32)
+        _OFFSETS_CACHE[key] = hit
+    return hit
 
 
 def occlusion_factor(depth: torch.Tensor, u: float, v: float,
@@ -77,7 +87,7 @@ def occlusion_factor(depth: torch.Tensor, u: float, v: float,
 
     # Gather every disk sample in one indexed read: keeps this to a single
     # device sync per light instead of one per sample.
-    offs = torch.tensor(_OFFSETS, device=depth.device, dtype=torch.float32)
+    offs = _offsets_on(depth.device)
     su = u + offs[:, 0] * radius / aspect
     sv = v + offs[:, 1] * radius
     px = (su * width).long().clamp(0, width - 1)

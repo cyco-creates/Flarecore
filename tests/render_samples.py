@@ -24,24 +24,12 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+# embedded pythons (._pth) do not add the script dir; conftest lives there
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import importlib.util  # noqa: E402
+from conftest import load_package  # noqa: E402
 
-
-def _load_package():
-    if "comfyui_flarecore" in sys.modules:
-        return sys.modules["comfyui_flarecore"]
-    spec = importlib.util.spec_from_file_location(
-        "comfyui_flarecore", ROOT / "__init__.py",
-        submodule_search_locations=[str(ROOT)],
-    )
-    pkg = importlib.util.module_from_spec(spec)
-    sys.modules["comfyui_flarecore"] = pkg
-    spec.loader.exec_module(pkg)
-    return pkg
-
-
-PKG = _load_package()
+PKG = load_package()
 FlareRender = PKG.NODE_CLASS_MAPPINGS["FlareRender"]
 FlarePresetLoader = PKG.NODE_CLASS_MAPPINGS["FlarePresetLoader"]
 
@@ -82,12 +70,14 @@ def run(preset_json, image, light=(0.3, 0.35), **overrides):
     args = dict(
         preset_json=preset_json, position_mode="manual",
         light_x=light[0], light_y=light[1],
+        flare_x=0.5, flare_y=0.5,
         detect_threshold=0.8, detect_max_lights=1, occlusion_radius=0.02,
-        invert_depth=False, intensity=1.0, scale=1.0, blend_mode="add",
-        clamp_output=True, seed=0,
+        light_depth=0.0, invert_depth=False, intensity=1.0, scale=1.0,
+        blend_mode="add", clamp_output=True, seed=0,
     )
     args.update(overrides)
-    return FlareRender().render(image=image, depth=None, **args)
+    result = FlareRender().render(image=image, depth=None, **args)
+    return result["result"] if isinstance(result, dict) else result
 
 
 def sample_renders(photo_path, device):

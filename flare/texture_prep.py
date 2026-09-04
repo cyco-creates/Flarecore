@@ -15,12 +15,7 @@ import math
 import torch
 import torch.nn.functional as F
 
-_LUMA = (0.2126, 0.7152, 0.0722)
-
-
-def _luminance(img: torch.Tensor) -> torch.Tensor:
-    w = torch.tensor(_LUMA, device=img.device, dtype=img.dtype)
-    return (img * w).sum(dim=-1)
+from .colorspace import luminance as _luminance
 
 
 def subtract_floor(img: torch.Tensor, black_point: float) -> torch.Tensor:
@@ -33,10 +28,12 @@ def subtract_floor(img: torch.Tensor, black_point: float) -> torch.Tensor:
 
 
 def center_on_energy(img: torch.Tensor) -> torch.Tensor:
-    """Roll the image so the luminance-squared centroid sits at the centre.
+    """Shift the image so the luminance-squared centroid sits at the centre.
 
     Squaring weights the bright core over faint spill, which is what should
-    define the element's pivot.
+    define the element's pivot. The shift pads with black rather than
+    wrapping: torch.roll would carry content off one edge back in on the
+    opposite side, compositing a phantom ghost mirrored across the element.
     """
     lum = _luminance(img) ** 2
     total = lum.sum()
@@ -47,8 +44,17 @@ def center_on_energy(img: torch.Tensor) -> torch.Tensor:
     xs = torch.arange(w, device=img.device, dtype=img.dtype)
     cy = (lum.sum(dim=1) * ys).sum() / total
     cx = (lum.sum(dim=0) * xs).sum() / total
-    return torch.roll(img, shifts=(int(round(h / 2 - cy.item())),
-                                   int(round(w / 2 - cx.item()))), dims=(0, 1))
+    dy = int(round(h / 2 - cy.item()))
+    dx = int(round(w / 2 - cx.item()))
+    if dy == 0 and dx == 0:
+        return img
+    # zero-pad on the side content moves away from, then crop back to size
+    x = img.permute(2, 0, 1).unsqueeze(0)
+    x = F.pad(x, (max(dx, 0), max(-dx, 0), max(dy, 0), max(-dy, 0)))
+    y0 = max(-dy, 0)
+    x0 = max(-dx, 0)
+    x = x[:, :, y0:y0 + h, x0:x0 + w]
+    return x[0].permute(1, 2, 0)
 
 
 def center_crop_square(img: torch.Tensor) -> torch.Tensor:

@@ -8,7 +8,7 @@ expects. Pure tensor math; this node estimates nothing.
 
 import torch
 
-from ..flare.depth import condition_depth, NORMALIZE_MODES
+from ..flare.depth import condition_depth, temporal_smooth_depth, NORMALIZE_MODES
 
 
 class FlareDepthAdapter:
@@ -27,10 +27,18 @@ class FlareDepthAdapter:
                 "blur": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 0.25, "step": 0.001}),
                 "black_point": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "white_point": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                # appended last so widgets_values in previously saved
+                # workflows stay aligned
+                "temporal_smooth": ("FLOAT", {
+                    "default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "tooltip": "zero-phase smoothing along the batch; stills "
+                               "per-frame depth-model shimmer on video",
+                }),
             },
         }
 
-    def adapt(self, depth, normalize, invert, blur, black_point, white_point):
+    def adapt(self, depth, normalize, invert, blur, black_point, white_point,
+              temporal_smooth=0.0):
         if white_point <= black_point:
             raise ValueError(
                 f"white_point ({white_point}) must be greater than "
@@ -45,6 +53,7 @@ class FlareDepthAdapter:
             mono, normalize=normalize, invert=invert, blur=blur,
             black_point=black_point, white_point=white_point,
         )
+        out = temporal_smooth_depth(out, temporal_smooth)
 
         image = out.unsqueeze(-1).expand(-1, -1, -1, 3).contiguous()
         return (image, out)

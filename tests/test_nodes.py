@@ -13,21 +13,9 @@ sys.path.insert(0, str(ROOT))
 from flare.colorspace import srgb_to_linear, linear_to_srgb  # noqa: E402
 
 
-def _load_package():
-    """Load the repo as a package the way ComfyUI does (importlib, package name)."""
-    if "comfyui_flarecore" in sys.modules:
-        return sys.modules["comfyui_flarecore"]
-    spec = importlib.util.spec_from_file_location(
-        "comfyui_flarecore", ROOT / "__init__.py",
-        submodule_search_locations=[str(ROOT)],
-    )
-    pkg = importlib.util.module_from_spec(spec)
-    sys.modules["comfyui_flarecore"] = pkg
-    spec.loader.exec_module(pkg)
-    return pkg
+from conftest import load_package  # noqa: E402
 
-
-PKG = _load_package()
+PKG = load_package()
 FlareRender = PKG.NODE_CLASS_MAPPINGS["FlareRender"]
 FlarePresetLoader = PKG.NODE_CLASS_MAPPINGS["FlarePresetLoader"]
 
@@ -67,6 +55,7 @@ class TestFlareRender:
     def test_registration_contract(self):
         assert set(PKG.NODE_CLASS_MAPPINGS) == {
             "FlareRender", "FlarePresetLoader", "FlareDepthAdapter",
+            "FlareTrack", "FlareKeyframes",
             "FlareElementPrompts", "FlareTexturePrepare",
             "FlareElementSave", "FlareElementPicker",
         }

@@ -45,11 +45,17 @@ function showWidget(w) {
 
 function setAdvanced(node, visible) {
   node._fcAdvanced = visible;
+  // properties are serialized with the workflow, so the toggle survives
+  // save/load — a plain JS field would silently reset to closed
+  if (node.properties) node.properties.fc_advanced = visible;
   for (const name of ADVANCED) {
     const w = node.widgets?.find((x) => x.name === name);
     if (w) (visible ? showWidget : hideWidget)(w);
   }
-  node.setSize([node.size[0], node.computeSize()[1]]);
+  // grow when the widgets need more room, but never shrink a node the user
+  // deliberately made taller
+  const want = node.computeSize()[1];
+  if (node.size[1] < want) node.setSize([node.size[0], want]);
   node.setDirtyCanvas(true, true);
 }
 
@@ -89,14 +95,23 @@ class PointPicker {
       this.canvas.addEventListener(t, (e) => this.onPointer(e));
     }
     if (typeof ResizeObserver !== "undefined") {
-      new ResizeObserver(() => this.draw()).observe(this.el);
+      this._ro = new ResizeObserver(() => this.draw());
+      this._ro.observe(this.el);
     }
+    // A detached element only means the widget is momentarily unmounted
+    // (other tab, collapsed node) — skip the tick, don't self-destruct.
+    // Real teardown happens in destroy() from the node's onRemoved.
     this._poll = setInterval(() => {
-      if (!document.body.contains(this.el)) return clearInterval(this._poll);
+      if (!document.body.contains(this.el)) return;
       const sig = ["light_x", "light_y", "flare_x", "flare_y"]
         .map((n) => getVal(this.node, n, 0)).join("|");
       if (sig !== this._sig) { this._sig = sig; this.draw(); }
     }, 300);
+  }
+
+  destroy() {
+    clearInterval(this._poll);
+    this._ro?.disconnect();
   }
 
   // CSS-pixel size of the panel. clientWidth/Height are layout values, so
@@ -398,8 +413,33 @@ class FlareEditor {
     this.root = document.createElement("div");
     this.root.className = "fcore";
     this.lastText = null;
+    this._pending = null;
     this.fetchLibrary();
     this.build();
+
+    // Watch for the preset changing OUTSIDE the editor — a paste into the
+    // raw textarea, a FlarePresetLoader link, a workflow load. Without this
+    // the rows go stale and slider closures write into the wrong element.
+    this._poll = setInterval(() => {
+      if (!document.body.contains(this.root)) return;
+      if (this._pending) return; // our own coalesced write is in flight
+      if (this.root.contains(document.activeElement)) return; // user mid-edit
+      const text = this.widget?.value;
+      if (text !== this.lastText) {
+        this.lastText = text;
+        this.build();
+      }
+    }, 600);
+  }
+
+  destroy() {
+    clearInterval(this._poll);
+  }
+
+  // Remap the expanded-row set across a structural change so the twirled-
+  // open panel stays with ITS element instead of whatever lands on its index.
+  remapExpanded(fn) {
+    this.expanded = new Set([...this.expanded].map(fn).filter((i) => i >= 0));
   }
 
   get widget() { return findWidget(this.node, "preset_json"); }
@@ -432,18 +472,39 @@ class FlareEditor {
     this.build();
   }
 
-  // slider path: change the value without rebuilding the DOM under the cursor
+  // Slider path: change values without rebuilding the DOM under the cursor.
+  // Writes coalesce to one JSON serialize per animation frame — a drag emits
+  // ~100 input events/second and stringifying a multi-KB preset per event is
+  // what made sliders sticky (and sprayed the undo stack). Sliders write
+  // absolute values, so mutating the pending object across events is exact.
   mutateQuiet(fn) {
-    const preset = this.read();
+    const preset = this._pending || this.read();
     if (!preset) return;
-    fn(preset);
-    this.write(preset);
+    try {
+      fn(preset);
+    } catch (e) {
+      this._pending = null; // preset changed shape under a live control
+      this.build();
+      return;
+    }
+    if (!this._pending) {
+      this._pending = preset;
+      requestAnimationFrame(() => {
+        if (this._pending) {
+          this.write(this._pending);
+          this._pending = null;
+        }
+      });
+    }
   }
 
   async fetchLibrary() {
     try {
       const r = await api.fetchApi("/flarecore/elements");
       this.libraryFiles = (await r.json()).elements || [];
+      // texture dropdowns rendered before the fetch resolved showed
+      // "<library empty>"; refresh them now the list exists
+      if (this.expanded.size) this.build();
     } catch { this.libraryFiles = []; }
   }
 
@@ -459,6 +520,9 @@ class FlareEditor {
     addBtn.textContent = "+ add";
     addBtn.onclick = (e) => popupMenu(e, ADD_MENU, (type) => {
       const elem = JSON.parse(JSON.stringify(ADD_DEFAULTS[type]));
+      // a stable id keeps this element's glint jitter its own, no matter how
+      // the stack is later reordered
+      elem.id = `${type}_${Date.now().toString(36)}${Math.floor(Math.random() * 46656).toString(36)}`;
       if (type === "texture" && this.libraryFiles.length) {
         elem.params.file = this.libraryFiles[0];
       }
@@ -474,10 +538,19 @@ class FlareEditor {
         const d = await r.json();
         popupMenu(e, (d.presets || []).map((n) => [n.replace(/\.json$/, ""), n]),
           async (name) => {
-            const rr = await api.fetchApi(
-              `/flarecore/preset/${name.replace(/\.json$/, "")}`);
-            const dd = await rr.json();
-            if (dd.json && this.widget) { this.widget.value = dd.json; this.build(); }
+            try {
+              const rr = await api.fetchApi(
+                `/flarecore/preset/${encodeURIComponent(name.replace(/\.json$/, ""))}`);
+              const dd = await rr.json();
+              if (dd.json && this.widget) {
+                this.widget.value = dd.json;
+                this.lastText = dd.json;
+                this.build();
+              } else if (dd.error) {
+                loadBtn.textContent = "load failed";
+                setTimeout(() => { loadBtn.textContent = "presets ▾"; }, 1800);
+              }
+            } catch (err) { console.error("flarecore preset load", err); }
           });
       } catch (err) { console.error("flarecore presets", err); }
     };
@@ -488,13 +561,20 @@ class FlareEditor {
     saveBtn.onclick = async () => {
       const name = prompt("Preset name:", "my_flare");
       if (!name) return;
+      const post = (overwrite) => api.fetchApi("/flarecore/save_preset", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, json: this.widget?.value || "", overwrite }),
+      });
       try {
-        const r = await api.fetchApi("/flarecore/save_preset", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, json: this.widget?.value || "" }),
-        });
-        const d = await r.json();
-        saveBtn.textContent = d.saved ? "saved ✓" : `error: ${d.error}`;
+        let d = await (await post(false)).json();
+        if (d.exists || d.shipped) {
+          const kind = d.shipped ? "a SHIPPED preset" : "an existing preset";
+          if (confirm(`'${name}' is ${kind}. Overwrite it?`)) {
+            d = await (await post(true)).json();
+          }
+        }
+        saveBtn.textContent = d.saved ? "saved ✓" : (d.error ? "not saved" : "save…");
+        if (d.error && !d.saved) console.warn("flarecore save:", d.error);
       } catch { saveBtn.textContent = "error"; }
       setTimeout(() => { saveBtn.textContent = "save…"; }, 1800);
     };
@@ -592,14 +672,28 @@ class FlareEditor {
       this.expanded.has(i) ? this.expanded.delete(i) : this.expanded.add(i);
       this.build();
     }));
-    head.appendChild(mk("⧉", "duplicate", () => this.mutate((p) =>
-      p.elements.splice(i + 1, 0, JSON.parse(JSON.stringify(p.elements[i]))))));
-    head.appendChild(mk("↑", "move up", () => { if (i > 0) this.mutate((p) =>
-      p.elements.splice(i - 1, 0, p.elements.splice(i, 1)[0])); }));
-    head.appendChild(mk("↓", "move down", () => this.mutate((p) => {
-      if (i < p.elements.length - 1) p.elements.splice(i + 1, 0, p.elements.splice(i, 1)[0]);
-    })));
-    head.appendChild(mk("✕", "delete", () => this.mutate((p) => p.elements.splice(i, 1))));
+    head.appendChild(mk("⧉", "duplicate", () => {
+      this.remapExpanded((e) => (e > i ? e + 1 : e));
+      this.mutate((p) => {
+        const copy = JSON.parse(JSON.stringify(p.elements[i]));
+        copy.id = ""; // the duplicate gets its own random identity
+        p.elements.splice(i + 1, 0, copy);
+      });
+    }));
+    head.appendChild(mk("↑", "move up", () => { if (i > 0) {
+      this.remapExpanded((e) => (e === i ? i - 1 : e === i - 1 ? i : e));
+      this.mutate((p) => p.elements.splice(i - 1, 0, p.elements.splice(i, 1)[0]));
+    } }));
+    head.appendChild(mk("↓", "move down", () => {
+      this.remapExpanded((e) => (e === i ? i + 1 : e === i + 1 ? i : e));
+      this.mutate((p) => {
+        if (i < p.elements.length - 1) p.elements.splice(i + 1, 0, p.elements.splice(i, 1)[0]);
+      });
+    }));
+    head.appendChild(mk("✕", "delete", () => {
+      this.remapExpanded((e) => (e === i ? -1 : e > i ? e - 1 : e));
+      this.mutate((p) => p.elements.splice(i, 1));
+    }));
 
     row.appendChild(head);
     if (this.expanded.has(i)) row.appendChild(this.buildAdvanced(elem, i));
@@ -735,6 +829,15 @@ app.registerExtension({
       setTimeout(() => picker.draw(), 60);
     };
 
+    // Tear the panels down with the node: the picker holds an interval, a
+    // ResizeObserver and pointer listeners; the editor holds an interval.
+    const onRemoved = nodeType.prototype.onRemoved;
+    nodeType.prototype.onRemoved = function () {
+      this._fcPicker?.destroy();
+      this._fcEditor?.destroy();
+      onRemoved?.apply(this, arguments);
+    };
+
     // Restore the compact layout for nodes loaded from a saved workflow, and
     // repair values saved by the build that placed the panels first.
     const onConfigure = nodeType.prototype.onConfigure;
@@ -742,24 +845,32 @@ app.registerExtension({
       onConfigure?.apply(this, arguments);
       const node = this;
 
-      // A workflow written by that build starts with a null per panel widget;
-      // a correct one ends with them. Shift the values back onto the real
-      // widgets so an already-saved graph loads intact.
+      // A workflow written by the one build that placed the panels first
+      // starts with exactly one null per panel widget; a correct save ends
+      // with them (or trims them). The guard requires BOTH the null prefix
+      // and the exact length that build produced, so a future graph that
+      // legitimately serializes a leading null cannot trip it.
       const vals = info?.widgets_values;
-      if (Array.isArray(vals) && vals.length > 2 &&
+      const real = node.widgets.filter((w) => !PANEL_WIDGETS.has(w.name));
+      if (Array.isArray(vals) && vals.length === real.length + 2 &&
           vals[0] === null && vals[1] === null) {
         const shifted = vals.slice(2);
-        const real = node.widgets.filter((w) => !PANEL_WIDGETS.has(w.name));
         real.forEach((w, i) => {
-          if (i < shifted.length && shifted[i] !== null && shifted[i] !== undefined) {
+          if (shifted[i] !== null && shifted[i] !== undefined) {
             w.value = shifted[i];
           }
         });
         console.log("[flarecore] repaired widget values from a shifted save");
       }
 
+      const savedHeight = Array.isArray(info?.size) ? info.size[1] : null;
       setTimeout(() => {
-        setAdvanced(node, !!node._fcAdvanced);
+        // the toggle state rides in node.properties, which IS serialized
+        setAdvanced(node, !!node.properties?.fc_advanced);
+        // setAdvanced only grows; if the user saved the node taller, keep it
+        if (savedHeight && savedHeight > node.size[1]) {
+          node.setSize([node.size[0], savedHeight]);
+        }
         node._fcEditor?.build();
         node._fcPicker?.draw();
       }, 50);

@@ -3,18 +3,33 @@
 
 Pure torch. Deterministic ordering: peaks are sorted by brightness
 descending, then by y, then by x, so batch frames stay consistent.
+
+Two properties matter for video work and shape this implementation:
+
+- Real bright lights clip. Inside a saturated disc every pixel equals the
+  local max, so "peak" pixels arrive as a plateau, not a point. The reported
+  position is therefore a mean-shift centroid of thresholded luminance, which
+  converges to the disc centre instead of anchoring to whichever rim pixel a
+  tie-break happens to pick — the difference between a stable flare origin
+  and per-frame chatter.
+- Candidate handling transfers to the CPU once per frame. Sorting GPU
+  tensors element-by-element from Python would issue one device sync per
+  candidate, and a blown-out sky has hundreds of thousands of candidates.
 """
 
 import torch
 import torch.nn.functional as F
 
-_LUMA = (0.2126, 0.7152, 0.0722)
+from .colorspace import LUMA_WEIGHTS, luminance
+
+# A frame with more raw peak candidates than this keeps only the brightest
+# of them; beyond a few hundred the rest are plateau duplicates anyway.
+_MAX_CANDIDATES = 512
 
 
 def linear_luminance(image_linear: torch.Tensor) -> torch.Tensor:
     """Rec.709 luminance of a (..., 3) linear-light tensor."""
-    w = torch.tensor(_LUMA, device=image_linear.device, dtype=image_linear.dtype)
-    return (image_linear * w).sum(dim=-1)
+    return luminance(image_linear)
 
 
 def detect_lights(image_linear: torch.Tensor, threshold: float = 0.8,
@@ -44,28 +59,37 @@ def detect_lights(image_linear: torch.Tensor, threshold: float = 0.8,
     min_sep_px = min_separation * height
     results = []
     for i in range(b):
-        ys, xs = torch.nonzero(is_peak[i], as_tuple=True)
-        if ys.numel() == 0:
+        mask = is_peak[i]
+        flat = torch.nonzero(mask, as_tuple=False)  # (N, 2) as (y, x)
+        if flat.shape[0] == 0:
             results.append([])
             continue
-        values = lum[i, ys, xs]
-        # sort by brightness desc, then y, then x (stable lexicographic)
-        order = torch.arange(ys.numel())
-        key = torch.stack([-values, ys.to(values.dtype), xs.to(values.dtype)], dim=1)
-        order = sorted(order.tolist(), key=lambda j: tuple(key[j].tolist()))
+
+        values = lum[i, flat[:, 0], flat[:, 1]]
+        if flat.shape[0] > _MAX_CANDIDATES:
+            top = torch.topk(values, _MAX_CANDIDATES).indices
+            flat = flat[top]
+            values = values[top]
+
+        # one transfer per frame; everything below is plain Python
+        ys = flat[:, 0].tolist()
+        xs = flat[:, 1].tolist()
+        vals = values.float().tolist()
+        order = sorted(range(len(vals)), key=lambda j: (-vals[j], ys[j], xs[j]))
 
         kept = []
         for j in order:
-            py, px = ys[j].item(), xs[j].item()
+            py, px = ys[j], xs[j]
             if any((py - ky) ** 2 + (px - kx) ** 2 < min_sep_px ** 2 for ky, kx, _ in kept):
                 continue
-            kept.append((py, px, values[j].item()))
+            kept.append((py, px, vals[j]))
             if len(kept) >= max_lights:
                 break
 
+        radius = max(2, min(int(min_sep_px / 2), 15))
         lights = []
         for py, px, brightness in kept:
-            cy, cx = _subpixel_centroid(lum[i], py, px)
+            cy, cx = _meanshift_centroid(lum[i], py, px, threshold, radius)
             lights.append({
                 "u": (cx + 0.5) / width,
                 "v": (cy + 0.5) / height,
@@ -75,17 +99,31 @@ def detect_lights(image_linear: torch.Tensor, threshold: float = 0.8,
     return results
 
 
-def _subpixel_centroid(lum: torch.Tensor, py: int, px: int, radius: int = 2):
-    """Weighted-mean centroid of the neighbourhood around a peak pixel."""
+def _meanshift_centroid(lum: torch.Tensor, py: int, px: int,
+                        threshold: float, radius: int,
+                        iterations: int = 3) -> tuple[float, float]:
+    """Above-threshold-weighted centroid, re-centred a few times.
+
+    The seed pixel of a saturated plateau is its top-left rim; iterating the
+    windowed centroid walks the estimate into the blob's centre.
+    """
     height, width = lum.shape
-    y0, y1 = max(py - radius, 0), min(py + radius + 1, height)
-    x0, x1 = max(px - radius, 0), min(px + radius + 1, width)
-    patch = lum[y0:y1, x0:x1]
-    total = patch.sum()
-    if total <= 0:
-        return float(py), float(px)
-    ys = torch.arange(y0, y1, device=lum.device, dtype=lum.dtype)
-    xs = torch.arange(x0, x1, device=lum.device, dtype=lum.dtype)
-    cy = (patch.sum(dim=1) * ys).sum() / total
-    cx = (patch.sum(dim=0) * xs).sum() / total
-    return cy.item(), cx.item()
+    floor = threshold * 0.5
+    cy, cx = float(py), float(px)
+    for _ in range(iterations):
+        iy, ix = int(round(cy)), int(round(cx))
+        y0, y1 = max(iy - radius, 0), min(iy + radius + 1, height)
+        x0, x1 = max(ix - radius, 0), min(ix + radius + 1, width)
+        patch = (lum[y0:y1, x0:x1] - floor).clamp(min=0.0)
+        total = patch.sum()
+        if total <= 0:
+            return float(py), float(px)
+        ys = torch.arange(y0, y1, device=lum.device, dtype=patch.dtype)
+        xs = torch.arange(x0, x1, device=lum.device, dtype=patch.dtype)
+        ny = ((patch.sum(dim=1) * ys).sum() / total).item()
+        nx = ((patch.sum(dim=0) * xs).sum() / total).item()
+        if abs(ny - cy) < 0.05 and abs(nx - cx) < 0.05:
+            cy, cx = ny, nx
+            break
+        cy, cx = ny, nx
+    return cy, cx

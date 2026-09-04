@@ -14,9 +14,16 @@ with w_j running from +1 (red) to -1 (blue). Scaling coordinates *down*
 renders the feature *larger*, so red ends up outside. At the default 3
 samples this is exactly a per-R/G/B evaluation; more samples blend a
 piecewise wavelength ramp for a continuous rainbow at equal total energy.
+
+Seeding: an element's random identity is its `id` when the preset gives one,
+else its stack index, avalanche-mixed with the global seed and the instance
+index — so reordering unrelated elements does not re-jitter a tuned glint,
+each count-instance of a chain gets its own jitter, and adjacent seeds do not
+walk sideways through the stack.
 """
 
 import math
+import zlib
 
 import torch
 
@@ -34,6 +41,25 @@ _SPECTRUM_ANCHORS = [
     (0.0, 1.0, 1.0),
     (0.0, 0.0, 1.0),
 ]
+
+_MASK64 = 0xFFFFFFFFFFFFFFFF
+
+
+def _mix(a: int, b: int) -> int:
+    """splitmix64-style avalanche of two integers into a positive 63-bit seed."""
+    x = ((a & _MASK64) * 0x9E3779B97F4A7C15 + (b & _MASK64)) & _MASK64
+    x ^= x >> 30
+    x = (x * 0xBF58476D1CE4E5B9) & _MASK64
+    x ^= x >> 27
+    x = (x * 0x94D049BB133111EB) & _MASK64
+    return (x ^ (x >> 31)) & 0x7FFFFFFFFFFFFFFF
+
+
+def element_seed(base_seed: int, elem: dict, index: int, instance: int = 0) -> int:
+    """Identity-stable seed for one instance of one element."""
+    ident = elem.get("id") or ""
+    key = zlib.crc32(ident.encode("utf-8")) if ident else index
+    return _mix(_mix(base_seed, key), instance)
 
 
 def _spectrum_color(x: float) -> tuple[float, float, float]:
@@ -60,56 +86,24 @@ def dispersion_samples(n: int) -> list[tuple[float, tuple[float, float, float]]]
     return list(zip(ws, colors))
 
 
-def _render_element_instance(x, y, elem, light, theta, global_scale, seed):
-    """Accumulated linear RGB (H, W, 3) for every count-instance of one element."""
-    fn = ELEMENT_FUNCTIONS[elem["type"]]
-    params = dict(elem["params"])
-    params["seed"] = seed
-
-    px, py = light["x"], light["y"]
-    ax = light.get("ax", 0.0)
-    ay = light.get("ay", 0.0)
-    stretch_x, stretch_y = elem["stretch"]
-    base_color = elem["color"]
+def _element_passes(elem, device, dtype):
+    """Precompute this element's evaluation passes once per render:
+    [(coordinate_scale, weight_tensor(3,))]. Folding the base colour in here
+    keeps torch.tensor(...) out of the per-frame/per-light/per-instance loop
+    — at video batch sizes those tiny host-to-device uploads dominate."""
+    base = elem["color"]
     dispersion = elem["dispersion"]
-
-    rot = math.radians(elem["rotation"])
-    if elem["auto_rotate"]:
-        rot += theta
-    cos_r, sin_r = math.cos(rot), math.sin(rot)
-
-    out = None
-    for i in range(elem["count"]):
-        t_i = elem["offset"] + i * elem["spread"]
-        intensity_i = elem["intensity"] * (elem["count_falloff"] ** i)
-        scale_i = elem["scale"] * (elem["count_scale_step"] ** i) * global_scale
-        if intensity_i <= 0.0:
-            continue
-
-        cx, cy = element_center(px, py, t_i, ax, ay)
-        u0 = x - cx
-        v0 = y - cy
-        # rotate by -rot so the element's local frame is axis-aligned
-        u = (u0 * cos_r + v0 * sin_r) / (scale_i * stretch_x)
-        v = (-u0 * sin_r + v0 * cos_r) / (scale_i * stretch_y)
-
-        if dispersion > 0.0:
-            for w, rgb in dispersion_samples(elem["dispersion_samples"]):
-                s = 1.0 - dispersion * K_DISPERSION * w
-                field = fn(u * s, v * s, params)
-                weight = torch.tensor(
-                    [rgb[0] * base_color[0], rgb[1] * base_color[1], rgb[2] * base_color[2]],
-                    device=field.device, dtype=field.dtype,
-                ) * intensity_i
-                contrib = _apply_weight(field, weight)
-                out = contrib if out is None else out + contrib
-        else:
-            field = fn(u, v, params)
-            weight = torch.tensor(base_color, device=field.device, dtype=field.dtype) * intensity_i
-            contrib = _apply_weight(field, weight)
-            out = contrib if out is None else out + contrib
-
-    return out
+    if dispersion > 0.0:
+        passes = []
+        for w, rgb in dispersion_samples(elem["dispersion_samples"]):
+            s = 1.0 - dispersion * K_DISPERSION * w
+            weight = torch.tensor(
+                [rgb[0] * base[0], rgb[1] * base[1], rgb[2] * base[2]],
+                device=device, dtype=dtype,
+            )
+            passes.append((s, weight))
+        return passes
+    return [(1.0, torch.tensor(base, device=device, dtype=dtype))]
 
 
 def _apply_weight(field: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
@@ -120,8 +114,44 @@ def _apply_weight(field: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
     return field.unsqueeze(-1) * weight
 
 
+def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
+                        base_seed, elem_index, light_weight):
+    """Add every count-instance of one element for one light into `out`."""
+    fn = ELEMENT_FUNCTIONS[elem["type"]]
+    px, py = light["x"], light["y"]
+    ax = light.get("ax", 0.0)
+    ay = light.get("ay", 0.0)
+    stretch_x, stretch_y = elem["stretch"]
+
+    rot = math.radians(elem["rotation"])
+    if elem["auto_rotate"]:
+        rot += theta
+    cos_r, sin_r = math.cos(rot), math.sin(rot)
+
+    for i in range(elem["count"]):
+        t_i = elem["offset"] + i * elem["spread"]
+        intensity_i = elem["intensity"] * (elem["count_falloff"] ** i)
+        scale_i = max(elem["scale"] * (elem["count_scale_step"] ** i) * global_scale, 1e-6)
+        if intensity_i <= 0.0:
+            continue
+
+        params = dict(elem["params"])
+        params["seed"] = element_seed(base_seed, elem, elem_index, i)
+
+        cx, cy = element_center(px, py, t_i, ax, ay)
+        u0 = x - cx
+        v0 = y - cy
+        # rotate by -rot so the element's local frame is axis-aligned
+        u = (u0 * cos_r + v0 * sin_r) / (scale_i * stretch_x)
+        v = (-u0 * sin_r + v0 * cos_r) / (scale_i * stretch_y)
+
+        for s, weight in passes:
+            field = fn(u * s, v * s, params) if s != 1.0 else fn(u, v, params)
+            out.add_(_apply_weight(field, weight), alpha=intensity_i * light_weight)
+
+
 def render_stack(preset, lights, height, width, device, dtype,
-                 extra_seed=0, intensity=1.0, scale=1.0, grid=None):
+                 extra_seed=0, intensity=1.0, scale=1.0, grid=None, out=None):
     """Render one frame's flare stack in linear light.
 
     preset: a validated preset dict (see schema.validate_preset).
@@ -131,6 +161,8 @@ def render_stack(preset, lights, height, width, device, dtype,
         place the flare anchor (the t=1 point); it defaults to the frame
         centre, and element spacing scales with the light-to-anchor distance.
     intensity/scale: node-level global multipliers on top of the preset's.
+    out: optional zeroed (height, width, 3) tensor to accumulate into, so a
+        video batch can preallocate one output instead of stacking copies.
 
     Returns (height, width, 3) linear RGB; genuinely zero where no element
     contributes.
@@ -142,42 +174,46 @@ def render_stack(preset, lights, height, width, device, dtype,
     g = preset["global"]
     g_intensity = g["intensity"] * intensity
     g_scale = g["scale"] * scale
-    tint = g["tint"]
     base_seed = g["seed"] + extra_seed
 
-    flare = torch.zeros(height, width, 3, device=device, dtype=dtype)
+    if out is None:
+        out = torch.zeros(height, width, 3, device=device, dtype=dtype)
+
+    enabled = [(idx, elem) for idx, elem in enumerate(preset["elements"])
+               if elem["enabled"]]
+    passes_by_idx = {idx: _element_passes(elem, device, dtype)
+                     for idx, elem in enabled}
+
     for light in lights:
         weight = light.get("brightness", 1.0) * (1.0 - light.get("occlusion", 0.0))
         if weight <= 0.0:
             continue
         theta = axis_angle(light["x"], light["y"],
                            light.get("ax", 0.0), light.get("ay", 0.0))
-        for idx, elem in enumerate(preset["elements"]):
-            if not elem["enabled"]:
-                continue
-            contrib = _render_element_instance(
-                x, y, elem, light, theta, g_scale, seed=base_seed + idx
-            )
-            if contrib is not None:
-                flare = flare + contrib * weight
+        for idx, elem in enabled:
+            _accumulate_element(out, x, y, elem, passes_by_idx[idx], light,
+                                theta, g_scale, base_seed, idx, weight)
 
-    tint_t = torch.tensor(tint, device=device, dtype=dtype)
-    return flare * (tint_t * g_intensity)
+    tint = torch.tensor(g["tint"], device=device, dtype=dtype)
+    out.mul_(tint * g_intensity)
+    return out
 
 
 def render_batch(preset, lights_per_frame, height, width, device, dtype,
                  extra_seed=0, intensity=1.0, scale=1.0):
     """Render a batch: lights_per_frame is a list (length B) of light lists.
 
-    Returns (B, height, width, 3) linear RGB.
+    Preallocates the (B, height, width, 3) result and renders every frame
+    into it in place — no per-frame copies, no stack doubling.
     """
     grid = make_grid(height, width, device, dtype)
-    frames = [
+    out = torch.zeros(len(lights_per_frame), height, width, 3,
+                      device=device, dtype=dtype)
+    for i, lights in enumerate(lights_per_frame):
         render_stack(preset, lights, height, width, device, dtype,
-                     extra_seed=extra_seed, intensity=intensity, scale=scale, grid=grid)
-        for lights in lights_per_frame
-    ]
-    return torch.stack(frames, dim=0)
+                     extra_seed=extra_seed, intensity=intensity, scale=scale,
+                     grid=grid, out=out[i])
+    return out
 
 
 def composite(image_linear: torch.Tensor, flare_linear: torch.Tensor, mode: str) -> torch.Tensor:

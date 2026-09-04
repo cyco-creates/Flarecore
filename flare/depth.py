@@ -74,8 +74,11 @@ def blur_depth(depth: torch.Tensor, amount: float) -> torch.Tensor:
     """
     if amount <= 0.0:
         return depth
-    height = depth.shape[-2]
-    sigma_px = amount * height
+    height, width = depth.shape[-2], depth.shape[-1]
+    # Reflect padding requires pad < dim; cap sigma so the 3-sigma kernel
+    # radius stays inside the narrower axis (portrait maps at high blur
+    # otherwise raise inside F.pad).
+    sigma_px = min(amount * height, (min(height, width) - 1) / 3.5)
     if sigma_px < 1e-3:
         return depth
 
@@ -88,6 +91,28 @@ def blur_depth(depth: torch.Tensor, amount: float) -> torch.Tensor:
     x = F.pad(x, (0, 0, pad, pad), mode="reflect")
     x = F.conv2d(x, k.view(1, 1, -1, 1))
     return x.squeeze(1)
+
+
+def temporal_smooth_depth(depth: torch.Tensor, amount: float) -> torch.Tensor:
+    """Zero-phase temporal smoothing of a (B, H, W) stack along the batch.
+
+    amount in [0, 1]: 0 is off, 1 is heavy. A forward and a backward
+    exponential pass are averaged so the smoothing does not lag the motion.
+    Per-frame depth-model noise is what makes occlusion shimmer on video;
+    this is the knob that stills it.
+    """
+    b = depth.shape[0]
+    if amount <= 0.0 or b < 2:
+        return depth
+    k = 1.0 - 0.9 * min(amount, 1.0)  # blend factor toward the new frame
+
+    fwd = depth.clone()
+    for t in range(1, b):
+        fwd[t] = fwd[t - 1] * (1.0 - k) + depth[t] * k
+    bwd = depth.clone()
+    for t in range(b - 2, -1, -1):
+        bwd[t] = bwd[t + 1] * (1.0 - k) + depth[t] * k
+    return (fwd + bwd) * 0.5
 
 
 def condition_depth(depth: torch.Tensor, normalize: str = "per_batch",

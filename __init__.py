@@ -1,30 +1,38 @@
 # SPDX-License-Identifier: Apache-2.0
-"""comfyui-flarecore: procedural lens flare nodes for ComfyUI."""
+"""comfyui-flarecore: procedural lens flare nodes for ComfyUI.
 
-try:
-    # Normal path: ComfyUI loads this directory as a package, so relative
-    # imports work.
+Two import contexts exist. ComfyUI loads this directory as a real package,
+so the relative imports work. Tests (and a bare ``import __init__``) load it
+without package context — that case is detected EXPLICITLY via __package__,
+never by catching ImportError: an except-ImportError fallback swallowed
+missing dependencies (no torch, no Pillow) and re-executed the package in a
+loop until RecursionError, burying the actual cause.
+"""
+
+if __package__:
     from .nodes import (
         FlareRender,
         FlarePresetLoader,
         FlareDepthAdapter,
+        FlareTrack,
+        FlareKeyframes,
         FlareElementPrompts,
         FlareTexturePrepare,
         FlareElementSave,
         FlareElementPicker,
     )
     from .nodes.api import register_routes
-except ImportError:
-    # No package context (pytest collecting the repo root, or a direct
-    # import of this file). Re-load ourselves under a proper package name so
-    # the relative imports above resolve.
+else:
+    # No package context: re-load this file once under a proper package name
+    # so the relative imports above resolve. Dependency failures inside that
+    # exec propagate unchanged — a missing torch reports as missing torch.
     import importlib.util
     import sys
     from pathlib import Path
 
     _root = Path(__file__).resolve().parent
     _name = "comfyui_flarecore"
-    if _name in sys.modules and hasattr(sys.modules[_name], "FlareRender"):
+    if _name in sys.modules:
         _pkg = sys.modules[_name]
     else:
         _spec = importlib.util.spec_from_file_location(
@@ -33,10 +41,17 @@ except ImportError:
         )
         _pkg = importlib.util.module_from_spec(_spec)
         sys.modules[_name] = _pkg
-        _spec.loader.exec_module(_pkg)
+        try:
+            _spec.loader.exec_module(_pkg)
+        except BaseException:
+            # never leave a half-initialized module behind
+            sys.modules.pop(_name, None)
+            raise
     FlareRender = _pkg.FlareRender
     FlarePresetLoader = _pkg.FlarePresetLoader
     FlareDepthAdapter = _pkg.FlareDepthAdapter
+    FlareTrack = _pkg.FlareTrack
+    FlareKeyframes = _pkg.FlareKeyframes
     FlareElementPrompts = _pkg.FlareElementPrompts
     FlareTexturePrepare = _pkg.FlareTexturePrepare
     FlareElementSave = _pkg.FlareElementSave
@@ -46,13 +61,16 @@ except ImportError:
 # Editor and point-picker widgets.
 WEB_DIRECTORY = "./web"
 
-# Same-origin helper routes for the editor; a no-op outside ComfyUI.
+# Same-origin helper routes for the editor; idempotent, a no-op outside
+# ComfyUI.
 register_routes()
 
 NODE_CLASS_MAPPINGS = {
     "FlareRender": FlareRender,
     "FlarePresetLoader": FlarePresetLoader,
     "FlareDepthAdapter": FlareDepthAdapter,
+    "FlareTrack": FlareTrack,
+    "FlareKeyframes": FlareKeyframes,
     "FlareElementPrompts": FlareElementPrompts,
     "FlareTexturePrepare": FlareTexturePrepare,
     "FlareElementSave": FlareElementSave,
@@ -63,6 +81,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "FlareRender": "Flare Render",
     "FlarePresetLoader": "Flare Preset Loader",
     "FlareDepthAdapter": "Flare Depth Adapter",
+    "FlareTrack": "Flare Track",
+    "FlareKeyframes": "Flare Keyframes",
     "FlareElementPrompts": "Flare Element Prompts",
     "FlareTexturePrepare": "Flare Texture Prepare",
     "FlareElementSave": "Flare Element Save",

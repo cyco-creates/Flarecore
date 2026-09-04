@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """FlareRender: render a procedural lens flare over an image."""
 
+import logging
+
 import torch
 
 from ..flare.colorspace import srgb_to_linear, linear_to_srgb
@@ -12,6 +14,16 @@ from ..flare.schema import load_preset
 from .library import resolve_preset_textures
 
 DEFAULT_PRESET = '{"schema_version": 1, "elements": [{"type": "glow"}]}'
+
+# Preview saving needs ComfyUI's temp dir; outside ComfyUI (tests, library
+# use) the node runs headless. Probed once so a genuine save failure inside
+# ComfyUI is logged instead of masquerading as "not in ComfyUI".
+try:
+    import folder_paths as _folder_paths
+except ImportError:
+    _folder_paths = None
+
+_preview_error_logged = False
 
 
 class FlareRender:
@@ -44,33 +56,48 @@ class FlareRender:
             },
             "optional": {
                 "depth": ("IMAGE",),
+                "lights": ("FLARE_LIGHTS", {
+                    "tooltip": "Per-frame lights from Flare Track or Flare "
+                               "Keyframes; overrides position_mode when connected.",
+                }),
             },
         }
 
     def render(self, image, preset_json, position_mode, light_x, light_y,
                flare_x, flare_y, detect_threshold, detect_max_lights,
                occlusion_radius, light_depth, invert_depth, intensity, scale,
-               blend_mode, clamp_output, seed, depth=None):
+               blend_mode, clamp_output, seed, depth=None, lights=None):
         preset = load_preset(preset_json)
-        resolve_preset_textures(preset)
 
         device = image.device
         dtype = image.dtype if image.dtype.is_floating_point else torch.float32
+        resolve_preset_textures(preset, device=device, dtype=dtype)
+
         rgb = image[..., :3].to(dtype)
         batch, height, width, _ = rgb.shape
 
         image_linear = srgb_to_linear(rgb)
 
-        lights_per_frame = self._resolve_lights(
-            image_linear, position_mode, light_x, light_y,
-            detect_threshold, detect_max_lights,
-        )
+        if lights is not None:
+            lights_per_frame = self._lights_from_input(lights, batch)
+        else:
+            lights_per_frame = self._resolve_lights(
+                image_linear, position_mode, light_x, light_y,
+                detect_threshold, detect_max_lights,
+            )
 
         if depth is not None:
             depth_maps = depth[..., :3].to(dtype).mean(dim=-1)  # (Bd, H, W)
-            for i, lights in enumerate(lights_per_frame):
-                dmap = depth_maps[min(i, depth_maps.shape[0] - 1)]
-                for light in lights:
+            bd = depth_maps.shape[0]
+            if 1 < bd < batch:
+                raise ValueError(
+                    f"depth batch ({bd}) is shorter than the image batch "
+                    f"({batch}); pass one depth map to reuse it for every "
+                    f"frame, or one per frame"
+                )
+            for i, frame_lights in enumerate(lights_per_frame):
+                dmap = depth_maps[0 if bd == 1 else i]
+                for light in frame_lights:
                     light["occlusion"] = occlusion_factor(
                         dmap, light["u"], light["v"],
                         radius=occlusion_radius, invert=invert_depth,
@@ -78,14 +105,19 @@ class FlareRender:
                     )
 
         # The flare anchor (t = 1) is a second free point: element spacing
-        # scales with the light-to-anchor distance.
-        ax, ay = uv_to_grid(flare_x, flare_y, height, width)
+        # scales with the light-to-anchor distance. Lights supplied through
+        # the FLARE_LIGHTS input may carry their own per-frame anchor.
+        default_anchor = uv_to_grid(flare_x, flare_y, height, width)
 
         engine_lights = []
-        for lights in lights_per_frame:
+        for frame_lights in lights_per_frame:
             frame = []
-            for light in lights:
+            for light in frame_lights:
                 x, y = uv_to_grid(light["u"], light["v"], height, width)
+                if "au" in light and "av" in light:
+                    ax, ay = uv_to_grid(light["au"], light["av"], height, width)
+                else:
+                    ax, ay = default_anchor
                 frame.append({
                     "x": x, "y": y, "ax": ax, "ay": ay,
                     "brightness": light.get("brightness", 1.0),
@@ -102,16 +134,33 @@ class FlareRender:
         out = linear_to_srgb(out_linear)
         flare_pass = linear_to_srgb(flare_linear)
         if clamp_output:
-            out = out.clamp(0.0, 1.0)
-            flare_pass = flare_pass.clamp(0.0, 1.0)
+            out = out.clamp_(0.0, 1.0)
+            flare_pass = flare_pass.clamp_(0.0, 1.0)
 
         flare_alpha = linear_luminance(flare_pass).clamp(0.0, 1.0)
 
         result = (out, flare_pass, flare_alpha)
-        ui = _save_preview(out[0])
-        if ui is not None:
-            return {"ui": ui, "result": result}
-        return result
+        if _folder_paths is None:
+            return result
+        return {"ui": _save_preview(out[0]), "result": result}
+
+    def _lights_from_input(self, lights, batch):
+        """Adapt a FLARE_LIGHTS object (list per frame of light dicts) to
+        this batch: a single frame of lights broadcasts, otherwise the
+        sequence must cover the batch."""
+        if not isinstance(lights, list) or (lights and not isinstance(lights[0], list)):
+            raise ValueError("lights input must be per-frame lists (FLARE_LIGHTS)")
+        n = len(lights)
+        if n == 0:
+            return [[] for _ in range(batch)]
+        if 1 < n < batch:
+            raise ValueError(
+                f"lights input covers {n} frames but the image batch has "
+                f"{batch}; produce one entry per frame (or a single frame "
+                f"to broadcast)"
+            )
+        return [[dict(light) for light in lights[0 if n == 1 else i]]
+                for i in range(batch)]
 
     def _resolve_lights(self, image_linear, position_mode, light_x, light_y,
                         detect_threshold, detect_max_lights):
@@ -137,13 +186,15 @@ class FlareRender:
 
 def _save_preview(frame):
     """Save a downscaled preview of frame (H, W, 3) into ComfyUI's temp dir
-    so the point-picker widget has a backdrop. Outside ComfyUI (tests,
-    library use) this quietly does nothing."""
+    so the point-picker widget has a backdrop. Returns the ui images dict;
+    on failure logs once and returns an empty list so the node's return
+    shape never changes."""
+    global _preview_error_logged
     try:
+        import os
         import random
         import numpy as np
         from PIL import Image
-        import folder_paths
 
         h, w = frame.shape[:2]
         max_w = 768
@@ -155,11 +206,14 @@ def _save_preview(frame):
             )[0].permute(1, 2, 0)
         arr = (frame.clamp(0, 1).cpu().numpy() * 255).astype(np.uint8)
 
-        temp = folder_paths.get_temp_directory()
+        temp = _folder_paths.get_temp_directory()
         name = f"flarecore_{random.getrandbits(48):012x}.png"
-        import os
         os.makedirs(temp, exist_ok=True)
         Image.fromarray(arr).save(os.path.join(temp, name), compress_level=1)
         return {"images": [{"filename": name, "subfolder": "", "type": "temp"}]}
-    except Exception:
-        return None
+    except Exception as e:
+        if not _preview_error_logged:
+            _preview_error_logged = True
+            logging.warning("flarecore: preview save failed (%s); the point "
+                            "picker will have no backdrop", e)
+        return {"images": []}

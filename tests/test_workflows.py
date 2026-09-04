@@ -79,9 +79,11 @@ def test_workflow_widget_values_align(path):
         # (verified against a live graph), so every declared widget counts.
         expected = declared_widgets(cls)
         values = node.get("widgets_values", [])
-        assert len(values) >= len(expected), (
-            f"{node['type']} in {path.name}: {len(values)} widget values for "
-            f"{len(expected)} widgets")
+        # values may run SHORT of the declared widgets: a workflow saved
+        # before a node gained a trailing input loads with the new widget at
+        # its default, and that forward-compatibility is deliberate. A SHIFT,
+        # by contrast, puts a wrong-typed value somewhere in the prefix and
+        # the type checks below catch it.
         for (name, spec), value in zip(expected, values):
             check_value(name, spec, value)
             checked += 1

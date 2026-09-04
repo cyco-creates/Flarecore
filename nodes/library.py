@@ -3,21 +3,27 @@
 
 Presets reference textures by relative path; this module resolves those
 references into linear-light tensors for the engine, with an mtime-aware
-cache so edited files reload without a restart. Loading lives at the node
-layer because the flare/ engine stays free of image-decoding dependencies.
+LRU cache so edited files reload without a restart. Device copies are cached
+too: at video batch sizes, re-uploading a texture per element evaluation is
+gigabytes of pointless PCIe traffic. Loading lives at the node layer because
+the flare/ engine stays free of image-decoding dependencies.
 """
 
+from collections import OrderedDict
 from pathlib import Path
 
 import numpy as np
 import torch
 from PIL import Image
 
-from ..flare.colorspace import srgb_to_linear
+from ..flare.colorspace import srgb_to_linear, luminance
+from ..flare.schema import normalize_texture_ref
 
 ELEMENTS_DIR = Path(__file__).resolve().parents[1] / "elements"
 
-_cache: dict[tuple, torch.Tensor] = {}
+_CACHE_LIMIT = 64
+_cpu_cache: OrderedDict = OrderedDict()     # (path, mtime, channel) -> tensor
+_device_cache: OrderedDict = OrderedDict()  # (cpu_key, device, dtype) -> tensor
 
 # A colour texture whose channels never differ by more than this is treated
 # as an intensity field under channel='auto'.
@@ -35,9 +41,7 @@ def list_elements() -> list[str]:
 
 
 def _resolve_path(ref: str) -> Path:
-    norm = ref.replace("\\", "/")
-    if norm.startswith("/") or ".." in norm.split("/") or (len(norm) > 1 and norm[1] == ":"):
-        raise ValueError(f"texture reference {ref!r} must stay inside the element library")
+    norm = normalize_texture_ref(ref, "texture reference")
     path = ELEMENTS_DIR / norm
     if not path.is_file():
         available = list_elements()
@@ -49,31 +53,50 @@ def _resolve_path(ref: str) -> Path:
     return path
 
 
-def load_texture(ref: str, channel: str = "auto") -> torch.Tensor:
-    """Load a library texture as linear light: (H, W) grey or (H, W, 3)."""
+def _lru_put(cache: OrderedDict, key, value):
+    cache[key] = value
+    cache.move_to_end(key)
+    while len(cache) > _CACHE_LIMIT:
+        cache.popitem(last=False)
+
+
+def load_texture(ref: str, channel: str = "auto",
+                 device=None, dtype=None) -> torch.Tensor:
+    """Load a library texture as linear light: (H, W) grey or (H, W, 3).
+
+    With device/dtype given, the returned tensor is cached resident on that
+    device — repeated renders reuse it instead of re-uploading.
+    """
     path = _resolve_path(ref)
-    key = (str(path), path.stat().st_mtime_ns, channel)
-    hit = _cache.get(key)
-    if hit is not None:
-        return hit
+    cpu_key = (str(path), path.stat().st_mtime_ns, channel)
+    out = _cpu_cache.get(cpu_key)
+    if out is None:
+        arr = np.asarray(Image.open(path).convert("RGB")).astype(np.float32) / 255.0
+        rgb = srgb_to_linear(torch.from_numpy(arr))
+        if channel == "luminance":
+            out = luminance(rgb)
+        elif channel == "rgb":
+            out = rgb
+        else:  # auto
+            spread = (rgb.amax(dim=-1) - rgb.amin(dim=-1)).max()
+            out = rgb.mean(-1) if spread <= _AUTO_GREY_TOLERANCE else rgb
+        _lru_put(_cpu_cache, cpu_key, out)
+    else:
+        _cpu_cache.move_to_end(cpu_key)
 
-    arr = np.asarray(Image.open(path).convert("RGB")).astype(np.float32) / 255.0
-    rgb = srgb_to_linear(torch.from_numpy(arr))
-
-    if channel == "luminance":
-        out = (rgb * torch.tensor([0.2126, 0.7152, 0.0722])).sum(-1)
-    elif channel == "rgb":
-        out = rgb
-    else:  # auto
-        spread = (rgb.amax(dim=-1) - rgb.amin(dim=-1)).max()
-        out = rgb.mean(-1) if spread <= _AUTO_GREY_TOLERANCE else rgb
-
-    _cache.clear() if len(_cache) > 64 else None
-    _cache[key] = out
-    return out
+    if device is None and dtype is None:
+        return out
+    dev_key = (cpu_key, str(device), str(dtype))
+    moved = _device_cache.get(dev_key)
+    if moved is None:
+        moved = out.to(device=device, dtype=dtype)
+        _lru_put(_device_cache, dev_key, moved)
+    else:
+        _device_cache.move_to_end(dev_key)
+    return moved
 
 
-def resolve_preset_textures(preset: dict) -> None:
+def resolve_preset_textures(preset: dict, device=None, dtype=None) -> None:
     """Inject '_texture' tensors into every texture element of a validated
     preset, in place. Raises with the library listing when a file is missing."""
     for elem in preset["elements"]:
@@ -85,5 +108,6 @@ def resolve_preset_textures(preset: dict) -> None:
                     + (", ".join(list_elements()[:20]) or "(library is empty)")
                 )
             elem["params"]["_texture"] = load_texture(
-                ref, elem["params"].get("channel", "auto")
+                ref, elem["params"].get("channel", "auto"),
+                device=device, dtype=dtype,
             )

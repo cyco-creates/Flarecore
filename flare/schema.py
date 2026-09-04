@@ -13,6 +13,7 @@ Every key has a default. A minimal valid preset is:
 
 import copy
 import json
+import math
 import warnings
 
 SCHEMA_VERSION = 1
@@ -26,6 +27,7 @@ GLOBAL_DEFAULTS = {
 
 # Keys shared by every element regardless of type.
 ELEMENT_COMMON_DEFAULTS = {
+    "id": "",               # optional stable identity; seeds derive from it
     "enabled": True,
     "offset": 0.0,          # t along the flare axis (0 = on light, 1 = center)
     "scale": 0.5,           # size in half-frame-heights
@@ -69,6 +71,10 @@ def _require_number(value, key, lo=None, hi=None, hi_exclusive=False):
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"preset key '{key}' must be a number, got {value!r}")
     v = float(value)
+    # json.loads accepts bare NaN/Infinity, and every range comparison against
+    # NaN is False — without this check a NaN scale poisons the whole render.
+    if not math.isfinite(v):
+        raise ValueError(f"preset key '{key}' must be finite, got {value!r}")
     if lo is not None and v < lo:
         raise ValueError(f"preset key '{key}' must be >= {lo}, got {v}")
     if hi is not None:
@@ -79,18 +85,35 @@ def _require_number(value, key, lo=None, hi=None, hi_exclusive=False):
     return v
 
 
-def _require_int(value, key, lo=None):
+def _require_int(value, key, lo=None, hi=None):
     if isinstance(value, bool) or not isinstance(value, int):
         raise ValueError(f"preset key '{key}' must be an integer, got {value!r}")
     if lo is not None and value < lo:
         raise ValueError(f"preset key '{key}' must be >= {lo}, got {value}")
+    if hi is not None and value > hi:
+        raise ValueError(f"preset key '{key}' must be <= {hi}, got {value}")
     return value
 
 
-def _require_vec(value, key, n):
+def _require_vec(value, key, n, lo=None, hi=None):
     if not isinstance(value, (list, tuple)) or len(value) != n:
         raise ValueError(f"preset key '{key}' must be a list of {n} numbers, got {value!r}")
-    return [_require_number(c, f"{key}[{i}]") for i, c in enumerate(value)]
+    return [_require_number(c, f"{key}[{i}]", lo=lo, hi=hi) for i, c in enumerate(value)]
+
+
+def normalize_texture_ref(ref, key="params.file") -> str:
+    """Shared texture-path guard: forward slashes, and never outside the
+    element library. Both the schema and the loader call this one function so
+    the security boundary cannot drift between them."""
+    if not isinstance(ref, str):
+        raise ValueError(f"'{key}' must be a string, got {ref!r}")
+    norm = ref.replace("\\", "/")
+    parts = norm.split("/")
+    if norm.startswith("/") or ".." in parts or (len(norm) > 1 and norm[1] == ":"):
+        raise ValueError(
+            f"'{key}' must be a relative path inside the element library, got {ref!r}"
+        )
+    return norm
 
 
 def _validate_element(raw: dict, index: int) -> dict:
@@ -130,26 +153,36 @@ def _validate_element(raw: dict, index: int) -> dict:
             continue
         elem[key] = value
 
-    # Validate common keys.
+    # Validate common keys. Upper bounds exist because preset_json is a free
+    # text field: an unbounded count or dispersion is a denial of service or a
+    # coordinate-scale sign flip, not a creative choice.
+    elem["id"] = str(elem["id"])
     elem["enabled"] = bool(elem["enabled"])
-    elem["offset"] = _require_number(elem["offset"], f"{where}.offset")
-    elem["scale"] = _require_number(elem["scale"], f"{where}.scale", lo=1e-6)
+    elem["offset"] = _require_number(elem["offset"], f"{where}.offset", lo=-10.0, hi=10.0)
+    elem["scale"] = _require_number(elem["scale"], f"{where}.scale", lo=1e-6, hi=100.0)
+    # colour is linear-light and may exceed 1 (HDR), but never go negative:
+    # a negative flare darkens the plate and falsifies the alpha mask
     elem["stretch"] = _require_vec(elem["stretch"], f"{where}.stretch", 2)
     if elem["stretch"][0] <= 0 or elem["stretch"][1] <= 0:
         raise ValueError(f"{where}.stretch components must be > 0")
     elem["rotation"] = _require_number(elem["rotation"], f"{where}.rotation")
     elem["auto_rotate"] = bool(elem["auto_rotate"])
-    elem["intensity"] = _require_number(elem["intensity"], f"{where}.intensity", lo=0.0)
-    elem["color"] = _require_vec(elem["color"], f"{where}.color", 3)
-    elem["dispersion"] = _require_number(elem["dispersion"], f"{where}.dispersion", lo=0.0)
+    elem["intensity"] = _require_number(elem["intensity"], f"{where}.intensity",
+                                        lo=0.0, hi=1000.0)
+    elem["color"] = _require_vec(elem["color"], f"{where}.color", 3, lo=0.0, hi=100.0)
+    # dispersion scales coordinates by 1 - d*0.05*w; past 8 the look is junk
+    # and at 20 the red sample collapses to a full-frame constant
+    elem["dispersion"] = _require_number(elem["dispersion"], f"{where}.dispersion",
+                                         lo=0.0, hi=8.0)
     elem["dispersion_samples"] = _require_int(
-        elem["dispersion_samples"], f"{where}.dispersion_samples", lo=3
+        elem["dispersion_samples"], f"{where}.dispersion_samples", lo=3, hi=33
     )
-    elem["count"] = _require_int(elem["count"], f"{where}.count", lo=1)
-    elem["spread"] = _require_number(elem["spread"], f"{where}.spread")
-    elem["count_falloff"] = _require_number(elem["count_falloff"], f"{where}.count_falloff", lo=0.0)
+    elem["count"] = _require_int(elem["count"], f"{where}.count", lo=1, hi=64)
+    elem["spread"] = _require_number(elem["spread"], f"{where}.spread", lo=-10.0, hi=10.0)
+    elem["count_falloff"] = _require_number(elem["count_falloff"], f"{where}.count_falloff",
+                                            lo=0.0, hi=10.0)
     elem["count_scale_step"] = _require_number(
-        elem["count_scale_step"], f"{where}.count_scale_step", lo=1e-6
+        elem["count_scale_step"], f"{where}.count_scale_step", lo=0.05, hi=10.0
     )
 
     # Validate per-type params.
@@ -167,7 +200,7 @@ def _validate_element(raw: dict, index: int) -> dict:
     elif etype == "streak":
         p["length"] = _require_number(p["length"], f"{where}.params.length", lo=1e-4)
         p["thickness"] = _require_number(p["thickness"], f"{where}.params.thickness", lo=1e-5)
-        p["count"] = _require_int(p["count"], f"{where}.params.count", lo=1)
+        p["count"] = _require_int(p["count"], f"{where}.params.count", lo=1, hi=32)
     elif etype == "ring":
         p["radius"] = _require_number(p["radius"], f"{where}.params.radius", lo=0.0)
         p["thickness"] = _require_number(p["thickness"], f"{where}.params.thickness", lo=1e-5)
@@ -178,23 +211,14 @@ def _validate_element(raw: dict, index: int) -> dict:
             p["angular_falloff"], f"{where}.params.angular_falloff", lo=0.0, hi=1.0
         )
     elif etype == "glint":
-        p["points"] = _require_int(p["points"], f"{where}.params.points", lo=2)
+        p["points"] = _require_int(p["points"], f"{where}.params.points", lo=2, hi=256)
         p["length"] = _require_number(p["length"], f"{where}.params.length", lo=1e-4)
         p["thickness"] = _require_number(p["thickness"], f"{where}.params.thickness", lo=1e-5)
         p["length_jitter"] = _require_number(
             p["length_jitter"], f"{where}.params.length_jitter", lo=0.0, hi=1.0
         )
     elif etype == "texture":
-        f = p["file"]
-        if not isinstance(f, str):
-            raise ValueError(f"{where}.params.file must be a string, got {f!r}")
-        norm = f.replace("\\", "/")
-        if norm.startswith("/") or ".." in norm.split("/") or (len(norm) > 1 and norm[1] == ":"):
-            raise ValueError(
-                f"{where}.params.file must be a relative path inside the "
-                f"element library, got {f!r}"
-            )
-        p["file"] = norm
+        p["file"] = normalize_texture_ref(p["file"], f"{where}.params.file")
         if p["channel"] not in ("auto", "rgb", "luminance"):
             raise ValueError(
                 f"{where}.params.channel must be 'auto', 'rgb' or "
@@ -261,9 +285,9 @@ def validate_preset(raw: dict) -> dict:
             continue
         out["global"][key] = value
     g = out["global"]
-    g["intensity"] = _require_number(g["intensity"], "global.intensity", lo=0.0)
-    g["scale"] = _require_number(g["scale"], "global.scale", lo=1e-6)
-    g["tint"] = _require_vec(g["tint"], "global.tint", 3)
+    g["intensity"] = _require_number(g["intensity"], "global.intensity", lo=0.0, hi=1000.0)
+    g["scale"] = _require_number(g["scale"], "global.scale", lo=1e-6, hi=100.0)
+    g["tint"] = _require_vec(g["tint"], "global.tint", 3, lo=0.0, hi=100.0)
     g["seed"] = _require_int(g["seed"], "global.seed")
 
     for i, raw_elem in enumerate(raw["elements"]):
