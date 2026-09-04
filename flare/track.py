@@ -12,11 +12,22 @@ module turns raw per-frame detections into stable tracks:
   marginal detection becomes a soft pulse instead of a strobe
 - a track survives `hold` missed frames before it starts dying, riding out
   single-frame detector dropouts
+- a lost track COASTS on its last velocity instead of freezing: when a sun
+  slides behind a pillar, the coasted position keeps moving into the
+  occluder so depth occlusion completes its fade naturally, and the track
+  is still in the right place to re-acquire the light on the far side —
+  one continuous track instead of a cut, a dead spot, and a rebirth
 
 Everything is plain Python floats — deterministic, device-free, testable.
 """
 
 import math
+
+
+def _smooth01(r: float) -> float:
+    """Cosine-flavoured ramp: gentle at both ends of a fade."""
+    r = min(max(r, 0.0), 1.0)
+    return r * r * (3.0 - 2.0 * r)
 
 
 def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
@@ -66,19 +77,28 @@ def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
             matched_dets.add(di)
             tr = tracks[tid]
             det = dets[di]
+            pu, pv = tr["u"], tr["v"]
             tr["u"] += (det["u"] - tr["u"]) * blend
             tr["v"] += (det["v"] - tr["v"]) * blend
+            tr["vu"] = tr["vu"] * 0.7 + (tr["u"] - pu) * 0.3
+            tr["vv"] = tr["vv"] * 0.7 + (tr["v"] - pv) * 0.3
             b = det.get("brightness", 1.0)
             tr["b"] += (b - tr["b"]) * blend
             tr["missed"] = 0
             tr["ramp"] = min(tr["ramp"] + 1.0 / fade, 1.0)
+            # the OUTPUT position is the raw detection; the EMA above exists
+            # for association and coasting velocity. Raw positions get a
+            # zero-phase smooth at the end — a causal EMA would trail a
+            # moving light by lag proportional to its speed
+            tr["out_u"], tr["out_v"] = det["u"], det["v"]
 
         born: set[int] = set()
         for di, det in enumerate(dets):
             if di in matched_dets:
                 continue
             tracks[next_tid] = {
-                "u": det["u"], "v": det["v"],
+                "u": det["u"], "v": det["v"], "vu": 0.0, "vv": 0.0,
+                "out_u": det["u"], "out_v": det["v"],
                 "b": det.get("brightness", 1.0),
                 "missed": 0, "ramp": 1.0 / fade,
             }
@@ -90,6 +110,13 @@ def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
             if tid in matched_tracks or tid in born:
                 continue
             tr["missed"] += 1
+            # coast: keep travelling on the last velocity (damped) so an
+            # occluded light stays where the light actually is
+            tr["u"] += tr["vu"]
+            tr["v"] += tr["vv"]
+            tr["out_u"], tr["out_v"] = tr["u"], tr["v"]
+            tr["vu"] *= 0.85
+            tr["vv"] *= 0.85
             if tr["missed"] > hold:
                 tr["ramp"] -= 1.0 / fade
                 if tr["ramp"] <= 1e-6:
@@ -98,12 +125,45 @@ def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
             del tracks[tid]
 
         out.append([
-            {"u": tr["u"], "v": tr["v"],
-             "brightness": tr["b"] * max(tr["ramp"], 0.0), "tid": tid}
+            {"u": tr["out_u"], "v": tr["out_v"],
+             "brightness": tr["b"] * _smooth01(tr["ramp"]), "tid": tid}
             for tid, tr in sorted(tracks.items())
             if tr["ramp"] > 1e-6
         ])
+
+    # zero-phase position smoothing per track: stills detector jitter
+    # without the lag a causal filter would add
+    if smoothing > 0.0:
+        by_tid: dict[int, list[dict]] = {}
+        for frame in out:
+            for light in frame:
+                by_tid.setdefault(light["tid"], []).append(light)
+        for entries in by_tid.values():
+            if len(entries) < 2:
+                continue
+            us = smooth_series([l["u"] for l in entries], smoothing)
+            vs = smooth_series([l["v"] for l in entries], smoothing)
+            for light, u, v in zip(entries, us, vs):
+                light["u"], light["v"] = u, v
     return out
+
+
+def smooth_series(values: list[float], amount: float) -> list[float]:
+    """Zero-phase exponential smoothing of a scalar series (forward and
+    backward passes averaged). Used to low-pass per-track occlusion along a
+    clip: a light snapping behind a thin occluder becomes a fast fade
+    instead of a one-frame cut, without lagging the motion."""
+    n = len(values)
+    if amount <= 0.0 or n < 2:
+        return list(values)
+    k = 1.0 - 0.9 * min(amount, 1.0)
+    fwd = list(values)
+    for t in range(1, n):
+        fwd[t] = fwd[t - 1] * (1.0 - k) + values[t] * k
+    bwd = list(values)
+    for t in range(n - 2, -1, -1):
+        bwd[t] = bwd[t + 1] * (1.0 - k) + values[t] * k
+    return [(a + b) * 0.5 for a, b in zip(fwd, bwd)]
 
 
 def parse_keyframes(text: str) -> list[tuple[int, float, float]]:

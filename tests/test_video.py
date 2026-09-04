@@ -129,6 +129,23 @@ class TestTracker:
         assert any(0 < x < 1 for x in tail)  # ramps out, not a strobe
         assert b[2] == 0.0
 
+    def test_lost_track_coasts_on_velocity(self):
+        # light moves right at 0.03/frame, vanishes behind an occluder for
+        # 4 frames, re-appears further along: the coasted track must keep
+        # moving (not freeze at the edge) and re-acquire as the SAME track
+        det = []
+        for f in range(14):
+            u = 0.2 + 0.03 * f
+            det.append([] if 6 <= f <= 9 else
+                       [{"u": u, "v": 0.5, "brightness": 1.0}])
+        out = track_lights(det, smoothing=0.3, max_jump=0.1, hold=3, fade=3)
+        # during the gap the position keeps advancing
+        gap_us = [frame[0]["u"] for frame in out[6:10] if frame]
+        assert len(gap_us) >= 3
+        assert all(b > a for a, b in zip(gap_us, gap_us[1:]))
+        # one identity across the whole shot
+        assert {l["tid"] for f in out for l in f} == {0}
+
     def test_crossing_lights_keep_identity(self):
         det = []
         for f in range(11):
@@ -143,6 +160,39 @@ class TestTracker:
         first = next(l for l in out[0] if l["tid"] == 0)
         last = next(l for l in out[-1] if l["tid"] == 0)
         assert first["u"] < 0.35 and last["u"] > 0.65
+
+
+class TestOcclusionSmoothing:
+    def test_smooth_series_softens_a_cut(self):
+        from flare.track import smooth_series
+        series = [0.0] * 6 + [1.0] * 6
+        s = smooth_series(series, 0.6)
+        steps = [abs(b - a) for a, b in zip(s, s[1:])]
+        assert max(steps) < 0.6           # the 1.0 cliff became a ramp
+        assert s[0] < 0.2 and s[-1] > 0.8  # endpoints still converge
+
+    def test_render_node_smooths_tracked_occlusion(self):
+        # a tracked light whose occlusion snaps 0 -> 1 mid-clip: flare energy
+        # must fall over multiple frames, not one
+        img = torch.zeros(10, 64, 96, 3)
+        depth = torch.zeros(10, 64, 96, 3)
+        depth[5:] = 0.9  # world becomes fully near from frame 5 on
+        lights = [[{"u": 0.5, "v": 0.5, "brightness": 1.0, "tid": 0}]
+                  for _ in range(10)]
+        out, fp, _ = run_node(img, depth=depth, lights=lights,
+                              occlusion_smooth=0.6, occlusion_radius=0.1)
+        e = [fp[f].sum().item() for f in range(10)]
+        peak = max(e)
+        deltas = [abs(b - a) / peak for a, b in zip(e, e[1:])]
+        assert max(deltas) < 0.5  # unsmoothed this is a 1.0 cliff
+        # without tid the same setup keeps the hard cut (behavior preserved)
+        lights_plain = [[{"u": 0.5, "v": 0.5, "brightness": 1.0}]
+                        for _ in range(10)]
+        out2, fp2, _ = run_node(img, depth=depth, lights=lights_plain,
+                                occlusion_smooth=0.6, occlusion_radius=0.1)
+        e2 = [fp2[f].sum().item() for f in range(10)]
+        d2 = [abs(b - a) / peak for a, b in zip(e2, e2[1:])]
+        assert max(d2) > 0.9
 
 
 class TestKeyframes:

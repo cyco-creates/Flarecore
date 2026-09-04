@@ -23,7 +23,7 @@ const ADVANCED = [
   "light_x", "light_y", "flare_x", "flare_y",
   "detect_threshold", "detect_max_lights",
   "occlusion_radius", "light_depth", "invert_depth",
-  "clamp_output", "control_after_generate",
+  "clamp_output", "control_after_generate", "occlusion_smooth",
 ];
 
 function hideWidget(w) {

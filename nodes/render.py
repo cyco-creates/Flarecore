@@ -53,6 +53,13 @@ class FlareRender:
                 "blend_mode": (["add", "screen"],),
                 "clamp_output": ("BOOLEAN", {"default": True}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2**31 - 1}),
+                # appended last so widgets_values in saved workflows stay aligned
+                "occlusion_smooth": ("FLOAT", {
+                    "default": 0.4, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "tooltip": "temporal smoothing of occlusion per tracked "
+                               "light across the batch; turns one-frame "
+                               "occlusion cuts into fades (video)",
+                }),
             },
             "optional": {
                 "depth": ("IMAGE",),
@@ -66,7 +73,8 @@ class FlareRender:
     def render(self, image, preset_json, position_mode, light_x, light_y,
                flare_x, flare_y, detect_threshold, detect_max_lights,
                occlusion_radius, light_depth, invert_depth, intensity, scale,
-               blend_mode, clamp_output, seed, depth=None, lights=None):
+               blend_mode, clamp_output, seed, occlusion_smooth=0.4,
+               depth=None, lights=None):
         preset = load_preset(preset_json)
 
         device = image.device
@@ -103,6 +111,7 @@ class FlareRender:
                         radius=occlusion_radius, invert=invert_depth,
                         light_depth=light_depth,
                     )
+            self._smooth_occlusion(lights_per_frame, occlusion_smooth)
 
         # The flare anchor (t = 1) is a second free point: element spacing
         # scales with the light-to-anchor distance. Lights supplied through
@@ -143,6 +152,30 @@ class FlareRender:
         if _folder_paths is None:
             return result
         return {"ui": _save_preview(out[0]), "result": result}
+
+    def _smooth_occlusion(self, lights_per_frame, amount):
+        """Low-pass each tracked light's occlusion series along the batch.
+
+        A detector can pin to a halo sliver beside a thin occluder and then
+        snap across it, which turns the occlusion into a one-frame cut; the
+        stable track ids from FlareTrack let the cut be spread into a fade.
+        Lights without a tid (manual, detect) are left untouched.
+        """
+        if amount <= 0.0 or len(lights_per_frame) < 2:
+            return
+        from ..flare.track import smooth_series
+        series: dict = {}
+        for i, frame_lights in enumerate(lights_per_frame):
+            for light in frame_lights:
+                tid = light.get("tid")
+                if tid is not None:
+                    series.setdefault(tid, []).append((i, light))
+        for entries in series.values():
+            if len(entries) < 2:
+                continue
+            smoothed = smooth_series([l["occlusion"] for _, l in entries], amount)
+            for (_, light), occ in zip(entries, smoothed):
+                light["occlusion"] = occ
 
     def _lights_from_input(self, lights, batch):
         """Adapt a FLARE_LIGHTS object (list per frame of light dicts) to

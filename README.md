@@ -46,12 +46,36 @@ FlareRender carries its own UI:
   `preset_json` widget, so hand-edited JSON and the editor stay in sync.
   `save…` writes into `presets/`; `presets ▾` loads any shipped or saved look.
 
+## Video
+
+In ComfyUI a video is an image batch, and every node here is batch-native.
+The parts that make flares hold together across frames:
+
+- **FlareTrack** turns per-frame detections into stable tracks: one identity
+  per light across the clip (crossing lights don't swap), smoothed zero-phase
+  positions (no lag, no jitter), fade in/out instead of strobing at the
+  detection threshold, and velocity coasting — a light that vanishes behind
+  an occluder keeps travelling, so depth occlusion completes its fade and the
+  track re-acquires the light on the far side. Outputs `FLARE_LIGHTS` plus a
+  colour-coded overlay for checking the track.
+- **FlareKeyframes** hand-animates instead: `frame: u,v` paths for the light
+  and optionally the flare anchor, linear or eased.
+- **FlareRender**'s optional `lights` input consumes either. Its
+  `occlusion_smooth` spreads occlusion changes for tracked lights across
+  frames — a thin occluder becomes a fade, never a one-frame cut.
+- **FlareDepthAdapter**'s `temporal_smooth` stills per-frame depth-model
+  shimmer (zero-phase along the batch); keep `normalize` on `per_batch`.
+
+The `flarecore_video_lab` workflow wires the whole chain from Load Video to
+two rendered videos (composite and flare pass).
+
 ## Custom elements (element forge)
 
-Two shipped workflows (ComfyUI → Workflow → Browse Templates → flarecore):
+Shipped workflows (ComfyUI → Workflow → Browse Templates → flarecore):
 
 - **flarecore_flare_lab** — the full playground: scene, depth occlusion,
   editor, and all outputs.
+- **flarecore_video_lab** — video in, tracked/occluded flare video out.
 - **flarecore_element_forge** — generate custom element textures with your
   local image model (wired for Krea2), condition them, and file them in the
   library. Pick a prompt from the bank, queue, then use the new element from

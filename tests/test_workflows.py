@@ -83,10 +83,18 @@ def test_workflow_widget_values_align(path):
         # before a node gained a trailing input loads with the new widget at
         # its default, and that forward-compatibility is deliberate. A SHIFT,
         # by contrast, puts a wrong-typed value somewhere in the prefix and
-        # the type checks below catch it.
-        for (name, spec), value in zip(expected, values):
-            check_value(name, spec, value)
+        # the type checks below catch it. The frontend appends a
+        # control_after_generate string after a seed widget; consume it.
+        vi = 0
+        for name, spec in expected:
+            if vi >= len(values):
+                break
+            check_value(name, spec, values[vi])
             checked += 1
+            vi += 1
+            if name in ("seed", "noise_seed") and vi < len(values) and \
+                    values[vi] in ("fixed", "randomize", "increment", "decrement"):
+                vi += 1
     assert checked > 0, f"{path.name} exercised no flarecore widgets"
 
 

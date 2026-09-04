@@ -111,6 +111,27 @@ host an image-backed picker. Note for future widgets: the frontend sometimes
 calls computeSize() with no width argument — height math must not depend
 unguarded on it.
 
+## 3g. Video architecture (2026-09-04)
+
+Temporal stability lives in three cooperating places, each at its own depth:
+
+- **flare/track.py** owns identity and motion: association, zero-phase
+  position smoothing (a causal EMA trails a moving light by lag proportional
+  to speed), fade ramps, and velocity coasting through detection loss.
+- **FlareRender.occlusion_smooth** low-passes occlusion per track id. This
+  exists because detection can pin to a halo sliver beside a thin occluder
+  and snap across it in one frame; measured on the demo clip it cut the
+  worst frame-to-frame flare-energy jump from 98.8% of peak to 34.1% (the
+  remainder being the legitimate fade ramp itself).
+- **FlareDepthAdapter.temporal_smooth** stills depth-model noise before it
+  reaches occlusion at all.
+
+Seeds are identity-stable (avalanche mix of global seed, optional element
+id, and instance index) so nothing re-jitters frame to frame or when the
+stack is reordered. New node inputs are only ever APPENDED to INPUT_TYPES:
+widgets_values is positional, and the QA loop showed both an insert and a
+front-loaded DOM widget corrupt every previously saved workflow.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

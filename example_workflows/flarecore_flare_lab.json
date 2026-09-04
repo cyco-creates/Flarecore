@@ -128,7 +128,8 @@
     false,
     0.01,
     0.0,
-    1.0
+    1.0,
+    0.0
    ]
   },
   {
@@ -155,6 +156,11 @@
      "name": "depth",
      "type": "IMAGE",
      "link": 4
+    },
+    {
+     "name": "lights",
+     "type": "FLARE_LIGHTS",
+     "link": null
     }
    ],
    "outputs": [
@@ -204,7 +210,8 @@
     "add",
     true,
     0,
-    "fixed"
+    "fixed",
+    0.4
    ]
   },
   {
