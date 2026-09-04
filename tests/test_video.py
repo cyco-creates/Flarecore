@@ -402,20 +402,94 @@ class TestElementBlurMaskShrink:
         right = out[:, 56:].sum().item()
         assert left < right * 0.05  # confined to the lit side
 
-    def test_bloom_through_node(self):
+    def test_lens_dirt_lights_up_near_the_light(self):
+        # the light itself illuminates lens dirt: on a pure black plate a
+        # screen-space light_mask element concentrates around the light
+        # position and stays dark in the far corner
         preset = json.dumps({"schema_version": 1, "elements": [
             {"type": "glow", "offset": 0, "scale": 2.0, "intensity": 0.8,
-             "auto_rotate": False, "light_mask": 1.0,
-             "params": {"softness": 1.0, "falloff": 0.7}}]})
-        dark = torch.zeros(1, 64, 96, 3)
-        bright = torch.zeros(1, 64, 96, 3)
-        bright[0, :, 64:] = 0.95
-        _, fp_dark, _ = run_node(dark, preset_json=preset)
-        _, fp_bright, _ = run_node(bright, preset_json=preset)
-        assert fp_dark.sum() == pytest.approx(0.0, abs=1e-4)
-        lit = fp_bright[0, :, 64:].sum().item()
-        unlit = fp_bright[0, :, :48].sum().item()
-        assert lit > unlit * 5
+             "auto_rotate": False, "screen_space": True, "light_mask": 1.0,
+             "params": {"softness": 1.2, "falloff": 0.6}}]})
+        dark = torch.zeros(1, 96, 144, 3)
+        _, fp, _ = run_node(dark, preset_json=preset,
+                            light_x=0.25, light_y=0.35)
+        near = fp[0, 20:50, 20:55].mean().item()   # around the light
+        far = fp[0, 70:, 110:].mean().item()       # opposite corner
+        assert near > 0.01
+        assert near > far * 4
+
+    def test_light_mask_follows_scene_brightness_too(self):
+        # a bright practical in the plate lights the dirt even away from
+        # the flare light
+        preset = json.dumps({"schema_version": 1, "elements": [
+            {"type": "glow", "offset": 0, "scale": 2.0, "intensity": 0.8,
+             "auto_rotate": False, "screen_space": True, "light_mask": 1.0,
+             "params": {"softness": 1.2, "falloff": 0.6}}]})
+        plate = torch.zeros(1, 96, 144, 3)
+        plate[0, 60:90, 110:140] = 0.95            # bright window, far corner
+        _, fp, _ = run_node(plate, preset_json=preset,
+                            light_x=0.15, light_y=0.2)
+        window = fp[0, 60:90, 110:140].mean().item()
+        dark_mid = fp[0, 60:90, 55:85].mean().item()
+        # the window is FARTHER from the light than the middle, yet brighter:
+        # scene luminance is driving the mask there
+        assert window > dark_mid * 2
+
+
+class TestAspectAndScreenSpace:
+    def test_global_aspect_widens_elements(self):
+        base = {"schema_version": 1, "elements": [
+            {"type": "glow", "offset": 0, "scale": 0.3, "auto_rotate": False,
+             "params": {"softness": 0.25, "falloff": 2.0}}]}
+        wide = json.loads(json.dumps(base))
+        wide["global"] = {"aspect": 2.5}
+        lights = [{"x": 0.0, "y": 0.0}]
+        n = render_stack(validate_preset(base), lights, 96, 96, "cpu",
+                         torch.float32).sum(-1)
+        w = render_stack(validate_preset(wide), lights, 96, 96, "cpu",
+                         torch.float32).sum(-1)
+
+        def footprint(f):
+            m = f > f.max() * 0.3
+            ys, xs = torch.nonzero(m, as_tuple=True)
+            return (xs.max() - xs.min()).item(), (ys.max() - ys.min()).item()
+
+        nw, nh = footprint(n)
+        ww, wh = footprint(w)
+        assert abs(nw / nh - 1.0) < 0.2          # base is round
+        assert ww / wh > 1.8                      # aspect stretched it wide
+
+    def test_screen_space_ignores_light_position(self):
+        p = validate_preset({"schema_version": 1, "elements": [
+            {"type": "glow", "offset": 0, "scale": 0.3, "screen_space": True,
+             "auto_rotate": False, "params": {"softness": 0.2, "falloff": 2.5}}]})
+        a = render_stack(p, [{"x": -0.8, "y": -0.5}], 96, 96, "cpu", torch.float32)
+        b = render_stack(p, [{"x": 0.7, "y": 0.4}], 96, 96, "cpu", torch.float32)
+        assert torch.allclose(a, b)               # pinned to the lens
+        u, v = argmax_uv(a.sum(-1))
+        assert abs(u - 0.5) < 0.03 and abs(v - 0.5) < 0.03  # frame centre
+
+    def test_screen_space_scales_with_strongest_light_not_count(self):
+        p = validate_preset({"schema_version": 1, "elements": [
+            {"type": "glow", "offset": 0, "scale": 0.3, "screen_space": True,
+             "auto_rotate": False, "params": {"softness": 0.2, "falloff": 2.5}}]})
+        one = render_stack(p, [{"x": 0.0, "y": 0.0, "brightness": 0.8}],
+                           96, 96, "cpu", torch.float32)
+        two = render_stack(p, [{"x": 0.0, "y": 0.0, "brightness": 0.8},
+                               {"x": 0.5, "y": 0.0, "brightness": 0.5}],
+                           96, 96, "cpu", torch.float32)
+        assert torch.allclose(one, two)           # not duplicated per light
+        occluded = render_stack(p, [{"x": 0.0, "y": 0.0, "brightness": 0.8,
+                                     "occlusion": 1.0}],
+                                96, 96, "cpu", torch.float32)
+        assert occluded.abs().max() == 0.0        # light gone -> dirt dark
+
+    def test_default_preset_is_cinematic_and_valid(self):
+        import sys as _s
+        render_mod = _s.modules["comfyui_flarecore.nodes.render"]
+        preset = load_preset(render_mod.DEFAULT_PRESET)
+        assert preset["name"] == "Cine Blue"
+        assert len(preset["elements"]) >= 8
 
 
 class TestTextureCenterShift:

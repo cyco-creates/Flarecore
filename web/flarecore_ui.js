@@ -276,8 +276,19 @@ class PointPicker {
 // procedural type with tuned parameters, matching the classic element set
 // (glow, disc, iris, multi-iris, spike ball, shimmer, sparkle, rays,
 // streak, stripe, ring, hoop, spectral, fog) plus library textures.
+// Which library category holds alternatives for each element look — the
+// name-click gallery filters to this, so a glow offers other glows.
+const CATEGORY_OF = {
+  glow: "glows", bloom: "glows", fog: "fog", disc: "discs",
+  iris: "iris_ghosts", "multi-iris": "iris_ghosts",
+  "spike ball": "spike_balls", shimmer: "shimmers", sparkle: "sparkles",
+  rays: "rays", glint: "rays", streak: "streaks", stripe: "stripes",
+  ring: "rings", hoop: "hoops", spectral: "rings", "lens dirt": "lens_dirt",
+};
+
 const ADD_MENU = [
   ["Glow", "glow"], ["Bloom (bright areas)", "bloom"],
+  ["Lens dirt (bright areas)", "lens_dirt"],
   ["Fog", "fog"], ["Disc", "disc"],
   ["Iris ghost", "iris"], ["Multi-iris", "multi_iris"],
   ["Spike ball", "spike_ball"], ["Shimmer", "shimmer"],
@@ -290,6 +301,7 @@ const ADD_MENU = [
 const ADD_DEFAULTS = {
   glow: { type: "glow", label: "glow", offset: 0, scale: 0.4, intensity: 1, color: [1, 0.95, 0.85], params: { softness: 0.35, falloff: 1.3 } },
   bloom: { type: "glow", label: "bloom", offset: 0, scale: 2.2, intensity: 0.5, auto_rotate: false, light_mask: 1, color: [1, 0.97, 0.9], params: { softness: 1.1, falloff: 0.7 } },
+  lens_dirt: { type: "texture", label: "lens dirt", offset: 0, scale: 1.3, intensity: 0.7, auto_rotate: false, screen_space: true, light_mask: 1, params: { file: "", channel: "auto" } },
   fog: { type: "glow", label: "fog", offset: 0, scale: 1.6, intensity: 0.25, color: [1, 0.97, 0.9], params: { softness: 0.8, falloff: 0.8 } },
   disc: { type: "iris", label: "disc", offset: 0.5, scale: 0.16, intensity: 0.3, color: [0.8, 0.9, 1], params: { blades: 24, edge_softness: 0.55 } },
   iris: { type: "iris", label: "iris", offset: 0.7, scale: 0.12, intensity: 0.25, color: [0.85, 0.93, 1], dispersion: 0.4, params: { blades: 8, edge_softness: 0.3 } },
@@ -522,9 +534,11 @@ function openGallery(files, { title = "Element library", selected = null,
   if (!files.length) {
     const empty = document.createElement("div");
     empty.className = "fcore-gal-empty";
-    empty.textContent =
-      "the library is empty — generate elements with the element forge " +
-      "workflow, they will appear here";
+    empty.textContent = category
+      ? `no ${category.replace(/_/g, " ")} elements yet — pick the ` +
+        `'${category}' prompts in the element forge workflow to generate some`
+      : "the library is empty — generate elements with the element forge " +
+        "workflow, they will appear here";
     body.appendChild(empty);
   } else {
     const cats = {};
@@ -710,12 +724,48 @@ class FlareEditor {
     if (elem.type === "texture") {
       if (file) {
         elem.params.file = file;
-        elem.label = file.split("/").pop().replace(/\.png$/, "").replace(/_/g, " ");
-      } else if (this.libraryFiles.length) {
-        elem.params.file = this.libraryFiles[0];
+        if (kind === "texture") {
+          elem.label = file.split("/").pop().replace(/\.png$/, "").replace(/_/g, " ");
+        }
+      } else {
+        // recipes like lens dirt prefer a file from their own category
+        const cat = CATEGORY_OF[elem.label];
+        const match = cat && this.libraryFiles.find((f) => f.startsWith(cat + "/"));
+        elem.params.file = match || this.libraryFiles[0] || "";
       }
     }
     this.mutate((p) => p.elements.push(elem));
+  }
+
+  categoryOf(elem) {
+    if (elem.type === "texture" && elem.params?.file?.includes("/")) {
+      return elem.params.file.split("/")[0];
+    }
+    return CATEGORY_OF[elem.label] || CATEGORY_OF[elem.type] || null;
+  }
+
+  // The name-click contract: EVERY element's name opens the gallery
+  // filtered to its own category. Picking a file swaps a texture element's
+  // file, or converts a procedural element into that texture while keeping
+  // its position, size, opacity, colour, blur and identity.
+  openAlternatives(elem, i) {
+    const cat = this.categoryOf(elem);
+    this.fetchLibrary().then(() => {
+      openGallery(this.libraryFiles, {
+        title: cat ? `${cat.replace(/_/g, " ")} — pick one` : "Pick an element",
+        selected: elem.type === "texture" ? (elem.params?.file || null) : null,
+        category: cat,
+      }, (ref) => this.mutate((p) => {
+        const e = p.elements[i];
+        if (e.type !== "texture") {
+          e.type = "texture";
+          e.params = { file: ref, channel: "auto" };
+        } else {
+          e.params.file = ref;
+        }
+        e.label = ref.split("/").pop().replace(/\.png$/, "").replace(/_/g, " ");
+      }));
+    });
   }
 
   build() {
@@ -836,6 +886,23 @@ class FlareEditor {
       gNum.value = v.toFixed(2); gRange.value = v;
       this.mutateQuiet((p) => { p.global.intensity = v; });
     });
+    const aLab = document.createElement("label");
+    aLab.textContent = "aspect";
+    const aRange = document.createElement("input");
+    aRange.type = "range"; aRange.min = 0.25; aRange.max = 3; aRange.step = 0.01;
+    aRange.value = g.aspect ?? 1;
+    const aNum = document.createElement("input");
+    aNum.type = "number"; aNum.min = 0.25; aNum.max = 3; aNum.step = 0.01;
+    aNum.value = Number(aRange.value).toFixed(2);
+    aRange.addEventListener("input", () => {
+      aNum.value = Number(aRange.value).toFixed(2);
+      this.mutateQuiet((p) => { p.global.aspect = Number(aRange.value); });
+    });
+    aNum.addEventListener("change", () => {
+      const v = Math.min(3, Math.max(0.25, Number(aNum.value) || 1));
+      aNum.value = v.toFixed(2); aRange.value = v;
+      this.mutateQuiet((p) => { p.global.aspect = v; });
+    });
     const tint = document.createElement("input");
     tint.type = "color";
     tint.className = "fcore-swatch";
@@ -843,10 +910,10 @@ class FlareEditor {
     tint.value = colorToHex(g.tint || [1, 1, 1]);
     tint.addEventListener("input", () =>
       this.mutateQuiet((p) => { p.global.tint = hexToColor(tint.value); }));
-    for (const el of [gRange, gNum, tint]) {
+    for (const el of [gRange, gNum, aRange, aNum, tint]) {
       el.addEventListener("pointerdown", (e) => e.stopPropagation());
     }
-    gRow.append(gLab, gRange, gNum, tint);
+    gRow.append(gLab, gRange, gNum, aLab, aRange, aNum, tint);
     this.root.appendChild(gRow);
 
     /* element rows */
@@ -897,39 +964,18 @@ class FlareEditor {
       this.build();
     };
 
-    // For a texture element the NAME opens the gallery filtered to its own
-    // category — swap this glow for another glow, not for a streak. All
-    // other settings live behind the chevron. For procedural elements the
-    // name is just another way to the settings.
+    // The NAME (and chip) of EVERY element opens the gallery filtered to
+    // its own category — alternatives for this look, generated in the
+    // forge. Settings live behind the chevron only.
     const name = document.createElement("span");
     name.className = "fcore-name";
     name.textContent = elem.label || elem.type;
-    if (elem.type === "texture") {
-      const cat = elem.params?.file?.includes("/")
-        ? elem.params.file.split("/")[0] : null;
-      name.title = (elem.params?.file || "no file") +
-        " — click for alternatives" + (cat ? ` (${cat})` : "");
-      const pick = async () => {
-        await this.fetchLibrary();
-        openGallery(this.libraryFiles, {
-          title: cat ? `${cat.replace(/_/g, " ")} — pick one` : "Pick an element",
-          selected: elem.params?.file || null,
-          category: cat,
-        }, (ref) => this.mutate((p) => {
-          p.elements[i].params.file = ref;
-          p.elements[i].label =
-            ref.split("/").pop().replace(/\.png$/, "").replace(/_/g, " ");
-        }));
-      };
-      name.onclick = pick;
-      chip.style.cursor = "pointer";
-      chip.onclick = pick;
-    } else {
-      name.title = "settings";
-      name.onclick = toggle;
-      chip.style.cursor = "pointer";
-      chip.onclick = toggle;
-    }
+    const cat = this.categoryOf(elem);
+    name.title = "click for alternatives" + (cat ? ` (${cat.replace(/_/g, " ")})` : "");
+    const pick = () => this.openAlternatives(elem, i);
+    name.onclick = pick;
+    chip.style.cursor = "pointer";
+    chip.onclick = pick;
 
     head.append(en, chip, name);
     head.appendChild(sliderCol("pos", elem.offset ?? 0, [-1, 3, 0.01],
@@ -1033,17 +1079,23 @@ class FlareEditor {
         ["auto", "rgb", "luminance"], (v) => setParam("channel", v)));
     }
 
-    const arWrap = document.createElement("div");
-    arWrap.className = "fcore-col";
-    const al = document.createElement("label");
-    al.textContent = "auto-rotate";
-    const ar = document.createElement("input");
-    ar.type = "checkbox";
-    ar.checked = elem.auto_rotate !== false;
-    ar.addEventListener("pointerdown", (e) => e.stopPropagation());
-    ar.onchange = () => set("auto_rotate", ar.checked);
-    arWrap.append(al, ar);
-    adv.appendChild(arWrap);
+    const checkbox = (label, checked, onChange) => {
+      const wrap = document.createElement("div");
+      wrap.className = "fcore-col";
+      const l = document.createElement("label");
+      l.textContent = label;
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = checked;
+      cb.addEventListener("pointerdown", (e) => e.stopPropagation());
+      cb.onchange = () => onChange(cb.checked);
+      wrap.append(l, cb);
+      return wrap;
+    };
+    adv.appendChild(checkbox("auto-rotate", elem.auto_rotate !== false,
+      (v) => set("auto_rotate", v)));
+    adv.appendChild(checkbox("screen space (lens)", elem.screen_space === true,
+      (v) => set("screen_space", v)));
 
     for (const [key, spec] of Object.entries(COMMON_SPECS)) {
       adv.appendChild(sliderCol(key.replace(/_/g, " "),

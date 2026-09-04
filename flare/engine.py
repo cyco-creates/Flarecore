@@ -130,13 +130,15 @@ def _blur_rgb(rgb: torch.Tensor, amount: float) -> torch.Tensor:
 
 
 def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
-                        base_seed, elem_index, light_weight, scene_mask=None):
+                        base_seed, elem_index, light_weight, scene_mask=None,
+                        global_aspect=1.0):
     """Add every count-instance of one element for one light into `out`."""
     fn = ELEMENT_FUNCTIONS[elem["type"]]
     px, py = light["x"], light["y"]
     ax = light.get("ax", 0.0)
     ay = light.get("ay", 0.0)
     stretch_x, stretch_y = elem["stretch"]
+    stretch_x = stretch_x * global_aspect  # anamorphic widen for every element
 
     # a covered light emits from a smaller visible area: shrink with occlusion
     occ = light.get("occlusion", 0.0)
@@ -219,8 +221,11 @@ def render_stack(preset, lights, height, width, device, dtype,
     if out is None:
         out = torch.zeros(height, width, 3, device=device, dtype=dtype)
 
+    g_aspect = g.get("aspect", 1.0)
     enabled = [(idx, elem) for idx, elem in enumerate(preset["elements"])
                if elem["enabled"]]
+    axis_elems = [(i, e) for i, e in enabled if not e.get("screen_space")]
+    screen_elems = [(i, e) for i, e in enabled if e.get("screen_space")]
     passes_by_idx = {idx: _element_passes(elem, device, dtype)
                      for idx, elem in enabled}
 
@@ -230,10 +235,26 @@ def render_stack(preset, lights, height, width, device, dtype,
             continue
         theta = axis_angle(light["x"], light["y"],
                            light.get("ax", 0.0), light.get("ay", 0.0))
-        for idx, elem in enabled:
+        for idx, elem in axis_elems:
             _accumulate_element(out, x, y, elem, passes_by_idx[idx], light,
                                 theta, g_scale, base_seed, idx, weight,
-                                scene_mask=scene_mask)
+                                scene_mask=scene_mask, global_aspect=g_aspect)
+
+    # Screen-space elements sit on the LENS, not the flare axis: rendered
+    # once per frame at frame centre, driven by the strongest light (lens
+    # dirt lights up with the light, it does not duplicate per light).
+    if screen_elems:
+        strongest = max(
+            (l.get("brightness", 1.0) * (1.0 - l.get("occlusion", 0.0))
+             for l in lights), default=0.0)
+        if strongest > 0.0:
+            lens_light = {"x": 0.0, "y": 0.0, "ax": 0.0, "ay": 0.0,
+                          "occlusion": 0.0}
+            for idx, elem in screen_elems:
+                _accumulate_element(out, x, y, elem, passes_by_idx[idx],
+                                    lens_light, 0.0, g_scale, base_seed, idx,
+                                    strongest, scene_mask=scene_mask,
+                                    global_aspect=g_aspect)
 
     tint = torch.tensor(g["tint"], device=device, dtype=dtype)
     out.mul_(tint * g_intensity)

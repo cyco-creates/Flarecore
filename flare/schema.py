@@ -21,6 +21,7 @@ SCHEMA_VERSION = 1
 GLOBAL_DEFAULTS = {
     "intensity": 1.0,
     "scale": 1.0,
+    "aspect": 1.0,          # >1 widens every element (anamorphic squeeze look)
     "tint": [1.0, 1.0, 1.0],
     "seed": 0,
 }
@@ -38,7 +39,10 @@ ELEMENT_COMMON_DEFAULTS = {
     "intensity": 1.0,
     "color": [1.0, 1.0, 1.0],
     "blur": 0.0,            # 0..1 gaussian soften of the rendered element
-    "light_mask": 0.0,      # 0..1: modulate by scene brightness (bloom-like)
+    "light_mask": 0.0,      # 0..1: modulate by scene brightness
+    "screen_space": False,  # lock to the lens (frame), not the flare axis —
+                            # rendered once per frame, scaled by the
+                            # brightest light; lens-dirt behaviour
     "dispersion": 0.0,
     "dispersion_samples": 3,  # >= 3; 3 = plain R/G/B dispersion
     "count": 1,
@@ -177,6 +181,7 @@ def _validate_element(raw: dict, index: int) -> dict:
     elem["blur"] = _require_number(elem["blur"], f"{where}.blur", lo=0.0, hi=1.0)
     elem["light_mask"] = _require_number(elem["light_mask"], f"{where}.light_mask",
                                          lo=0.0, hi=1.0)
+    elem["screen_space"] = bool(elem["screen_space"])
     # dispersion scales coordinates by 1 - d*0.05*w; past 8 the look is junk
     # and at 20 the red sample collapses to a full-frame constant
     elem["dispersion"] = _require_number(elem["dispersion"], f"{where}.dispersion",
@@ -294,6 +299,7 @@ def validate_preset(raw: dict) -> dict:
     g = out["global"]
     g["intensity"] = _require_number(g["intensity"], "global.intensity", lo=0.0, hi=1000.0)
     g["scale"] = _require_number(g["scale"], "global.scale", lo=1e-6, hi=100.0)
+    g["aspect"] = _require_number(g["aspect"], "global.aspect", lo=0.2, hi=5.0)
     g["tint"] = _require_vec(g["tint"], "global.tint", 3, lo=0.0, hi=100.0)
     g["seed"] = _require_int(g["seed"], "global.seed")
 

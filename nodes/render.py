@@ -14,7 +14,16 @@ from ..flare.occlude import occlusion_factor
 from ..flare.schema import load_preset
 from .library import resolve_preset_textures
 
-DEFAULT_PRESET = '{"schema_version": 1, "elements": [{"type": "glow"}]}'
+# The default preset is the cinematic base look — the first render should
+# already read as a real lens, not a placeholder dot.
+from pathlib import Path as _Path
+
+_FALLBACK_PRESET = '{"schema_version": 1, "elements": [{"type": "glow"}]}'
+try:
+    DEFAULT_PRESET = (_Path(__file__).resolve().parents[1] / "presets"
+                      / "cine_blue.json").read_text(encoding="utf-8")
+except OSError:
+    DEFAULT_PRESET = _FALLBACK_PRESET
 
 # Preview saving needs ComfyUI's temp dir; outside ComfyUI (tests, library
 # use) the node runs headless. Probed once so a genuine save failure inside
@@ -135,14 +144,29 @@ class FlareRender:
                 })
             engine_lights.append(frame)
 
-        # Elements with light_mask fade toward the scene's bright areas; the
-        # mask is the frame's normalized luminance, gently blurred. Only
-        # built when the preset actually uses it.
+        # Elements with light_mask appear where the light is: the mask is the
+        # scene's linear luminance combined with a radial falloff around each
+        # light (dirt on a lens is lit by the source itself, even over a
+        # black plate). Only built when the preset uses it.
         scene_masks = None
         if any(e.get("light_mask", 0.0) > 0.0 for e in preset["elements"]):
-            lum = linear_luminance(image_linear)  # (B, H, W)
-            peak = lum.amax(dim=(-2, -1), keepdim=True).clamp(min=1e-6)
-            scene_masks = blur_depth((lum / peak).clamp(0.0, 1.0), 0.02)
+            mask = linear_luminance(image_linear).clamp(0.0, 1.0)  # (B, H, W)
+            yy = torch.linspace(0.0, 1.0, height, device=device, dtype=dtype)
+            xx = torch.linspace(0.0, 1.0, width, device=device, dtype=dtype)
+            gy, gx = torch.meshgrid(yy, xx, indexing="ij")
+            aspect_px = width / height
+            falloff_r = 0.35  # of frame height
+            for i, frame_lights in enumerate(lights_per_frame):
+                for light in frame_lights:
+                    w = light.get("brightness", 1.0) * \
+                        (1.0 - light.get("occlusion", 0.0))
+                    if w <= 0.0:
+                        continue
+                    d2 = ((gx - light["u"]) * aspect_px) ** 2 + \
+                         (gy - light["v"]) ** 2
+                    glowm = torch.exp(-d2 / (2.0 * falloff_r ** 2)) * min(w, 1.0)
+                    mask[i] = torch.maximum(mask[i], glowm)
+            scene_masks = blur_depth(mask, 0.02)
 
         flare_linear = render_batch(
             preset, engine_lights, height, width, device, dtype,
@@ -162,11 +186,10 @@ class FlareRender:
         result = (out, flare_pass, flare_alpha)
         if _folder_paths is None:
             return result
-        # The picker backdrop is the CLEAN input plate, not the composite —
-        # a rendered flare core on the backdrop reads as a second sun and
-        # makes positioning confusing. It rides a custom ui key so ComfyUI
-        # does not also display it as a preview image under the node.
-        return {"ui": {"fc_preview": _save_preview(rgb[0])["images"]},
+        # The picker backdrop is the COMPOSITE — the point of the panel is
+        # previewing the flare while positioning it. It rides a custom ui
+        # key so ComfyUI does not also paint a preview image under the node.
+        return {"ui": {"fc_preview": _save_preview(out[0])["images"]},
                 "result": result}
 
     def _smooth_occlusion(self, lights_per_frame, amount):

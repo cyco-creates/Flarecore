@@ -55,6 +55,11 @@
     "thin_ring": "Abstract lens flare photography: a single thin circle of soft light with a delicate rainbow chromatic fringe, slightly uneven thickness and brightness around the circumference, hollow black interior, gently imperfect, pure black background, no text",
     "double_ring": "Abstract lens flare photography: two thin concentric circles of dim light, the outer slightly warmer and patchier than the inner, uneven brightness around both, hollow interior, photographed lens reflection, pure black background, no text"
   },
+  "lens_dirt": {
+    "dust_scratches": "Macro photograph of the surface of a dirty camera lens lit from behind: hundreds of tiny dust particles, faint smudges and a few hairline scratches glowing dimly against a pure black background, scattered unevenly with denser clumps, all very dim and delicate, real optical grime, no text",
+    "greasy_smudge": "Macro photograph of faint greasy fingerprint smudges and streaked wipe marks on glass catching light, barely visible pale smears on a pure black background, organic and irregular, real lens grime, no text",
+    "particle_field": "Macro photograph of sparse floating dust motes of varying size catching light in darkness, each a soft dim speck, a few larger defocused ones, spread over a pure black background, uneven natural distribution, no text"
+  },
   "lens_orbs": {
     "orb_cluster": "Macro photograph of a loose cluster of overlapping defocused bokeh orbs of very dim light, various sizes, soft imperfect edges, a few with faint dust texture, scattered unevenly across a pure black background, no text",
     "drifting_orbs": "Macro photograph of scattered faint circular lens orbs drifting diagonally across the frame, different sizes and opacities, some slightly hexagonal, all dim and translucent, pure black background, no text"
