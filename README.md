@@ -25,6 +25,39 @@ CUDA, MPS, and CPU.
   restarting ComfyUI.
 - **FlareDepthAdapter** — conditions a depth map for occlusion use: normalize
   range, flip near/far convention, remap levels, blur edges. Pure tensor math.
+- **FlareElementPrompts / FlareTexturePrepare / FlareElementSave /
+  FlareElementPicker** — the element forge: an editable prompt bank
+  (`prompts/element_prompts.json`), post-processing that turns a generated
+  image into a compositing-safe element (black floor, auto-center, border
+  feather), and the element library under `elements/<category>/`.
+
+## The editor
+
+FlareRender carries its own UI:
+
+- **Point picker** — drag the orange **light** and the cyan **flare anchor**
+  directly on the last rendered frame. Elements sit at
+  `P + t · (anchor − P)`, so the ghost chain aims at the anchor and its
+  spacing grows with the distance between the two points.
+- **Stack editor** — add, reorder, duplicate and delete elements; every row
+  has sliders for position along the axis, size, and opacity, and the
+  twirl-down exposes everything else (color, dispersion, count chains,
+  stretch, per-type parameters, texture file picker). It reads and writes the
+  `preset_json` widget, so hand-edited JSON and the editor stay in sync.
+  `save…` writes into `presets/`; `presets ▾` loads any shipped or saved look.
+
+## Custom elements (element forge)
+
+Two shipped workflows (ComfyUI → Workflow → Browse Templates → flarecore):
+
+- **flarecore_flare_lab** — the full playground: scene, depth occlusion,
+  editor, and all outputs.
+- **flarecore_element_forge** — generate custom element textures with your
+  local image model (wired for Krea2), condition them, and file them in the
+  library. Pick a prompt from the bank, queue, then use the new element from
+  the editor's texture dropdown. The engine itself never runs a model; the
+  `texture` element just samples your library through the same transform
+  pipeline (dispersion included) as the procedural elements.
 
 ## Depth occlusion
 

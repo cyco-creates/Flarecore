@@ -1,0 +1,514 @@
+{
+ "id": "flarecore_flare_lab",
+ "revision": 0,
+ "last_node_id": 10,
+ "last_link_id": 9,
+ "nodes": [
+  {
+   "id": 1,
+   "type": "LoadImage",
+   "pos": [
+    -560,
+    60
+   ],
+   "size": [
+    300,
+    340
+   ],
+   "flags": {},
+   "order": 1,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [
+    {
+     "name": "IMAGE",
+     "type": "IMAGE",
+     "links": [
+      1,
+      2
+     ],
+     "slot_index": 0
+    },
+    {
+     "name": "MASK",
+     "type": "MASK",
+     "links": [],
+     "slot_index": 1
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "LoadImage"
+   },
+   "widgets_values": [
+    "flarecore_occlusion_scene.png",
+    "image"
+   ]
+  },
+  {
+   "id": 2,
+   "type": "DepthAnythingV2Preprocessor",
+   "pos": [
+    -200,
+    420
+   ],
+   "size": [
+    300,
+    110
+   ],
+   "flags": {},
+   "order": 2,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "image",
+     "type": "IMAGE",
+     "link": 2
+    }
+   ],
+   "outputs": [
+    {
+     "name": "IMAGE",
+     "type": "IMAGE",
+     "links": [
+      3
+     ],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "DepthAnythingV2Preprocessor"
+   },
+   "widgets_values": [
+    "depth_anything_v2_vitl.pth",
+    512
+   ]
+  },
+  {
+   "id": 3,
+   "type": "FlareDepthAdapter",
+   "pos": [
+    160,
+    420
+   ],
+   "size": [
+    290,
+    170
+   ],
+   "flags": {},
+   "order": 3,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "depth",
+     "type": "IMAGE",
+     "link": 3
+    }
+   ],
+   "outputs": [
+    {
+     "name": "depth",
+     "type": "IMAGE",
+     "links": [
+      4
+     ],
+     "slot_index": 0
+    },
+    {
+     "name": "depth_mask",
+     "type": "MASK",
+     "links": [],
+     "slot_index": 1
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "FlareDepthAdapter"
+   },
+   "widgets_values": [
+    "per_batch",
+    false,
+    0.01,
+    0.0,
+    1.0
+   ]
+  },
+  {
+   "id": 4,
+   "type": "FlareRender",
+   "pos": [
+    -200,
+    -560
+   ],
+   "size": [
+    470,
+    1330
+   ],
+   "flags": {},
+   "order": 4,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "image",
+     "type": "IMAGE",
+     "link": 1
+    },
+    {
+     "name": "depth",
+     "type": "IMAGE",
+     "link": 4
+    }
+   ],
+   "outputs": [
+    {
+     "name": "image",
+     "type": "IMAGE",
+     "links": [
+      5,
+      9
+     ],
+     "slot_index": 0
+    },
+    {
+     "name": "flare_pass",
+     "type": "IMAGE",
+     "links": [
+      6
+     ],
+     "slot_index": 1
+    },
+    {
+     "name": "flare_alpha",
+     "type": "MASK",
+     "links": [
+      7
+     ],
+     "slot_index": 2
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "FlareRender"
+   },
+   "widgets_values": [
+    "{\n  \"schema_version\": 1,\n  \"name\": \"Clean 35mm\",\n  \"author\": \"flarecore\",\n  \"global\": { \"intensity\": 1.0, \"scale\": 1.0, \"tint\": [1.0, 1.0, 1.0], \"seed\": 0 },\n  \"elements\": [\n    {\n      \"type\": \"glow\",\n      \"offset\": 0.0,\n      \"scale\": 0.35,\n      \"intensity\": 1.0,\n      \"color\": [1.0, 0.96, 0.88],\n      \"params\": { \"softness\": 0.3, \"falloff\": 1.3 }\n    },\n    {\n      \"type\": \"glow\",\n      \"offset\": 0.0,\n      \"scale\": 0.12,\n      \"intensity\": 1.4,\n      \"color\": [1.0, 0.99, 0.95],\n      \"params\": { \"softness\": 0.25, \"falloff\": 2.2 }\n    },\n    {\n      \"type\": \"iris\",\n      \"offset\": 0.3,\n      \"count\": 6,\n      \"spread\": 0.28,\n      \"scale\": 0.07,\n      \"count_scale_step\": 1.28,\n      \"count_falloff\": 0.78,\n      \"intensity\": 0.1,\n      \"color\": [0.85, 0.93, 1.0],\n      \"dispersion\": 0.35,\n      \"params\": { \"blades\": 8, \"edge_softness\": 0.3 }\n    },\n    {\n      \"type\": \"iris\",\n      \"offset\": 1.55,\n      \"scale\": 0.22,\n      \"intensity\": 0.06,\n      \"color\": [1.0, 0.85, 0.7],\n      \"dispersion\": 0.7,\n      \"params\": { \"blades\": 8, \"edge_softness\": 0.18, \"hollow\": 0.72 }\n    },\n    {\n      \"type\": \"ring\",\n      \"offset\": 1.9,\n      \"scale\": 0.4,\n      \"intensity\": 0.04,\n      \"color\": [0.95, 0.9, 1.0],\n      \"dispersion\": 1.1,\n      \"params\": { \"radius\": 1.0, \"thickness\": 0.1 }\n    }\n  ]\n}\n",
+    "manual",
+    0.42,
+    0.3,
+    0.62,
+    0.55,
+    0.8,
+    1,
+    0.06,
+    0.0,
+    false,
+    1.0,
+    1.0,
+    "add",
+    true,
+    0,
+    "fixed"
+   ]
+  },
+  {
+   "id": 5,
+   "type": "PreviewImage",
+   "pos": [
+    340,
+    -560
+   ],
+   "size": [
+    420,
+    300
+   ],
+   "flags": {},
+   "order": 5,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "link": 5
+    }
+   ],
+   "outputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "links": [],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "PreviewImage"
+   },
+   "widgets_values": [],
+   "title": "composite"
+  },
+  {
+   "id": 6,
+   "type": "PreviewImage",
+   "pos": [
+    340,
+    -210
+   ],
+   "size": [
+    420,
+    300
+   ],
+   "flags": {},
+   "order": 6,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "link": 6
+    }
+   ],
+   "outputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "links": [],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "PreviewImage"
+   },
+   "widgets_values": [],
+   "title": "flare pass"
+  },
+  {
+   "id": 7,
+   "type": "MaskToImage",
+   "pos": [
+    340,
+    130
+   ],
+   "size": [
+    210,
+    40
+   ],
+   "flags": {},
+   "order": 7,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "mask",
+     "type": "MASK",
+     "link": 7
+    }
+   ],
+   "outputs": [
+    {
+     "name": "IMAGE",
+     "type": "IMAGE",
+     "links": [
+      8
+     ],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "MaskToImage"
+   },
+   "widgets_values": []
+  },
+  {
+   "id": 8,
+   "type": "PreviewImage",
+   "pos": [
+    590,
+    130
+   ],
+   "size": [
+    300,
+    240
+   ],
+   "flags": {},
+   "order": 8,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "link": 8
+    }
+   ],
+   "outputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "links": [],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "PreviewImage"
+   },
+   "widgets_values": [],
+   "title": "flare alpha"
+  },
+  {
+   "id": 9,
+   "type": "SaveImage",
+   "pos": [
+    800,
+    -560
+   ],
+   "size": [
+    360,
+    340
+   ],
+   "flags": {},
+   "order": 9,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "link": 9
+    }
+   ],
+   "outputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "links": [],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "SaveImage"
+   },
+   "widgets_values": [
+    "flarecore_lab"
+   ]
+  },
+  {
+   "id": 10,
+   "type": "Note",
+   "pos": [
+    -560,
+    -400
+   ],
+   "size": [
+    340,
+    300
+   ],
+   "flags": {},
+   "order": 10,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [],
+   "properties": {},
+   "widgets_values": [
+    "FLARE LAB\n\n1. Drag the orange LIGHT point and the cyan FLARE ANCHOR directly on\n   the preview inside Flare Render. Ghost spacing follows the distance\n   between the two points.\n2. Build the flare in the editor below the picker: + add element,\n   then use the pos / size / opac sliders. The small arrow opens the\n   full parameter set (color, dispersion, count chains, textures...).\n3. presets loads shipped looks; save... writes your own next to them.\n4. The depth branch keeps the flare occluded when the light hides\n   behind the pillar - drag the light behind it and render.\n5. flare_pass output is the flare over black for external compositing."
+   ],
+   "color": "#432",
+   "bgcolor": "#653"
+  }
+ ],
+ "links": [
+  [
+   1,
+   1,
+   0,
+   4,
+   0,
+   "IMAGE"
+  ],
+  [
+   2,
+   1,
+   0,
+   2,
+   0,
+   "IMAGE"
+  ],
+  [
+   3,
+   2,
+   0,
+   3,
+   0,
+   "IMAGE"
+  ],
+  [
+   4,
+   3,
+   0,
+   4,
+   1,
+   "IMAGE"
+  ],
+  [
+   5,
+   4,
+   0,
+   5,
+   0,
+   "IMAGE"
+  ],
+  [
+   6,
+   4,
+   1,
+   6,
+   0,
+   "IMAGE"
+  ],
+  [
+   7,
+   4,
+   2,
+   7,
+   0,
+   "MASK"
+  ],
+  [
+   8,
+   7,
+   0,
+   8,
+   0,
+   "IMAGE"
+  ],
+  [
+   9,
+   4,
+   0,
+   9,
+   0,
+   "IMAGE"
+  ]
+ ],
+ "groups": [
+  {
+   "title": "FLARE LAB",
+   "bounding": [
+    -590,
+    -640,
+    1810,
+    640
+   ],
+   "color": "#3f5159",
+   "font_size": 22,
+   "flags": {}
+  },
+  {
+   "title": "DEPTH OCCLUSION",
+   "bounding": [
+    -590,
+    340,
+    1080,
+    330
+   ],
+   "color": "#535f42",
+   "font_size": 22,
+   "flags": {}
+  }
+ ],
+ "config": {},
+ "extra": {},
+ "version": 0.4
+}

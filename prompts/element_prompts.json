@@ -1,8 +1,8 @@
 {
   "glows": {
-    "soft_halo": "A single soft warm glowing orb of light on a pure black background, perfectly centered, smooth radial falloff with a long gentle tail, macro photograph of light through a cinema prime lens, no other objects, no text",
-    "hot_core": "An intense white-hot point of light with a tight bright core and a subtle bloom halo, centered on a pure black background, photographed with a high-end cinema lens wide open, clean and symmetrical, no text",
-    "hazy_veil": "A very soft diffuse cloud of pale golden light, barely-there atmospheric haze glow, centered on a pure black background, extremely smooth gradients, dreamy cinematic look, no text"
+    "soft_halo": "Abstract lens flare photography: a soft warm diffuse ball of pure light floating on a pure black background, perfectly centered, smooth radial falloff fading to black at the edges, out of focus, no light bulb, no lamp, no sun disc, no physical object of any kind, only formless glowing light, no text",
+    "hot_core": "Abstract lens flare photography: an intense white-hot point of pure light with a tight bright core and soft bloom halo, centered on a pure black background, heavily overexposed center, no physical object, no lamp, no bulb, only light itself, clean and symmetrical, no text",
+    "hazy_veil": "Abstract lens flare photography: an extremely soft diffuse cloud of pale golden light, barely-there atmospheric haze, centered on a pure black background, ultra smooth gradients, defocused, no physical object, only formless light, no text"
   },
   "shimmers": {
     "star_sparkle": "A delicate star-shaped sparkle of light with many thin radiating needle rays, perfectly centered on a pure black background, macro photograph of light caught on a lens coating, crisp symmetrical rays, no text",

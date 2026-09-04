@@ -81,6 +81,36 @@ Its `normalize` mode defaults to `per_batch` because per-frame normalization
 rescales every frame independently, making a static object's depth drift as
 other content enters the shot.
 
+## 3d. Movable flare anchor (2026-09-04, owner-directed)
+
+The axis anchor C is no longer pinned to frame centre: FlareRender exposes
+flare_x/flare_y and the engine takes element_center = P + t*(E - P). Element
+spacing therefore scales with |E - P|, giving direct manual control over the
+distance between the source and the flare chain. Defaults keep the classic
+behaviour (anchor = centre).
+
+## 3e. Texture elements and the element forge (owner-directed constraint change)
+
+The original spec banned texture-based elements. The owner requested
+AI-generated custom elements, so the constraint is now: the ENGINE stays
+procedural-first and model-free, but a `texture` element type samples PNGs
+from the user's element library (elements/<category>/<name>.png) in linear
+light through the same transform pipeline. Generation happens in the user's
+own graph (the shipped element forge workflow uses their local Krea2);
+FlareTexturePrepare/FlareElementSave only condition and file the result.
+The pack ships only engine-rendered starter textures plus locally generated
+examples — nothing sourced from third-party tools, so the original licensing
+concern stays addressed.
+
+## 3f. Front-end widgets are DOM widgets
+
+Both the point picker and the stack editor are DOM widgets. Canvas-drawn
+custom widgets (draw/mouse on the litegraph widget) get a fixed 20px height
+from the current ComfyUI frontend regardless of computeSize, so they cannot
+host an image-backed picker. Note for future widgets: the frontend sometimes
+calls computeSize() with no width argument — height math must not depend
+unguarded on it.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning
