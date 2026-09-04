@@ -129,16 +129,29 @@ def _ramp01(t: float, falloff: str) -> float:
     return t * t * (3.0 - 2.0 * t)          # smooth
 
 
-def trigger_factor(trig, x: float, y: float, frame_aspect: float) -> float:
+def trigger_factor(trig, x: float, y: float, frame_aspect: float,
+                   light_x: float = 0.0, light_y: float = 0.0) -> float:
     """How strongly an element's trigger rule fires (0..1) for a point in
-    grid coordinates. 'border' measures the distance to the nearest frame
-    edge (negative outside the frame, so an element that has left the frame
-    is fully triggered); 'center' measures the distance to the frame centre.
-    inner..outer is the ramp from fully on to fully off."""
+    grid coordinates.
+
+    'border' measures the distance to the nearest frame edge (negative
+    outside the frame, so a point that has left the frame is fully
+    triggered); 'center' measures the distance to the frame centre; 'light'
+    measures the distance to the light itself. inner..outer is the ramp from
+    fully on to fully off.
+
+    The editor's trigger preview reimplements this in JavaScript
+    (web/flarecore_ui.js, triggerFactor) to paint the trigger region live.
+    test_trigger_factor_reference_values pins the values both must produce —
+    change one and update the other.
+    """
     if trig is None:
         return 0.0
-    if trig["mode"] == "border":
+    mode = trig["mode"]
+    if mode == "border":
         d = min(frame_aspect - abs(x), 1.0 - abs(y))
+    elif mode == "light":
+        d = math.hypot(x - light_x, y - light_y)
     else:
         d = math.hypot(x, y)
     span = max(trig["outer"] - trig["inner"], 1e-6)
@@ -225,9 +238,14 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
         rot += theta
     cos_r, sin_r = math.cos(rot), math.sin(rot)
 
-    # trigger driven by the light's own position is the same for every instance
-    f_light = trigger_factor(trig, real_lx, real_ly, frame_aspect) \
-        if trig is not None and trig["source"] == "light" else 0.0
+    # A rule read at the light's own position is the same for every instance,
+    # so it is evaluated once. Rules measured at the element (including every
+    # "light" rule, which is about the element's distance TO the light) move
+    # with each instance and are evaluated inside the loop.
+    f_light = None
+    if trig is not None and trig["mode"] != "light" and trig["source"] == "light":
+        f_light = trigger_factor(trig, real_lx, real_ly, frame_aspect,
+                                 real_lx, real_ly)
 
     for i in range(elem["count"]):
         t_i = elem["offset"] + i * elem["spread"]
@@ -250,14 +268,18 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
             cy = ay + (cy - ay) * move_y
 
         inst_weight = passes
+        cos_i, sin_i = cos_r, sin_r
         if trig is not None:
-            f = f_light if trig["source"] == "light" \
-                else trigger_factor(trig, cx, cy, frame_aspect)
+            f = f_light if f_light is not None else trigger_factor(
+                trig, cx, cy, frame_aspect, real_lx, real_ly)
             if f > 0.0:
                 # brightness is ADDED in intensity units so an element can
                 # sit at 0 and only exist while its rule fires
                 intensity_i = max(intensity_i + f * trig["brightness"], 0.0)
                 scale_i = max(scale_i * (1.0 + f * trig["scale"]), 1e-6)
+                if trig["rotation"]:
+                    rot_i = rot + math.radians(f * trig["rotation"])
+                    cos_i, sin_i = math.cos(rot_i), math.sin(rot_i)
                 tc = trig["color"]
                 if tc != [1.0, 1.0, 1.0]:
                     mix = torch.tensor([1.0 + f * (c - 1.0) for c in tc],
@@ -272,14 +294,14 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
         u0 = x - cx / global_aspect
         v0 = y - cy
         # rotate by -rot so the element's local frame is axis-aligned
-        u = (u0 * cos_r + v0 * sin_r) / (scale_i * stretch_x)
-        v = (-u0 * sin_r + v0 * cos_r) / (scale_i * stretch_y)
+        u = (u0 * cos_i + v0 * sin_i) / (scale_i * stretch_x)
+        v = (-u0 * sin_i + v0 * cos_i) / (scale_i * stretch_y)
         if elem["type"] == "orbs":
             lu0 = real_lx / global_aspect - cx / global_aspect
             lv0 = real_ly - cy
             params["_light_local"] = (
-                (lu0 * cos_r + lv0 * sin_r) / (scale_i * stretch_x),
-                (-lu0 * sin_r + lv0 * cos_r) / (scale_i * stretch_y),
+                (lu0 * cos_i + lv0 * sin_i) / (scale_i * stretch_x),
+                (-lu0 * sin_i + lv0 * cos_i) / (scale_i * stretch_y),
             )
 
         if heavy:

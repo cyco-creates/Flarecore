@@ -186,6 +186,35 @@ class PointPicker {
     const [lx, ly] = this.point("light_x", "light_y", r);
     const [fx, fy] = this.point("flare_x", "flare_y", r);
 
+    // trigger preview: the region where the rule fires, painted over the
+    // plate exactly as the engine evaluates it (see triggerFactor)
+    const trig = this.node._fcTriggerPreview;
+    if (trig) {
+      const aspect = this.backdrop
+        ? this.backdrop.width / this.backdrop.height : 16 / 9;
+      const gx = (getVal(this.node, "light_x", 0.5) - 0.5) * 2 * aspect;
+      const gy = (getVal(this.node, "light_y", 0.5) - 0.5) * 2;
+      const step = 4;                       // CSS px per sample cell
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(r.x, r.y, r.w, r.h);
+      ctx.clip();
+      for (let py = 0; py < r.h; py += step) {
+        for (let px = 0; px < r.w; px += step) {
+          const u = (px + step / 2) / r.w, v = (py + step / 2) / r.h;
+          const f = triggerFactor(trig, (u - 0.5) * 2 * aspect, (v - 0.5) * 2,
+            aspect, gx, gy);
+          if (f <= 0.01) continue;
+          ctx.fillStyle = `rgba(232,72,72,${(0.55 * f).toFixed(3)})`;
+          ctx.fillRect(r.x + px, r.y + py, step, step);
+        }
+      }
+      ctx.restore();
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.font = "10px sans-serif";
+      ctx.fillText(`trigger preview — ${trig.mode}`, r.x + 6, r.y + 13);
+    }
+
     ctx.lineWidth = 1.4;
     ctx.strokeStyle = "rgba(255,255,255,0.6)";
     ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(fx, fy); ctx.stroke();
@@ -336,12 +365,34 @@ const ADD_DEFAULTS = {
 // Trigger block defaults (mirror of the schema's TRIGGER_DEFAULTS).
 const TRIGGER_DEFAULTS = {
   mode: "none", source: "light", inner: 0, outer: 0.3, falloff: "smooth",
-  brightness: 0, scale: 0, color: [1, 1, 1],
+  brightness: 0, scale: 0, rotation: 0, color: [1, 1, 1],
 };
 const TRIGGER_SPECS = {
   inner: [-1, 2, 0.01], outer: [-1, 2, 0.01],
   brightness: [-2, 8, 0.05], scale: [-0.9, 6, 0.05],
+  rotation: [-180, 180, 1],
 };
+
+// Port of flare/engine.py trigger_factor() — how strongly a rule fires at a
+// point in grid coordinates, used to paint the trigger preview. The Python
+// test test_trigger_factor_reference_values pins the values both must
+// produce; if you change one, change the other.
+function triggerRamp(t, falloff) {
+  t = Math.min(Math.max(t, 0), 1);
+  if (falloff === "linear") return t;
+  if (falloff === "exponential") return t * t;
+  return t * t * (3 - 2 * t);
+}
+
+function triggerFactor(trig, x, y, frameAspect, lx = 0, ly = 0) {
+  if (!trig || trig.mode === "none") return 0;
+  let d;
+  if (trig.mode === "border") d = Math.min(frameAspect - Math.abs(x), 1 - Math.abs(y));
+  else if (trig.mode === "light") d = Math.hypot(x - lx, y - ly);
+  else d = Math.hypot(x, y);
+  const span = Math.max(trig.outer - trig.inner, 1e-6);
+  return 1 - triggerRamp((d - trig.inner) / span, trig.falloff);
+}
 
 // Element settings copied with "copy settings" (everything but identity).
 let clipboardElem = null;
@@ -452,6 +503,8 @@ const CSS = `
 .fcore-mini.on { background: #2f4a75; border-color: #4f7ac0; color: #fff; }
 .fcore-mini:disabled { opacity: .35; cursor: default; }
 .fcore-row.dim { opacity: .4; }
+.fcore-row.trig { border-left: 3px solid #e84848; padding-left: 5px; }
+.fcore-mini.armed { background: #5b2626; border-color: #e84848; color: #ffd7d7; }
 .fcore-sec { grid-column: 1 / -1; color: #8a8fa8; font-size: 11px;
   letter-spacing: .04em; text-transform: uppercase; margin-top: 4px;
   border-top: 1px solid #2b2b33; padding-top: 5px; }
@@ -680,6 +733,7 @@ class FlareEditor {
     this.future = [];
     this._lastQuietPush = 0;
     this.lensOpen = false;
+    this.previewIndex = null;
     this.root.tabIndex = 0;
     this.root.addEventListener("keydown", (e) => {
       if (!(e.ctrlKey || e.metaKey)) return;
@@ -707,6 +761,7 @@ class FlareEditor {
 
   destroy() {
     clearInterval(this._poll);
+    if (this.node) this.node._fcTriggerPreview = null;
   }
 
   // Remap the expanded-row set across a structural change so the twirled-
@@ -905,6 +960,21 @@ class FlareEditor {
         e.label = ref.split("/").pop().replace(/\.png$/, "").replace(/_/g, " ");
       }));
     });
+  }
+
+  // Push the previewed element's rule onto the node for the picker to paint.
+  // A rule stops previewing when its row collapses or its mode goes to none.
+  syncTriggerPreview() {
+    const preset = this.read();
+    const elem = (this.previewIndex != null && preset)
+      ? preset.elements[this.previewIndex] : null;
+    const trig = elem?.trigger;
+    const live = !!trig && !!trig.mode && trig.mode !== "none"
+      && this.expanded.has(this.previewIndex);
+    if (!live) this.previewIndex = null;
+    this.node._fcTriggerPreview = live
+      ? Object.assign({}, TRIGGER_DEFAULTS, trig) : null;
+    this.node._fcPicker?.draw();
   }
 
   build() {
@@ -1109,6 +1179,7 @@ class FlareEditor {
     list.className = "fcore-list";
     this.anySolo = preset.elements.some((e) => e.solo);
     preset.elements.forEach((elem, i) => list.appendChild(this.buildRow(elem, i)));
+    this.syncTriggerPreview();
     if (!preset.elements.length) {
       const empty = document.createElement("div");
       empty.style.cssText = "color:#777;text-align:center;padding:16px;";
@@ -1136,7 +1207,11 @@ class FlareEditor {
   buildRow(elem, i) {
     const row = document.createElement("div");
     row.className = "fcore-row" + (elem.enabled === false ? " off" : "")
-      + (this.anySolo && !elem.solo ? " dim" : "");
+      + (this.anySolo && !elem.solo ? " dim" : "")
+      // a red edge marks a row that reacts to the light's position, so a
+      // preset's rule-driven elements are visible at a glance
+      + (elem.trigger && elem.trigger.mode && elem.trigger.mode !== "none"
+        ? " trig" : "");
 
     const head = document.createElement("div");
     head.className = "fcore-head";
@@ -1356,25 +1431,57 @@ class FlareEditor {
     /* trigger: rule-based animation without keyframes */
     const sec = document.createElement("div");
     sec.className = "fcore-sec";
-    sec.textContent = "trigger — react to the light nearing the frame border or centre";
+    sec.textContent =
+      "trigger — animation without keyframes: react to the light reaching " +
+      "the frame border or centre, or to this element nearing the light";
     adv.appendChild(sec);
     const trig = Object.assign({}, TRIGGER_DEFAULTS, elem.trigger || {});
-    const setTrig = (k, v) => this.mutateQuiet((p) => {
-      const t = Object.assign({}, TRIGGER_DEFAULTS, p.elements[i].trigger || {});
-      t[k] = v;
-      p.elements[i].trigger = t.mode === "none" ? null : t;
-    });
+    const setTrig = (k, v) => {
+      this.mutateQuiet((p) => {
+        const t = Object.assign({}, TRIGGER_DEFAULTS, p.elements[i].trigger || {});
+        t[k] = v;
+        p.elements[i].trigger = t.mode === "none" ? null : t;
+      });
+      if (this.previewIndex === i && this.node._fcTriggerPreview) {
+        this.node._fcTriggerPreview[k] = v;
+        this.node._fcPicker?.draw();
+      }
+    };
     const setTrigRebuild = (k, v) => { setTrig(k, v); this.flushPending(); this.build(); };
-    adv.appendChild(dropdown("mode", trig.mode, ["none", "border", "center"],
+    adv.appendChild(dropdown("mode", trig.mode,
+      ["none", "border", "center", "light"],
       (v) => setTrigRebuild("mode", v)));
     if (trig.mode !== "none") {
-      adv.appendChild(dropdown("driven by", trig.source, ["light", "element"],
-        (v) => setTrig("source", v)));
+      // "light" always measures this element's distance to the light, so
+      // the driving-point choice does not apply to it
+      if (trig.mode !== "light") {
+        adv.appendChild(dropdown("driven by", trig.source, ["light", "element"],
+          (v) => setTrig("source", v)));
+      }
       adv.appendChild(dropdown("falloff", trig.falloff, ["smooth", "linear", "exponential"],
         (v) => setTrig("falloff", v)));
       for (const [key, spec] of Object.entries(TRIGGER_SPECS)) {
         adv.appendChild(sliderCol(key, trig[key], spec, (v) => setTrig(key, v)));
       }
+      // preview: paint the trigger region on the picker. Only one element
+      // previews at a time — arming another (or collapsing this row) clears it.
+      const pwrap = document.createElement("div");
+      pwrap.className = "fcore-col";
+      const pl = document.createElement("label");
+      pl.textContent = "preview region";
+      const pb = document.createElement("button");
+      pb.className = "fcore-mini" + (this.previewIndex === i ? " armed" : "");
+      pb.style.width = "100%";
+      pb.textContent = this.previewIndex === i ? "previewing" : "show";
+      pb.title = "paint this rule's trigger region over the picker";
+      pb.onclick = () => {
+        this.previewIndex = this.previewIndex === i ? null : i;
+        this.syncTriggerPreview();
+        this.build();
+      };
+      pwrap.append(pl, pb);
+      adv.appendChild(pwrap);
+
       const cwrap = document.createElement("div");
       cwrap.className = "fcore-col";
       const cl = document.createElement("label");

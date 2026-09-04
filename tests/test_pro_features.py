@@ -218,3 +218,75 @@ class TestSceneColour:
         rb_tinted = fp_tinted[..., 0].sum() / fp_tinted[..., 2].sum()
         assert rb_neutral == pytest.approx(1.0, abs=0.05)
         assert rb_tinted > 3.0
+
+
+class TestTriggerLightModeAndRotation:
+    def test_light_mode_fires_when_element_nears_the_light(self):
+        # an element far along the axis is far from the light; as the anchor
+        # pulls it back toward the light the rule fires
+        t = {"mode": "light", "inner": 0.0, "outer": 0.6, "brightness": 2.0}
+        p = {"schema_version": 1, "elements": [glow(offset=2.0, trigger=t)]}
+        far = render(p, [{"x": -0.7, "y": 0.0, "ax": 0.0, "ay": 0.0}]).sum()
+        # anchor almost on the light -> t=2 lands right next to it
+        near = render(p, [{"x": -0.7, "y": 0.0, "ax": -0.65, "ay": 0.0}]).sum()
+        assert near > far * 1.5
+
+    def test_light_mode_ignores_source_and_is_per_instance(self):
+        # source "light" must not collapse a light-mode rule to distance 0:
+        # it always measures the ELEMENT's distance to the light, so a chain
+        # fires only on the instances that sit near the light
+        t = {"mode": "light", "source": "light", "inner": 0.0, "outer": 0.35,
+             "brightness": 4.0}
+        p = {"schema_version": 1, "elements": [
+            glow(offset=0.0, count=3, spread=1.0, scale=0.1, trigger=t)]}
+        f = render(p, [{"x": -0.9, "y": 0.0, "ax": 0.0, "ay": 0.0}]).sum(-1)
+        near = f[:, :W // 3].sum()          # instance on the light
+        far = f[:, 2 * W // 3:].sum()       # instance out at t=2
+        # intensity 1 + brightness 4 on the near instance, 1 on the far one
+        assert near / far == pytest.approx(5.0, rel=0.02)
+
+    def test_rotation_trigger_turns_the_element(self):
+        t = {"mode": "center", "inner": 0.0, "outer": 0.4, "rotation": 90.0}
+        p = {"schema_version": 1, "elements": [
+            {"type": "streak", "offset": 0.0, "scale": 0.6, "intensity": 1.0,
+             "auto_rotate": False, "trigger": t,
+             "params": {"length": 0.9, "thickness": 0.02}}]}
+
+        def extent(f):
+            m = f > f.max() * 0.25
+            ys, xs = torch.nonzero(m, as_tuple=True)
+            return ((xs.max() - xs.min()).item(), (ys.max() - ys.min()).item())
+
+        off_w, off_h = extent(render(p, [{"x": 1.3, "y": 0.0}]).sum(-1))
+        on_w, on_h = extent(render(p, [{"x": 0.0, "y": 0.0}]).sum(-1))
+        assert off_w > off_h * 2        # untriggered: horizontal streak
+        assert on_h > on_w * 2          # triggered: rotated upright
+
+    def test_rotation_validation(self):
+        with pytest.raises(ValueError):
+            validate_preset({"schema_version": 1, "elements": [
+                glow(trigger={"mode": "center", "rotation": 5000})]})
+
+    def test_trigger_factor_reference_values(self):
+        """Pins the values the editor's JavaScript preview must reproduce.
+
+        web/flarecore_ui.js triggerFactor() is a port of trigger_factor();
+        if this test is updated, update that function too.
+        """
+        A = 16 / 9
+        cases = [
+            # (mode, falloff, inner, outer, x, y, lx, ly, expected)
+            ("border", "smooth", 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0),
+            ("border", "smooth", 0.0, 0.5, 0.0, 0.75, 0.0, 0.0, 0.5),
+            ("border", "linear", 0.0, 0.5, 0.0, 0.75, 0.0, 0.0, 0.5),
+            ("border", "linear", 0.0, 0.5, 0.0, 1.2, 0.0, 0.0, 1.0),
+            ("center", "linear", 0.0, 1.0, 0.6, 0.0, 0.0, 0.0, 0.4),
+            ("center", "exponential", 0.0, 1.0, 0.5, 0.0, 0.0, 0.0, 0.75),
+            ("light", "linear", 0.0, 1.0, 0.3, 0.4, 0.0, 0.0, 0.5),
+            ("light", "smooth", 0.0, 1.0, 0.5, 0.0, 0.0, 0.0, 0.5),
+        ]
+        for mode, falloff, inner, outer, x, y, lx, ly, expected in cases:
+            trig = {"mode": mode, "falloff": falloff, "inner": inner,
+                    "outer": outer}
+            got = trigger_factor(trig, x, y, A, lx, ly)
+            assert got == pytest.approx(expected, abs=1e-6), (mode, falloff, x, y)

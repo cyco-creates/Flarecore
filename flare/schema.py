@@ -34,13 +34,16 @@ GLOBAL_DEFAULTS = {
 # Rule-based modulation without keyframes: as the light (or this element)
 # nears the frame border or centre, brightness/scale/colour shift.
 TRIGGER_DEFAULTS = {
-    "mode": "none",         # none | border | center
-    "source": "light",      # light | element (which position drives it)
+    "mode": "none",         # none | border | center | light
+    "source": "light",      # light | element (which position drives it;
+                            # ignored by mode "light", which always measures
+                            # the element's distance to the light)
     "inner": 0.0,           # distance (half-heights) where the rule is fully on
     "outer": 0.3,           # distance where it is fully off
     "falloff": "smooth",    # linear | smooth | exponential
     "brightness": 0.0,      # intensity ADDED at full trigger (can be negative)
     "scale": 0.0,           # added scale multiplier at full trigger
+    "rotation": 0.0,        # degrees ADDED at full trigger
     "color": [1.0, 1.0, 1.0],  # tint at full trigger
 }
 
@@ -174,8 +177,9 @@ def _validate_trigger(raw, where: str):
             warnings.warn(f"{where}.trigger has unknown key '{key}' (ignored)")
             continue
         t[key] = value
-    if t["mode"] not in ("none", "border", "center"):
-        raise ValueError(f"{where}.trigger.mode must be none, border or center")
+    if t["mode"] not in ("none", "border", "center", "light"):
+        raise ValueError(
+            f"{where}.trigger.mode must be none, border, center or light")
     if t["source"] not in ("light", "element"):
         raise ValueError(f"{where}.trigger.source must be light or element")
     if t["falloff"] not in ("linear", "smooth", "exponential"):
@@ -187,6 +191,8 @@ def _validate_trigger(raw, where: str):
     t["brightness"] = _require_number(t["brightness"], f"{where}.trigger.brightness",
                                       lo=-20.0, hi=20.0)
     t["scale"] = _require_number(t["scale"], f"{where}.trigger.scale", lo=-0.95, hi=20.0)
+    t["rotation"] = _require_number(t["rotation"], f"{where}.trigger.rotation",
+                                    lo=-720.0, hi=720.0)
     t["color"] = _require_vec(t["color"], f"{where}.trigger.color", 3, lo=0.0, hi=100.0)
     return None if t["mode"] == "none" else t
 

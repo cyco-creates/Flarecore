@@ -214,6 +214,46 @@ not happen at module load or in headless tests), renders there, and returns
 results on the input's device. Outside ComfyUI nothing changes. Measured:
 253 ms per 1080p frame through the node including PNG encoding, from 2.3 s.
 
+## 3m. Dynamic triggering completed (2026-09-05)
+
+Owner pointed at the transcript's triggering section (01 @ 00:20:45) as the
+reference for what the feature should cover. Three pieces were missing from
+3k and are now in:
+
+- **`mode: "light"`** - the rule fires on the distance between the ELEMENT
+  and the light, not on frame geometry. It always measures the element (the
+  `source` choice is ignored and hidden in the editor): with source "light"
+  the distance would be identically zero, which is a degenerate config, and
+  "how close is this ghost to the source" is the only useful reading. It is
+  therefore evaluated per count-instance, so one chain lights up only on the
+  instances that pass near the light.
+- **`rotation`** as a triggered property (degrees added at full trigger).
+  The element's cos/sin are hoisted out of the instance loop for speed, so a
+  rotating trigger recomputes them per instance and every downstream use
+  (including the orbs light-local transform) reads the per-instance frame.
+- **Trigger preview** - the editor paints the trigger region over the point
+  picker in red, live while inner/outer/mode change, one rule at a time
+  (arming another or collapsing the row clears it). Rows whose element has a
+  rule carry a red left edge so a preset's rule-driven elements are visible
+  without opening anything.
+
+The preview needs the field at ~10k points per repaint, so it is a
+JavaScript port of `trigger_factor` rather than a server round-trip per
+slider event. The duplication is real; `test_trigger_factor_reference_values`
+pins eight (mode, falloff, point) -> value cases, and both implementations
+carry a comment pointing at the other. Verified in the browser by sampling
+the painted canvas against those values across the frame.
+
+## 3n. Trigger lab workflow (2026-09-05)
+
+The video lab needs footage with a trackable light. `flarecore_trigger_lab`
+demonstrates rule-based animation with no assets at all: an EmptyImage batch,
+FlareKeyframes sweeping the light across and out of frame, and the
+Trigger Showcase preset whose three rule elements are named for the mode
+they use. 64 frames at 960x540 render in ~6 s. The video lab now bakes its
+preset into the widget instead of taking it from a FlarePresetLoader link,
+because a linked preset_json leaves the editor with nothing to edit.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

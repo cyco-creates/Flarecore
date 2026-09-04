@@ -1,8 +1,8 @@
 {
  "id": "flarecore_video_lab",
  "revision": 0,
- "last_node_id": 10,
- "last_link_id": 10,
+ "last_node_id": 9,
+ "last_link_id": 9,
  "nodes": [
   {
    "id": 1,
@@ -221,38 +221,6 @@
   },
   {
    "id": 5,
-   "type": "FlarePresetLoader",
-   "pos": [
-    -600,
-    -140
-   ],
-   "size": [
-    300,
-    60
-   ],
-   "flags": {},
-   "order": 5,
-   "mode": 0,
-   "inputs": [],
-   "outputs": [
-    {
-     "name": "preset_json",
-     "type": "STRING",
-     "links": [
-      8
-     ],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "FlarePresetLoader"
-   },
-   "widgets_values": [
-    "cine_blue.json"
-   ]
-  },
-  {
-   "id": 6,
    "type": "FlareRender",
    "pos": [
     -240,
@@ -263,7 +231,7 @@
     820
    ],
    "flags": {},
-   "order": 6,
+   "order": 5,
    "mode": 0,
    "inputs": [
     {
@@ -280,14 +248,6 @@
      "name": "lights",
      "type": "FLARE_LIGHTS",
      "link": 6
-    },
-    {
-     "name": "preset_json",
-     "type": "STRING",
-     "link": 8,
-     "widget": {
-      "name": "preset_json"
-     }
     }
    ],
    "outputs": [
@@ -295,7 +255,7 @@
      "name": "image",
      "type": "IMAGE",
      "links": [
-      9
+      8
      ],
      "slot_index": 0
     },
@@ -303,7 +263,7 @@
      "name": "flare_pass",
      "type": "IMAGE",
      "links": [
-      10
+      9
      ],
      "slot_index": 1
     },
@@ -318,7 +278,7 @@
     "Node name for S&R": "FlareRender"
    },
    "widgets_values": [
-    "{\n  \"schema_version\": 1,\n  \"name\": \"Cine Blue\",\n  \"author\": \"flarecore\",\n  \"global\": {\n    \"intensity\": 1.0,\n    \"scale\": 1.0,\n    \"aspect\": 1.0,\n    \"tint\": [\n      0.97,\n      0.99,\n      1.06\n    ],\n    \"seed\": 7\n  },\n  \"elements\": [\n    {\n      \"type\": \"glow\",\n      \"label\": \"core\",\n      \"id\": \"cine_core\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.09,\n      \"intensity\": 4.0,\n      \"color\": [\n        1.0,\n        1.0,\n        1.0\n      ],\n      \"params\": {\n        \"softness\": 0.3,\n        \"falloff\": 2.2\n      }\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"core bloom\",\n      \"id\": \"cine_bloom\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.5,\n      \"intensity\": 1.8,\n      \"color\": [\n        0.85,\n        0.9,\n        1.0\n      ],\n      \"params\": {\n        \"softness\": 0.55,\n        \"falloff\": 1.5\n      },\n      \"irregular\": 0.2\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"veil\",\n      \"id\": \"cine_veil\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 1.1,\n      \"intensity\": 0.12,\n      \"color\": [\n        0.42,\n        0.5,\n        0.95\n      ],\n      \"params\": {\n        \"softness\": 0.85,\n        \"falloff\": 1.05\n      },\n      \"irregular\": 0.25\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"wide haze\",\n      \"id\": \"cine_haze\",\n      \"slot\": \"glows\",\n      \"offset\": 0.15,\n      \"scale\": 2.2,\n      \"intensity\": 0.025,\n      \"color\": [\n        0.4,\n        0.42,\n        0.8\n      ],\n      \"blur\": 0.3,\n      \"params\": {\n        \"softness\": 1.0,\n        \"falloff\": 0.85\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"glint\",\n      \"label\": \"rays\",\n      \"id\": \"cine_rays\",\n      \"slot\": \"rays\",\n      \"offset\": 0.0,\n      \"scale\": 0.5,\n      \"intensity\": 0.42,\n      \"color\": [\n        0.9,\n        0.94,\n        1.0\n      ],\n      \"blur\": 0.05,\n      \"params\": {\n        \"points\": 46,\n        \"length\": 0.3,\n        \"thickness\": 0.0028,\n        \"length_jitter\": 0.8\n      },\n      \"irregular\": 0.45\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"streak\",\n      \"id\": \"cine_streak\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.42,\n      \"auto_rotate\": false,\n      \"color\": [\n        0.72,\n        0.82,\n        1.0\n      ],\n      \"blur\": 0.05,\n      \"params\": {\n        \"length\": 2.2,\n        \"thickness\": 0.007\n      },\n      \"irregular\": 0.25\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"streak haze\",\n      \"id\": \"cine_streakhaze\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.07,\n      \"auto_rotate\": false,\n      \"color\": [\n        0.6,\n        0.7,\n        1.0\n      ],\n      \"blur\": 0.25,\n      \"params\": {\n        \"length\": 1.4,\n        \"thickness\": 0.035\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"ring\",\n      \"label\": \"thin ring\",\n      \"id\": \"cine_ring\",\n      \"slot\": \"rings\",\n      \"offset\": 0.62,\n      \"scale\": 0.62,\n      \"intensity\": 0.085,\n      \"color\": [\n        0.72,\n        0.78,\n        0.95\n      ],\n      \"dispersion\": 0.45,\n      \"blur\": 0.04,\n      \"params\": {\n        \"radius\": 1.0,\n        \"thickness\": 0.012\n      },\n      \"irregular\": 0.4\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"magenta veil\",\n      \"id\": \"cine_magenta\",\n      \"slot\": \"glows\",\n      \"offset\": -0.62,\n      \"scale\": 0.85,\n      \"intensity\": 0.11,\n      \"rotation\": 0.0,\n      \"color\": [\n        0.8,\n        0.42,\n        0.85\n      ],\n      \"blur\": 0.28,\n      \"params\": {\n        \"softness\": 0.8,\n        \"falloff\": 1.15\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghosts near\",\n      \"id\": \"cine_ghost1\",\n      \"slot\": \"ghosts\",\n      \"offset\": 1.3,\n      \"count\": 3,\n      \"spread\": 0.1,\n      \"scale\": 0.1,\n      \"count_scale_step\": 1.22,\n      \"count_falloff\": 0.9,\n      \"intensity\": 0.22,\n      \"color\": [\n        0.68,\n        0.8,\n        1.0\n      ],\n      \"dispersion\": 0.4,\n      \"blur\": 0.1,\n      \"params\": {\n        \"blades\": 20,\n        \"edge_softness\": 0.65\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghosts far\",\n      \"id\": \"cine_ghost2\",\n      \"slot\": \"ghosts\",\n      \"offset\": 2.25,\n      \"count\": 3,\n      \"spread\": 0.24,\n      \"scale\": 0.135,\n      \"count_scale_step\": 1.15,\n      \"count_falloff\": 0.8,\n      \"intensity\": 0.2,\n      \"color\": [\n        0.6,\n        0.74,\n        1.0\n      ],\n      \"dispersion\": 0.6,\n      \"blur\": 0.12,\n      \"params\": {\n        \"blades\": 20,\n        \"edge_softness\": 0.7\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"hex ghost\",\n      \"id\": \"cine_hex\",\n      \"slot\": \"ghosts\",\n      \"offset\": 1.62,\n      \"scale\": 0.1,\n      \"intensity\": 0.16,\n      \"color\": [\n        0.7,\n        0.82,\n        1.0\n      ],\n      \"dispersion\": 0.9,\n      \"blur\": 0.05,\n      \"params\": {\n        \"blades\": 6,\n        \"edge_softness\": 0.35\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"warm dot\",\n      \"id\": \"cine_warm\",\n      \"slot\": \"glows\",\n      \"offset\": 3.15,\n      \"scale\": 0.035,\n      \"intensity\": 0.5,\n      \"color\": [\n        1.0,\n        0.5,\n        0.28\n      ],\n      \"blur\": 0.05,\n      \"params\": {\n        \"softness\": 0.5,\n        \"falloff\": 1.6\n      }\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghost rim\",\n      \"id\": \"cine_ghostrim\",\n      \"slot\": \"ghosts\",\n      \"offset\": 2.25,\n      \"count\": 3,\n      \"spread\": 0.24,\n      \"scale\": 0.135,\n      \"count_scale_step\": 1.15,\n      \"count_falloff\": 0.8,\n      \"intensity\": 0.13,\n      \"color\": [\n        0.75,\n        0.85,\n        1.0\n      ],\n      \"dispersion\": 0.8,\n      \"blur\": 0.05,\n      \"params\": {\n        \"blades\": 20,\n        \"edge_softness\": 0.35,\n        \"hollow\": 0.72\n      },\n      \"irregular\": 0.35\n    }\n  ]\n}",
+    "{\n  \"schema_version\": 1,\n  \"name\": \"Anamorphic Gold\",\n  \"author\": \"flarecore\",\n  \"global\": {\n    \"intensity\": 1.0,\n    \"scale\": 1.0,\n    \"aspect\": 1.6,\n    \"tint\": [\n      1.0,\n      0.98,\n      0.94\n    ],\n    \"seed\": 21,\n    \"fringe\": 0.2,\n    \"edge_fade_start\": 0.15,\n    \"edge_fade_range\": 0.5\n  },\n  \"elements\": [\n    {\n      \"type\": \"glow\",\n      \"label\": \"core\",\n      \"id\": \"ag_core\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.08,\n      \"intensity\": 4.5,\n      \"color\": [\n        1.0,\n        0.98,\n        0.9\n      ],\n      \"params\": {\n        \"softness\": 0.3,\n        \"falloff\": 2.2\n      }\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"gold bloom\",\n      \"id\": \"ag_bloom\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.5,\n      \"intensity\": 0.85,\n      \"irregular\": 0.25,\n      \"color\": [\n        1.0,\n        0.82,\n        0.5\n      ],\n      \"params\": {\n        \"softness\": 0.5,\n        \"falloff\": 1.4\n      }\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"anamorphic streak\",\n      \"id\": \"ag_streak\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.55,\n      \"auto_rotate\": false,\n      \"irregular\": 0.3,\n      \"blur\": 0.04,\n      \"color\": [\n        1.0,\n        0.86,\n        0.55\n      ],\n      \"params\": {\n        \"length\": 2.6,\n        \"thickness\": 0.006\n      }\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"streak haze\",\n      \"id\": \"ag_streakhaze\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.09,\n      \"auto_rotate\": false,\n      \"blur\": 0.3,\n      \"color\": [\n        1.0,\n        0.8,\n        0.5\n      ],\n      \"params\": {\n        \"length\": 1.8,\n        \"thickness\": 0.05\n      }\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"anamorphic bars\",\n      \"id\": \"ag_bars\",\n      \"slot\": \"ghosts\",\n      \"offset\": 0.6,\n      \"count\": 4,\n      \"spread\": 0.35,\n      \"scale\": 0.045,\n      \"count_scale_step\": 1.3,\n      \"count_falloff\": 0.85,\n      \"intensity\": 0.22,\n      \"stretch\": [\n        3.2,\n        0.45\n      ],\n      \"auto_rotate\": false,\n      \"move\": [\n        1.0,\n        0.15\n      ],\n      \"irregular\": 0.35,\n      \"dispersion\": 0.5,\n      \"blur\": 0.03,\n      \"color\": [\n        1.0,\n        0.75,\n        0.45\n      ],\n      \"params\": {\n        \"blades\": 4,\n        \"edge_softness\": 0.35\n      }\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghost chain\",\n      \"id\": \"ag_ghosts\",\n      \"slot\": \"ghosts\",\n      \"offset\": 1.35,\n      \"count\": 3,\n      \"spread\": 0.28,\n      \"scale\": 0.11,\n      \"count_scale_step\": 1.2,\n      \"count_falloff\": 0.85,\n      \"intensity\": 0.16,\n      \"irregular\": 0.3,\n      \"dispersion\": 0.6,\n      \"blur\": 0.1,\n      \"color\": [\n        1.0,\n        0.8,\n        0.55\n      ],\n      \"params\": {\n        \"blades\": 8,\n        \"edge_softness\": 0.6\n      }\n    },\n    {\n      \"type\": \"glint\",\n      \"label\": \"rays\",\n      \"id\": \"ag_rays\",\n      \"slot\": \"rays\",\n      \"offset\": 0.0,\n      \"scale\": 0.55,\n      \"intensity\": 0.35,\n      \"irregular\": 0.5,\n      \"blur\": 0.05,\n      \"color\": [\n        1.0,\n        0.94,\n        0.8\n      ],\n      \"params\": {\n        \"points\": 36,\n        \"length\": 0.4,\n        \"thickness\": 0.003,\n        \"length_jitter\": 0.75\n      }\n    },\n    {\n      \"type\": \"hoop\",\n      \"label\": \"gold hoop\",\n      \"id\": \"ag_hoop\",\n      \"slot\": \"hoops\",\n      \"offset\": 0.5,\n      \"scale\": 0.9,\n      \"intensity\": 0.06,\n      \"irregular\": 0.4,\n      \"dispersion\": 1.2,\n      \"blur\": 0.06,\n      \"color\": [\n        1.0,\n        0.7,\n        0.4\n      ],\n      \"params\": {\n        \"radius\": 0.9,\n        \"thickness\": 0.2,\n        \"angular_falloff\": 0.85,\n        \"completion\": 220,\n        \"completion_feather\": 0.35\n      }\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"edge gleam\",\n      \"id\": \"ag_gleam\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 1.8,\n      \"intensity\": 0.0,\n      \"auto_rotate\": false,\n      \"stretch\": [\n        1.0,\n        0.08\n      ],\n      \"blur\": 0.2,\n      \"color\": [\n        1.0,\n        0.7,\n        0.35\n      ],\n      \"trigger\": {\n        \"mode\": \"border\",\n        \"source\": \"light\",\n        \"inner\": -0.1,\n        \"outer\": 0.35,\n        \"falloff\": \"smooth\",\n        \"brightness\": 0.45,\n        \"scale\": 0.3,\n        \"color\": [\n          1.0,\n          0.55,\n          0.25\n        ]\n      },\n      \"params\": {\n        \"softness\": 0.9,\n        \"falloff\": 1.2\n      }\n    },\n    {\n      \"type\": \"orbs\",\n      \"label\": \"lens orbs\",\n      \"id\": \"ag_orbs\",\n      \"slot\": \"ghosts\",\n      \"scale\": 1.0,\n      \"intensity\": 0.07,\n      \"blur\": 0.06,\n      \"color\": [\n        1.0,\n        0.9,\n        0.7\n      ],\n      \"params\": {\n        \"count\": 26,\n        \"size\": 0.045,\n        \"size_jitter\": 0.7,\n        \"spread\": 1.4,\n        \"edge_softness\": 0.35,\n        \"illumination\": 0.55,\n        \"shape\": \"disc\",\n        \"blades\": 6\n      }\n    }\n  ]\n}\n",
     "manual",
     0.5,
     0.5,
@@ -336,7 +296,63 @@
     0,
     "fixed",
     0.5,
-    0.0
+    0.35
+   ]
+  },
+  {
+   "id": 6,
+   "type": "VHS_VideoCombine",
+   "pos": [
+    300,
+    -560
+   ],
+   "size": [
+    360,
+    320
+   ],
+   "flags": {},
+   "order": 6,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "link": 8
+    },
+    {
+     "name": "audio",
+     "type": "AUDIO",
+     "link": null
+    },
+    {
+     "name": "meta_batch",
+     "type": "VHS_BatchManager",
+     "link": null
+    },
+    {
+     "name": "vae",
+     "type": "VAE",
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "name": "Filenames",
+     "type": "VHS_FILENAMES",
+     "links": [],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "VHS_VideoCombine"
+   },
+   "widgets_values": [
+    16.0,
+    0,
+    "flarecore_video",
+    "image/gif",
+    false,
+    true
    ]
   },
   {
@@ -344,7 +360,7 @@
    "type": "VHS_VideoCombine",
    "pos": [
     300,
-    -560
+    -180
    ],
    "size": [
     360,
@@ -389,62 +405,6 @@
    "widgets_values": [
     16.0,
     0,
-    "flarecore_video",
-    "image/gif",
-    false,
-    true
-   ]
-  },
-  {
-   "id": 8,
-   "type": "VHS_VideoCombine",
-   "pos": [
-    300,
-    -180
-   ],
-   "size": [
-    360,
-    320
-   ],
-   "flags": {},
-   "order": 8,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "link": 10
-    },
-    {
-     "name": "audio",
-     "type": "AUDIO",
-     "link": null
-    },
-    {
-     "name": "meta_batch",
-     "type": "VHS_BatchManager",
-     "link": null
-    },
-    {
-     "name": "vae",
-     "type": "VAE",
-     "link": null
-    }
-   ],
-   "outputs": [
-    {
-     "name": "Filenames",
-     "type": "VHS_FILENAMES",
-     "links": [],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "VHS_VideoCombine"
-   },
-   "widgets_values": [
-    16.0,
-    0,
     "flarecore_video_pass",
     "image/gif",
     false,
@@ -452,7 +412,7 @@
    ]
   },
   {
-   "id": 9,
+   "id": 8,
    "type": "PreviewImage",
    "pos": [
     300,
@@ -463,7 +423,7 @@
     260
    ],
    "flags": {},
-   "order": 9,
+   "order": 8,
    "mode": 0,
    "inputs": [
     {
@@ -487,7 +447,7 @@
    "title": "track overlay"
   },
   {
-   "id": 10,
+   "id": 9,
    "type": "Note",
    "pos": [
     -980,
@@ -495,16 +455,16 @@
    ],
    "size": [
     360,
-    330
+    400
    ],
    "flags": {},
-   "order": 10,
+   "order": 9,
    "mode": 0,
    "inputs": [],
    "outputs": [],
    "properties": {},
    "widgets_values": [
-    "VIDEO LAB\n\n1. Pick a video in Load Video. Frames flow as one batch.\n2. Flare Track finds and follows the brightest light(s): stable ids,\n   smoothed positions, fade in/out, and velocity coasting through\n   moments the detector loses the light. The overlay preview shows\n   the tracked points per frame.\n3. Depth Anything + Flare Depth Adapter (temporal_smooth) drive\n   occlusion; occlusion_smooth on Flare Render (gear panel) spreads\n   any hard occlusion cut into a fade across frames.\n4. For hand-animated motion instead of tracking, swap Flare Track for\n   Flare Keyframes (frame: u,v paths for light and anchor).\n5. Both video outputs: composite and the flare pass over black for\n   external compositing."
+    "VIDEO LAB\n\n1. Pick a video in Load Video. Frames flow as one batch.\n2. Flare Track finds and follows the brightest light(s): stable ids,\n   smoothed positions, fade in/out, and velocity coasting through\n   moments the detector loses the light. The overlay preview shows\n   the tracked points per frame.\n3. Depth Anything + Flare Depth Adapter (temporal_smooth) drive\n   occlusion; occlusion_smooth on Flare Render (gear panel) spreads\n   any hard occlusion cut into a fade across frames.\n4. The flare animates itself as the light moves - no keyframes:\n   - rows with a RED EDGE in the editor carry a trigger rule. Anamorphic\n     Gold's edge gleam blooms as the light nears the frame border.\n     Twirl a row open, set mode/inner/outer, and hit 'show' next to\n     preview region to paint the trigger area over the picker.\n   - lens (global row): flicker gives every tracked light its own\n     brightness wobble; edge fade cuts a light that leaves frame.\n   - scene_color (gear panel) tints each flare by the plate colour at\n     the light, so a warm street lamp flares warm.\n5. For hand-animated motion instead of tracking, see the TRIGGER LAB\n   workflow: Flare Keyframes drives the light along a path.\n6. Both video outputs: composite and the flare pass over black for\n   external compositing."
    ],
    "color": "#432",
    "bgcolor": "#653"
@@ -515,7 +475,7 @@
    1,
    1,
    0,
-   6,
+   5,
    0,
    "IMAGE"
   ],
@@ -547,7 +507,7 @@
    5,
    3,
    0,
-   6,
+   5,
    1,
    "IMAGE"
   ],
@@ -555,7 +515,7 @@
    6,
    4,
    0,
-   6,
+   5,
    2,
    "FLARE_LIGHTS"
   ],
@@ -563,7 +523,7 @@
    7,
    4,
    1,
-   9,
+   8,
    0,
    "IMAGE"
   ],
@@ -572,22 +532,14 @@
    5,
    0,
    6,
-   3,
-   "STRING"
-  ],
-  [
-   9,
-   6,
-   0,
-   7,
    0,
    "IMAGE"
   ],
   [
-   10,
-   6,
+   9,
+   5,
    1,
-   8,
+   7,
    0,
    "IMAGE"
   ]

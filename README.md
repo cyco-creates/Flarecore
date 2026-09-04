@@ -60,12 +60,17 @@ FlareRender carries its own UI:
 
 Elements can react to where the light is without keyframes:
 
-- **Triggers** — each element's twirl-down has a trigger rule: as the light
-  (or the element itself) nears the frame **border** or **centre**, add
-  brightness, scale it up, and shift its colour, over a feathered range with
-  linear, smooth or exponential falloff. Set an element's opacity to 0 and it
-  exists only while its rule fires — a gleam that blooms as the sun leaves
-  frame, or a flash when a headlight crosses centre.
+- **Triggers** — each element's twirl-down has a trigger rule. As the light
+  (or the element itself) reaches the frame **border**, the **centre**, or
+  comes near the **light**, the element adds brightness, scales, rotates and
+  shifts colour, over a feathered range with linear, smooth or exponential
+  falloff. Set an element's opacity to 0 and it exists only while its rule
+  fires — a gleam that blooms as the sun leaves frame, a ring flash when a
+  headlight crosses centre, a spark that only lights up when a ghost passes
+  close to the source.
+  Rows with a rule carry a **red edge** in the editor, and `preview region`
+  paints the trigger area over the picker in red while you drag its range —
+  the same field the engine evaluates.
 - **Translation locks** (`move x / move y`) — how much of the light's motion
   an element follows per screen axis. `move y = 0` gives the horizontal-only
   ghost bars of an anamorphic lens; fractional values give the loose,
@@ -119,7 +124,12 @@ Shipped workflows (ComfyUI → Workflow → Browse Templates → flarecore):
 
 - **flarecore_flare_lab** — the full playground: scene, depth occlusion,
   editor, and all outputs.
-- **flarecore_video_lab** — video in, tracked/occluded flare video out.
+- **flarecore_video_lab** — video in, tracked/occluded flare video out, with
+  the flare reacting to the light's travel (triggers, flicker, edge fade).
+- **flarecore_trigger_lab** — rule-based animation with nothing to load:
+  a keyframed light sweeps across a dark plate and the Trigger Showcase
+  preset lights up on the border, at the centre, and near the light. Queue it
+  and watch; then twirl a red-edged row open and preview its region.
 - **flarecore_element_forge** — generate custom element textures with your
   local image model (wired for Krea2), condition them, and file them in the
   library at 2K with a black margin so nothing ever crops. Pick a prompt from
