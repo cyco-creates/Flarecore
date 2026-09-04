@@ -7,9 +7,9 @@
     "scale": 1.0,
     "aspect": 1.0,
     "tint": [
-      0.96,
+      0.97,
       0.99,
-      1.08
+      1.06
     ],
     "seed": 7
   },
@@ -18,208 +18,286 @@
       "type": "glow",
       "label": "core",
       "id": "cine_core",
+      "slot": "glows",
       "offset": 0.0,
-      "scale": 0.16,
-      "intensity": 3.2,
+      "scale": 0.09,
+      "intensity": 4.0,
       "color": [
-        0.97,
-        0.99,
+        1.0,
+        1.0,
         1.0
       ],
       "params": {
-        "softness": 0.28,
-        "falloff": 2.6
+        "softness": 0.3,
+        "falloff": 2.2
       }
     },
     {
       "type": "glow",
-      "label": "inner glow",
-      "id": "cine_inner",
+      "label": "core bloom",
+      "id": "cine_bloom",
+      "slot": "glows",
       "offset": 0.0,
-      "scale": 0.55,
-      "intensity": 1.25,
+      "scale": 0.5,
+      "intensity": 1.8,
       "color": [
-        0.6,
-        0.72,
+        0.85,
+        0.9,
         1.0
       ],
       "params": {
-        "softness": 0.45,
-        "falloff": 1.7
+        "softness": 0.55,
+        "falloff": 1.5
       }
     },
     {
       "type": "glow",
       "label": "veil",
       "id": "cine_veil",
+      "slot": "glows",
       "offset": 0.0,
-      "scale": 1.6,
-      "intensity": 0.13,
+      "scale": 1.1,
+      "intensity": 0.12,
       "color": [
-        0.34,
-        0.44,
+        0.42,
+        0.5,
         0.95
       ],
       "params": {
-        "softness": 0.7,
-        "falloff": 1.0
+        "softness": 0.85,
+        "falloff": 1.05
       }
     },
     {
       "type": "glow",
-      "label": "magenta edge",
-      "id": "cine_magenta",
-      "offset": -0.55,
-      "scale": 1.0,
-      "intensity": 0.14,
+      "label": "wide haze",
+      "id": "cine_haze",
+      "slot": "fog",
+      "offset": 0.15,
+      "scale": 2.2,
+      "intensity": 0.025,
       "color": [
-        0.85,
-        0.3,
+        0.4,
+        0.42,
         0.8
       ],
-      "blur": 0.12,
+      "blur": 0.3,
       "params": {
-        "softness": 0.7,
-        "falloff": 1.1
-      }
-    },
-    {
-      "type": "streak",
-      "label": "streak",
-      "id": "cine_streak",
-      "offset": 0.0,
-      "scale": 1.0,
-      "intensity": 0.22,
-      "auto_rotate": false,
-      "color": [
-        0.6,
-        0.72,
-        1.0
-      ],
-      "blur": 0.12,
-      "params": {
-        "length": 1.2,
-        "thickness": 0.03
+        "softness": 1.0,
+        "falloff": 0.85
       }
     },
     {
       "type": "glint",
       "label": "rays",
       "id": "cine_rays",
+      "slot": "rays",
       "offset": 0.0,
-      "scale": 0.42,
-      "intensity": 0.6,
-      "color": [
-        0.85,
-        0.9,
-        1.0
-      ],
-      "blur": 0.1,
-      "params": {
-        "points": 11,
-        "length": 0.4,
-        "thickness": 0.012,
-        "length_jitter": 0.7
-      }
-    },
-    {
-      "type": "hoop",
-      "label": "chroma hoop",
-      "id": "cine_hoop",
-      "offset": 0.0,
-      "scale": 1.05,
+      "scale": 0.5,
       "intensity": 0.42,
       "color": [
-        0.32,
-        0.5,
+        0.9,
+        0.94,
         1.0
       ],
-      "dispersion": 1.4,
-      "dispersion_samples": 9,
-      "blur": 0.07,
+      "blur": 0.05,
       "params": {
-        "radius": 1.0,
-        "thickness": 0.09,
-        "angular_falloff": 0.6
+        "points": 46,
+        "length": 0.3,
+        "thickness": 0.0028,
+        "length_jitter": 0.8
       }
     },
     {
-      "type": "hoop",
-      "label": "hoop haze",
-      "id": "cine_hoophaze",
+      "type": "streak",
+      "label": "streak",
+      "id": "cine_streak",
+      "slot": "streaks",
       "offset": 0.0,
-      "scale": 1.02,
-      "intensity": 0.1,
+      "scale": 1.0,
+      "intensity": 0.42,
+      "auto_rotate": false,
       "color": [
-        0.3,
-        0.42,
-        0.9
+        0.72,
+        0.82,
+        1.0
       ],
-      "blur": 0.2,
+      "blur": 0.05,
       "params": {
-        "radius": 0.95,
-        "thickness": 0.3,
-        "angular_falloff": 0.5
+        "length": 2.2,
+        "thickness": 0.007
+      }
+    },
+    {
+      "type": "streak",
+      "label": "streak haze",
+      "id": "cine_streakhaze",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.07,
+      "auto_rotate": false,
+      "color": [
+        0.6,
+        0.7,
+        1.0
+      ],
+      "blur": 0.25,
+      "params": {
+        "length": 1.4,
+        "thickness": 0.035
+      }
+    },
+    {
+      "type": "ring",
+      "label": "thin ring",
+      "id": "cine_ring",
+      "slot": "rings",
+      "offset": 0.62,
+      "scale": 0.62,
+      "intensity": 0.085,
+      "color": [
+        0.72,
+        0.78,
+        0.95
+      ],
+      "dispersion": 0.45,
+      "blur": 0.04,
+      "params": {
+        "radius": 1.0,
+        "thickness": 0.012
+      }
+    },
+    {
+      "type": "glow",
+      "label": "magenta veil",
+      "id": "cine_magenta",
+      "slot": "glows",
+      "offset": -0.62,
+      "scale": 0.85,
+      "intensity": 0.11,
+      "rotation": 0.0,
+      "color": [
+        0.8,
+        0.42,
+        0.85
+      ],
+      "blur": 0.28,
+      "params": {
+        "softness": 0.8,
+        "falloff": 1.15
       }
     },
     {
       "type": "iris",
-      "label": "ghost chain",
-      "id": "cine_ghosts",
-      "offset": 0.5,
-      "count": 4,
-      "spread": 0.28,
-      "scale": 0.06,
-      "count_scale_step": 1.5,
-      "count_falloff": 0.85,
-      "intensity": 0.24,
+      "label": "ghosts near",
+      "id": "cine_ghost1",
+      "slot": "iris_ghosts",
+      "offset": 1.3,
+      "count": 3,
+      "spread": 0.1,
+      "scale": 0.1,
+      "count_scale_step": 1.22,
+      "count_falloff": 0.9,
+      "intensity": 0.22,
       "color": [
-        0.55,
-        0.72,
+        0.68,
+        0.8,
         1.0
       ],
-      "dispersion": 0.5,
+      "dispersion": 0.4,
       "blur": 0.1,
       "params": {
-        "blades": 7,
-        "edge_softness": 0.45
+        "blades": 20,
+        "edge_softness": 0.65
+      }
+    },
+    {
+      "type": "iris",
+      "label": "ghosts far",
+      "id": "cine_ghost2",
+      "slot": "iris_ghosts",
+      "offset": 2.25,
+      "count": 3,
+      "spread": 0.24,
+      "scale": 0.135,
+      "count_scale_step": 1.15,
+      "count_falloff": 0.8,
+      "intensity": 0.2,
+      "color": [
+        0.6,
+        0.74,
+        1.0
+      ],
+      "dispersion": 0.6,
+      "blur": 0.12,
+      "params": {
+        "blades": 20,
+        "edge_softness": 0.7
       }
     },
     {
       "type": "iris",
       "label": "hex ghost",
       "id": "cine_hex",
-      "offset": 1.1,
-      "scale": 0.13,
-      "intensity": 0.22,
+      "slot": "iris_ghosts",
+      "offset": 1.62,
+      "scale": 0.1,
+      "intensity": 0.16,
       "color": [
-        0.6,
-        0.78,
+        0.7,
+        0.82,
         1.0
       ],
       "dispersion": 0.9,
-      "blur": 0.06,
+      "blur": 0.05,
       "params": {
         "blades": 6,
-        "edge_softness": 0.4
+        "edge_softness": 0.35
+      }
+    },
+    {
+      "type": "glow",
+      "label": "warm dot",
+      "id": "cine_warm",
+      "slot": "glows",
+      "offset": 3.15,
+      "scale": 0.035,
+      "intensity": 0.5,
+      "color": [
+        1.0,
+        0.5,
+        0.28
+      ],
+      "blur": 0.05,
+      "params": {
+        "softness": 0.5,
+        "falloff": 1.6
       }
     },
     {
       "type": "iris",
-      "label": "soft disc",
-      "id": "cine_disc",
-      "offset": 1.6,
-      "scale": 0.34,
-      "intensity": 0.14,
+      "label": "ghost rim",
+      "id": "cine_ghostrim",
+      "slot": "iris_ghosts",
+      "offset": 2.25,
+      "count": 3,
+      "spread": 0.24,
+      "scale": 0.135,
+      "count_scale_step": 1.15,
+      "count_falloff": 0.8,
+      "intensity": 0.13,
       "color": [
-        0.5,
-        0.64,
+        0.75,
+        0.85,
         1.0
       ],
-      "blur": 0.25,
+      "dispersion": 0.8,
+      "blur": 0.05,
       "params": {
-        "blades": 16,
-        "edge_softness": 0.6
+        "blades": 20,
+        "edge_softness": 0.35,
+        "hollow": 0.72
       }
     }
   ]

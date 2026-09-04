@@ -508,7 +508,7 @@ function popupMenu(evt, entries, onPick) {
 // to show a single category only (used when a texture row's name is
 // clicked: alternatives for THIS element, not the whole library).
 function openGallery(files, { title = "Element library", selected = null,
-                              category = null }, onPick) {
+                              category = null, onShowAll = null }, onPick) {
   if (category) {
     files = files.filter((f) => f.startsWith(category + "/"));
   }
@@ -526,7 +526,18 @@ function openGallery(files, { title = "Element library", selected = null,
   close.className = "fcore-btn";
   close.textContent = "close";
   close.onclick = () => shade.remove();
-  head.append(caption, close);
+  head.append(caption);
+  if (onShowAll) {
+    const all = document.createElement("button");
+    all.className = "fcore-btn";
+    all.style.marginLeft = "auto";
+    all.textContent = "all elements";
+    all.title = "browse the whole library instead of this family";
+    all.onclick = () => { shade.remove(); onShowAll(); };
+    head.appendChild(all);
+    close.style.marginLeft = "8px";
+  }
+  head.appendChild(close);
 
   const body = document.createElement("div");
   body.className = "fcore-gal-body";
@@ -721,6 +732,9 @@ class FlareEditor {
   addElement(kind, file = null) {
     const elem = JSON.parse(JSON.stringify(ADD_DEFAULTS[kind] || ADD_DEFAULTS.texture));
     elem.id = this.mintId(elem.type);
+    // the row's family, fixed at birth and kept through texture swaps
+    if (kind !== "texture") elem.slot = CATEGORY_OF[kind] || CATEGORY_OF[elem.label] || "";
+    else if (file?.includes("/")) elem.slot = file.split("/")[0];
     if (elem.type === "texture") {
       if (file) {
         elem.params.file = file;
@@ -737,7 +751,13 @@ class FlareEditor {
     this.mutate((p) => p.elements.push(elem));
   }
 
+  // A row keeps its FAMILY even after a texture is dropped into it: the
+  // slot is what the layer is for ("this is my hoop"), not what file it
+  // currently holds. Without this, swapping a hoop for a glow texture made
+  // that row a glows row forever, and every swapped row ended up offering
+  // glows.
   categoryOf(elem) {
+    if (elem.slot) return elem.slot;
     if (elem.type === "texture" && elem.params?.file?.includes("/")) {
       return elem.params.file.split("/")[0];
     }
@@ -748,15 +768,25 @@ class FlareEditor {
   // filtered to its own category. Picking a file swaps a texture element's
   // file, or converts a procedural element into that texture while keeping
   // its position, size, opacity, colour, blur and identity.
-  openAlternatives(elem, i) {
-    const cat = this.categoryOf(elem);
+  openAlternatives(elem, i, showAll = false) {
+    const cat = showAll ? null : this.categoryOf(elem);
     this.fetchLibrary().then(() => {
+      const inCat = cat
+        ? this.libraryFiles.filter((f) => f.startsWith(cat + "/")).length : 0;
+      // never a dead end: an empty family opens the whole library with a note
+      const empty = cat && inCat === 0;
       openGallery(this.libraryFiles, {
-        title: cat ? `${cat.replace(/_/g, " ")} — pick one` : "Pick an element",
+        title: empty
+          ? `no ${cat.replace(/_/g, " ")} elements yet — showing everything`
+          : cat ? `${cat.replace(/_/g, " ")} — pick one` : "All elements",
         selected: elem.type === "texture" ? (elem.params?.file || null) : null,
-        category: cat,
+        category: empty ? null : cat,
+        onShowAll: (cat && !empty)
+          ? () => this.openAlternatives(elem, i, true) : null,
       }, (ref) => this.mutate((p) => {
         const e = p.elements[i];
+        // remember the family before the file overwrites the evidence
+        if (!e.slot) e.slot = this.categoryOf(e) || "";
         if (e.type !== "texture") {
           e.type = "texture";
           e.params = { file: ref, channel: "auto" };
