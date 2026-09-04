@@ -184,7 +184,9 @@ class TestOcclusionSmoothing:
         e = [fp[f].sum().item() for f in range(10)]
         peak = max(e)
         deltas = [abs(b - a) / peak for a, b in zip(e, e[1:])]
-        assert max(deltas) < 0.5  # unsmoothed this is a 1.0 cliff
+        # occlusion now shrinks as well as dims, so energy falls with a
+        # higher exponent — the smoothed fade still must beat the raw cliff
+        assert max(deltas) < 0.75
         # without tid the same setup keeps the hard cut (behavior preserved)
         lights_plain = [[{"u": 0.5, "v": 0.5, "brightness": 1.0}]
                         for _ in range(10)]
@@ -193,6 +195,7 @@ class TestOcclusionSmoothing:
         e2 = [fp2[f].sum().item() for f in range(10)]
         d2 = [abs(b - a) / peak for a, b in zip(e2, e2[1:])]
         assert max(d2) > 0.9
+        assert max(deltas) < max(d2) * 0.8
 
 
 class TestKeyframes:
@@ -337,6 +340,82 @@ class TestOcclusionSequence:
         for a, b in zip(energy, energy[1:]):
             assert b >= a - 1e-3
         assert energy[-1] > energy[0]
+
+
+class TestElementBlurMaskShrink:
+    def _glow(self, **over):
+        elem = {"type": "glow", "offset": 0.0, "scale": 0.25,
+                "auto_rotate": False, "params": {"softness": 0.2, "falloff": 2.5}}
+        elem.update(over)
+        return validate_preset({"schema_version": 1, "elements": [elem]})
+
+    def test_schema_bounds(self):
+        p = self._glow(blur=0.5, light_mask=0.7)
+        assert p["elements"][0]["blur"] == 0.5
+        assert p["elements"][0]["light_mask"] == 0.7
+        with pytest.raises(ValueError, match="blur"):
+            self._glow(blur=1.5)
+        with pytest.raises(ValueError, match="light_mask"):
+            self._glow(light_mask=-0.1)
+
+    def test_occlusion_shrinks_not_only_dims(self):
+        lights_free = [{"x": 0.0, "y": 0.0, "occlusion": 0.0}]
+        lights_half = [{"x": 0.0, "y": 0.0, "occlusion": 0.6}]
+        p = self._glow()
+        free = render_stack(p, lights_free, 128, 128, "cpu", torch.float32).sum(-1)
+        occ = render_stack(p, lights_half, 128, 128, "cpu", torch.float32).sum(-1)
+        # normalize away the brightness fade, compare FOOTPRINTS: the
+        # occluded flare must be spatially smaller, not just dimmer
+        free_n = free / free.max()
+        occ_n = occ / occ.max()
+        area_free = (free_n > 0.3).sum().item()
+        area_occ = (occ_n > 0.3).sum().item()
+        assert area_occ < area_free * 0.7
+        assert occ.max() < free.max()  # and still dimmer
+
+    def test_blur_softens_preserving_energy(self):
+        sharp_p = validate_preset({"schema_version": 1, "elements": [
+            {"type": "glint", "offset": 0.0, "scale": 0.6, "auto_rotate": False,
+             "params": {"points": 8, "length": 0.6, "thickness": 0.004,
+                        "length_jitter": 0.0}}]})
+        soft_p = validate_preset(json.loads(json.dumps({
+            "schema_version": 1, "elements": [
+                {"type": "glint", "offset": 0.0, "scale": 0.6, "blur": 0.6,
+                 "auto_rotate": False,
+                 "params": {"points": 8, "length": 0.6, "thickness": 0.004,
+                            "length_jitter": 0.0}}]})))
+        lights = [{"x": 0.0, "y": 0.0}]
+        sharp = render_stack(sharp_p, lights, 128, 128, "cpu", torch.float32)
+        soft = render_stack(soft_p, lights, 128, 128, "cpu", torch.float32)
+        assert soft.max() < sharp.max() * 0.6            # peaks flattened
+        assert soft.sum() == pytest.approx(sharp.sum().item(), rel=0.15)
+
+    def test_light_mask_confines_to_bright_areas(self):
+        p = self._glow(light_mask=1.0, scale=1.5,
+                       params={"softness": 0.8, "falloff": 0.8})
+        lights = [{"x": 0.0, "y": 0.0}]
+        mask = torch.zeros(96, 96)
+        mask[:, 48:] = 1.0  # right half of the scene is bright
+        out = render_stack(p, lights, 96, 96, "cpu", torch.float32,
+                           scene_mask=mask).sum(-1)
+        left = out[:, :40].sum().item()
+        right = out[:, 56:].sum().item()
+        assert left < right * 0.05  # confined to the lit side
+
+    def test_bloom_through_node(self):
+        preset = json.dumps({"schema_version": 1, "elements": [
+            {"type": "glow", "offset": 0, "scale": 2.0, "intensity": 0.8,
+             "auto_rotate": False, "light_mask": 1.0,
+             "params": {"softness": 1.0, "falloff": 0.7}}]})
+        dark = torch.zeros(1, 64, 96, 3)
+        bright = torch.zeros(1, 64, 96, 3)
+        bright[0, :, 64:] = 0.95
+        _, fp_dark, _ = run_node(dark, preset_json=preset)
+        _, fp_bright, _ = run_node(bright, preset_json=preset)
+        assert fp_dark.sum() == pytest.approx(0.0, abs=1e-4)
+        lit = fp_bright[0, :, 64:].sum().item()
+        unlit = fp_bright[0, :, :48].sum().item()
+        assert lit > unlit * 5
 
 
 class TestTextureCenterShift:

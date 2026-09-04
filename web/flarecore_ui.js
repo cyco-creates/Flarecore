@@ -46,6 +46,17 @@ function showWidget(w) {
   if (w.element?.style) w.element.style.display = "";
 }
 
+// The editor fills whatever node height remains below it. Its y-offset
+// inside the node is measured by the layout every draw, so height =
+// node height - offset - margin tracks manual resizes exactly.
+function fitEditor(node) {
+  const ew = findWidget(node, "flare_editor");
+  if (!ew) return;
+  const y = Number.isFinite(ew.y) && ew.y > 0 ? ew.y : ew.last_y;
+  if (!Number.isFinite(y) || y <= 0) return;
+  node._fcEditorH = Math.max(280, node.size[1] - y - 12);
+}
+
 function setAdvanced(node, visible) {
   node._fcAdvanced = visible;
   // properties are serialized with the workflow, so the toggle survives
@@ -60,6 +71,9 @@ function setAdvanced(node, visible) {
   const want = node.computeSize()[1];
   if (node.size[1] < want) node.setSize([node.size[0], want]);
   node.setDirtyCanvas(true, true);
+  // the editor's y-offset changes when widgets appear/disappear; refit
+  // once the next layout pass has measured it
+  setTimeout(() => { fitEditor(node); node.setDirtyCanvas(true, true); }, 80);
 }
 
 function findWidget(node, name) {
@@ -188,17 +202,14 @@ class PointPicker {
       ctx.fill();
     }
 
+    // light handle: a plain ring and dot — no sun-ray decoration, which
+    // read as a rendered sun on the backdrop
     ctx.strokeStyle = "#ffb648";
-    ctx.fillStyle = "rgba(255,182,72,0.25)";
+    ctx.fillStyle = "rgba(255,182,72,0.18)";
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(lx, ly, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2;
-      ctx.beginPath();
-      ctx.moveTo(lx + Math.cos(a) * 11, ly + Math.sin(a) * 11);
-      ctx.lineTo(lx + Math.cos(a) * 15, ly + Math.sin(a) * 15);
-      ctx.stroke();
-    }
+    ctx.fillStyle = "#ffb648";
+    ctx.beginPath(); ctx.arc(lx, ly, 2.5, 0, Math.PI * 2); ctx.fill();
 
     ctx.strokeStyle = "#5fd7ff";
     ctx.fillStyle = "rgba(95,215,255,0.18)";
@@ -266,7 +277,8 @@ class PointPicker {
 // (glow, disc, iris, multi-iris, spike ball, shimmer, sparkle, rays,
 // streak, stripe, ring, hoop, spectral, fog) plus library textures.
 const ADD_MENU = [
-  ["Glow", "glow"], ["Fog", "fog"], ["Disc", "disc"],
+  ["Glow", "glow"], ["Bloom (bright areas)", "bloom"],
+  ["Fog", "fog"], ["Disc", "disc"],
   ["Iris ghost", "iris"], ["Multi-iris", "multi_iris"],
   ["Spike ball", "spike_ball"], ["Shimmer", "shimmer"],
   ["Sparkle", "sparkle"], ["Rays", "rays"],
@@ -277,6 +289,7 @@ const ADD_MENU = [
 
 const ADD_DEFAULTS = {
   glow: { type: "glow", label: "glow", offset: 0, scale: 0.4, intensity: 1, color: [1, 0.95, 0.85], params: { softness: 0.35, falloff: 1.3 } },
+  bloom: { type: "glow", label: "bloom", offset: 0, scale: 2.2, intensity: 0.5, auto_rotate: false, light_mask: 1, color: [1, 0.97, 0.9], params: { softness: 1.1, falloff: 0.7 } },
   fog: { type: "glow", label: "fog", offset: 0, scale: 1.6, intensity: 0.25, color: [1, 0.97, 0.9], params: { softness: 0.8, falloff: 0.8 } },
   disc: { type: "iris", label: "disc", offset: 0.5, scale: 0.16, intensity: 0.3, color: [0.8, 0.9, 1], params: { blades: 24, edge_softness: 0.55 } },
   iris: { type: "iris", label: "iris", offset: 0.7, scale: 0.12, intensity: 0.25, color: [0.85, 0.93, 1], dispersion: 0.4, params: { blades: 8, edge_softness: 0.3 } },
@@ -294,6 +307,7 @@ const ADD_DEFAULTS = {
 };
 
 const COMMON_SPECS = {
+  light_mask: [0, 1, 0.01],
   dispersion: [0, 3, 0.05], dispersion_samples: [3, 15, 2],
   rotation: [-180, 180, 1], count: [1, 24, 1], spread: [0, 1, 0.01],
   count_falloff: [0.1, 1, 0.01], count_scale_step: [0.5, 2, 0.01],
@@ -302,6 +316,7 @@ const COMMON_SPECS = {
 // What an ABSENT key means (the schema's defaults) — without these an unset
 // slider would display its range minimum, e.g. rotation reading -180.
 const COMMON_DEFAULTS = {
+  light_mask: 0,
   dispersion: 0, dispersion_samples: 3, rotation: 0, count: 1, spread: 0,
   count_falloff: 1, count_scale_step: 1,
 };
@@ -477,8 +492,14 @@ function popupMenu(evt, entries, onPick) {
 }
 
 // Full-screen element gallery: thumbnails of everything in the library,
-// grouped by category. Click a thumbnail -> onPick(ref).
-function openGallery(files, { title = "Element library", selected = null }, onPick) {
+// grouped by category. Click a thumbnail -> onPick(ref). Pass `category`
+// to show a single category only (used when a texture row's name is
+// clicked: alternatives for THIS element, not the whole library).
+function openGallery(files, { title = "Element library", selected = null,
+                              category = null }, onPick) {
+  if (category) {
+    files = files.filter((f) => f.startsWith(category + "/"));
+  }
   document.querySelectorAll(".fcore-shade").forEach((m) => m.remove());
   const shade = document.createElement("div");
   shade.className = "fcore-shade";
@@ -543,7 +564,9 @@ function openGallery(files, { title = "Element library", selected = null }, onPi
   document.body.appendChild(shade);
 }
 
-// slider + numeric box column, labelled above — the mockup's control unit
+// slider + numeric box column, labelled above — the mockup's control unit.
+// The number box shows the TRUE value even when it exceeds the slider range
+// (e.g. an HDR intensity of 1.4 on a 0..1 slider).
 function sliderCol(label, value, [min, max, step], onChange) {
   const wrap = document.createElement("div");
   wrap.className = "fcore-col";
@@ -551,11 +574,12 @@ function sliderCol(label, value, [min, max, step], onChange) {
   lab.textContent = label;
   const range = document.createElement("input");
   range.type = "range"; range.min = min; range.max = max; range.step = step;
-  range.value = value ?? min;
+  const real = Number.isFinite(Number(value)) ? Number(value) : min;
+  range.value = Math.min(max, Math.max(min, real));
   const num = document.createElement("input");
-  num.type = "number"; num.min = min; num.max = max; num.step = step;
+  num.type = "number"; num.min = min; num.step = step;
   const fmt = (v) => Number(v).toFixed(step >= 1 ? 0 : 2);
-  num.value = fmt(range.value);
+  num.value = fmt(real);
   range.addEventListener("input", () => {
     num.value = fmt(range.value);
     onChange(Number(range.value));
@@ -563,9 +587,9 @@ function sliderCol(label, value, [min, max, step], onChange) {
   num.addEventListener("change", () => {
     let v = Number(num.value);
     if (!Number.isFinite(v)) return;
-    v = Math.min(max, Math.max(min, v));
+    v = Math.max(min, v);
     num.value = fmt(v);
-    range.value = v;
+    range.value = Math.min(max, v);
     onChange(v);
   });
   for (const el of [range, num]) {
@@ -868,29 +892,54 @@ class FlareEditor {
 
     const chip = this.chipFor(elem);
 
-    // the NAME is the door: click it to open this element's panel — for a
-    // texture element that panel leads with the gallery
-    const name = document.createElement("span");
-    name.className = "fcore-name";
-    name.textContent = elem.label || elem.type;
-    name.title = elem.type === "texture"
-      ? (elem.params?.file || "no file") + " — click to change"
-      : "click for all settings";
     const toggle = () => {
       this.expanded.has(i) ? this.expanded.delete(i) : this.expanded.add(i);
       this.build();
     };
-    name.onclick = toggle;
-    chip.style.cursor = "pointer";
-    chip.onclick = toggle;
+
+    // For a texture element the NAME opens the gallery filtered to its own
+    // category — swap this glow for another glow, not for a streak. All
+    // other settings live behind the chevron. For procedural elements the
+    // name is just another way to the settings.
+    const name = document.createElement("span");
+    name.className = "fcore-name";
+    name.textContent = elem.label || elem.type;
+    if (elem.type === "texture") {
+      const cat = elem.params?.file?.includes("/")
+        ? elem.params.file.split("/")[0] : null;
+      name.title = (elem.params?.file || "no file") +
+        " — click for alternatives" + (cat ? ` (${cat})` : "");
+      const pick = async () => {
+        await this.fetchLibrary();
+        openGallery(this.libraryFiles, {
+          title: cat ? `${cat.replace(/_/g, " ")} — pick one` : "Pick an element",
+          selected: elem.params?.file || null,
+          category: cat,
+        }, (ref) => this.mutate((p) => {
+          p.elements[i].params.file = ref;
+          p.elements[i].label =
+            ref.split("/").pop().replace(/\.png$/, "").replace(/_/g, " ");
+        }));
+      };
+      name.onclick = pick;
+      chip.style.cursor = "pointer";
+      chip.onclick = pick;
+    } else {
+      name.title = "settings";
+      name.onclick = toggle;
+      chip.style.cursor = "pointer";
+      chip.onclick = toggle;
+    }
 
     head.append(en, chip, name);
     head.appendChild(sliderCol("pos", elem.offset ?? 0, [-1, 3, 0.01],
       (v) => this.mutateQuiet((p) => { p.elements[i].offset = v; })));
     head.appendChild(sliderCol("size", elem.scale ?? 0.5, [0.01, 2.5, 0.01],
       (v) => this.mutateQuiet((p) => { p.elements[i].scale = v; })));
-    head.appendChild(sliderCol("opac", elem.intensity ?? 1, [0, 3, 0.01],
+    head.appendChild(sliderCol("opac", elem.intensity ?? 1, [0, 1, 0.01],
       (v) => this.mutateQuiet((p) => { p.elements[i].intensity = v; })));
+    head.appendChild(sliderCol("blur", elem.blur ?? 0, [0, 1, 0.01],
+      (v) => this.mutateQuiet((p) => { p.elements[i].blur = v; })));
 
     // recolor lives on the face of the row, not buried in a submenu
     const col = document.createElement("input");
@@ -905,14 +954,17 @@ class FlareEditor {
 
     const acts = document.createElement("div");
     acts.className = "fcore-acts";
-    const mk = (txt, title, fn) => {
+    const mk = (txt, title, fn, html = false) => {
       const b = document.createElement("button");
       b.className = "fcore-mini";
-      b.textContent = txt;
+      if (html) b.innerHTML = txt;
+      else b.textContent = txt;
       b.title = title;
       b.onclick = fn;
       acts.appendChild(b);
+      return b;
     };
+    mk(this.expanded.has(i) ? "▴" : "▾", "settings", toggle);
     mk("⧉", "duplicate", () => {
       this.remapExpanded((e) => (e > i ? e + 1 : e));
       this.mutate((p) => {
@@ -931,10 +983,16 @@ class FlareEditor {
         if (i < p.elements.length - 1) p.elements.splice(i + 1, 0, p.elements.splice(i, 1)[0]);
       });
     });
-    mk("🗑", "delete", () => {
+    const TRASH_SVG =
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" ' +
+      'stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
+      '<path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 ' +
+      '0 1-2 2H7a2 2 0 0 1-2-2V6m5 5v6m4-6v6"/></svg>';
+    const del = mk(TRASH_SVG, "delete", () => {
       this.remapExpanded((e) => (e === i ? -1 : e > i ? e - 1 : e));
       this.mutate((p) => p.elements.splice(i, 1));
-    });
+    }, true);
+    del.style.color = "#c96a6a";
     head.appendChild(acts);
 
     row.appendChild(head);
@@ -970,22 +1028,6 @@ class FlareEditor {
     };
 
     if (elem.type === "texture") {
-      // the gallery IS this element's main setting
-      const pickBtn = document.createElement("button");
-      pickBtn.className = "fcore-btn accent";
-      pickBtn.style.gridColumn = "1 / -1";
-      pickBtn.textContent = "choose element from gallery…";
-      pickBtn.onclick = async () => {
-        await this.fetchLibrary();
-        openGallery(this.libraryFiles,
-          { title: "Pick an element", selected: elem.params?.file || null },
-          (ref) => this.mutate((p) => {
-            p.elements[i].params.file = ref;
-            p.elements[i].label =
-              ref.split("/").pop().replace(/\.png$/, "").replace(/_/g, " ");
-          }));
-      };
-      adv.appendChild(pickBtn);
       adv.appendChild(dropdown("channel (luminance = full recolor)",
         elem.params?.channel || "auto",
         ["auto", "rgb", "luminance"], (v) => setParam("channel", v)));
@@ -1059,18 +1101,31 @@ app.registerExtension({
 
       const editor = new FlareEditor(node);
       node._fcEditor = editor;
+      // The editor's height follows the node: fitEditor() measures the
+      // widget's y-offset after each layout and hands the remaining node
+      // height to the editor, so dragging the node bigger gives more room
+      // for sliders and elements instead of dead space + scrolling.
       const editorWidget = node.addDOMWidget("flare_editor", "flarecore.editor",
-        editor.root, { serialize: false, hideOnZoom: true, getMinHeight: () => 240 });
+        editor.root, { serialize: false, hideOnZoom: true, getMinHeight: () => 280 });
       editorWidget.serialize = false;
       editorWidget.serializeValue = () => undefined;
-      editorWidget.computeSize = (w) => [Number(w) || node.size?.[0] || 460, 380];
+      editorWidget.computeSize = (w) =>
+        [Number(w) || node.size?.[0] || 500, node._fcEditorH ?? 400];
 
       // The panels stay at the END of node.widgets: widgets_values is a
       // positional array and ComfyUI serializes a null for each DOM widget,
       // so any other position shifts every real value on reload.
       setAdvanced(node, false);
-      node.setSize([Math.max(node.size[0], 470), node.computeSize()[1]]);
+      node.setSize([Math.max(node.size[0], 500),
+                    Math.max(node.computeSize()[1], 880)]);
       setTimeout(() => picker.draw(), 60);
+    };
+
+    // Manual node resize: hand the new leftover height to the editor.
+    const onResize = nodeType.prototype.onResize;
+    nodeType.prototype.onResize = function (size) {
+      onResize?.apply(this, arguments);
+      fitEditor(this);
     };
 
     // Tear the panels down with the node: the picker holds an interval, a
@@ -1123,7 +1178,10 @@ app.registerExtension({
     const onExecuted = nodeType.prototype.onExecuted;
     nodeType.prototype.onExecuted = function (message) {
       onExecuted?.apply(this, arguments);
-      const imgs = message?.images;
+      // fc_preview is the clean input plate for the picker backdrop; it is
+      // NOT sent as ui.images so ComfyUI does not also paint a preview
+      // image under the node
+      const imgs = message?.fc_preview ?? message?.images;
       if (imgs?.length && this._fcPicker) {
         const im = imgs[0];
         const url = api.apiURL(

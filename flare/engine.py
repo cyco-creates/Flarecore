@@ -28,10 +28,19 @@ import zlib
 import torch
 
 from .axis import axis_angle, element_center
+from .depth import blur_depth
 from .elements import ELEMENT_FUNCTIONS
 from .grid import make_grid
 
 K_DISPERSION = 0.05
+
+# A partially occluded light shrinks its flare as well as dimming it: the
+# visible emitting area is smaller, so every element scales by
+# (1 - occlusion) ** OCCLUSION_SHRINK on top of the brightness fade.
+OCCLUSION_SHRINK = 0.6
+
+# blur = 1.0 softens an element with a gaussian sigma of 4% of frame height.
+BLUR_SIGMA_MAX = 0.04
 
 # Piecewise-linear spectrum anchors from red to blue.
 _SPECTRUM_ANCHORS = [
@@ -114,14 +123,28 @@ def _apply_weight(field: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
     return field.unsqueeze(-1) * weight
 
 
+def _blur_rgb(rgb: torch.Tensor, amount: float) -> torch.Tensor:
+    """Gaussian-soften an (H, W, 3) contribution; amount is a sigma as a
+    fraction of frame height (reuses the depth module's separable blur)."""
+    return blur_depth(rgb.permute(2, 0, 1), amount).permute(1, 2, 0)
+
+
 def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
-                        base_seed, elem_index, light_weight):
+                        base_seed, elem_index, light_weight, scene_mask=None):
     """Add every count-instance of one element for one light into `out`."""
     fn = ELEMENT_FUNCTIONS[elem["type"]]
     px, py = light["x"], light["y"]
     ax = light.get("ax", 0.0)
     ay = light.get("ay", 0.0)
     stretch_x, stretch_y = elem["stretch"]
+
+    # a covered light emits from a smaller visible area: shrink with occlusion
+    occ = light.get("occlusion", 0.0)
+    size_mult = max(1.0 - occ, 1e-3) ** OCCLUSION_SHRINK if occ > 0.0 else 1.0
+
+    blur = elem.get("blur", 0.0)
+    lmask = elem.get("light_mask", 0.0)
+    heavy = blur > 0.0 or (lmask > 0.0 and scene_mask is not None)
 
     rot = math.radians(elem["rotation"])
     if elem["auto_rotate"]:
@@ -131,7 +154,8 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
     for i in range(elem["count"]):
         t_i = elem["offset"] + i * elem["spread"]
         intensity_i = elem["intensity"] * (elem["count_falloff"] ** i)
-        scale_i = max(elem["scale"] * (elem["count_scale_step"] ** i) * global_scale, 1e-6)
+        scale_i = max(elem["scale"] * (elem["count_scale_step"] ** i)
+                      * global_scale, 1e-6) * size_mult
         if intensity_i <= 0.0:
             continue
 
@@ -145,13 +169,27 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
         u = (u0 * cos_r + v0 * sin_r) / (scale_i * stretch_x)
         v = (-u0 * sin_r + v0 * cos_r) / (scale_i * stretch_y)
 
-        for s, weight in passes:
-            field = fn(u * s, v * s, params) if s != 1.0 else fn(u, v, params)
-            out.add_(_apply_weight(field, weight), alpha=intensity_i * light_weight)
+        if heavy:
+            inst = torch.zeros_like(out)
+            for s, weight in passes:
+                field = fn(u * s, v * s, params) if s != 1.0 else fn(u, v, params)
+                inst.add_(_apply_weight(field, weight))
+            if blur > 0.0:
+                inst = _blur_rgb(inst, blur * BLUR_SIGMA_MAX)
+            if lmask > 0.0 and scene_mask is not None:
+                # fade the element toward the scene's bright areas
+                factor = (1.0 - lmask) + lmask * scene_mask
+                inst = inst * factor.unsqueeze(-1)
+            out.add_(inst, alpha=intensity_i * light_weight)
+        else:
+            for s, weight in passes:
+                field = fn(u * s, v * s, params) if s != 1.0 else fn(u, v, params)
+                out.add_(_apply_weight(field, weight), alpha=intensity_i * light_weight)
 
 
 def render_stack(preset, lights, height, width, device, dtype,
-                 extra_seed=0, intensity=1.0, scale=1.0, grid=None, out=None):
+                 extra_seed=0, intensity=1.0, scale=1.0, grid=None, out=None,
+                 scene_mask=None):
     """Render one frame's flare stack in linear light.
 
     preset: a validated preset dict (see schema.validate_preset).
@@ -163,6 +201,8 @@ def render_stack(preset, lights, height, width, device, dtype,
     intensity/scale: node-level global multipliers on top of the preset's.
     out: optional zeroed (height, width, 3) tensor to accumulate into, so a
         video batch can preallocate one output instead of stacking copies.
+    scene_mask: optional (height, width) brightness mask in [0, 1]; elements
+        with light_mask > 0 fade toward the mask's bright areas.
 
     Returns (height, width, 3) linear RGB; genuinely zero where no element
     contributes.
@@ -192,7 +232,8 @@ def render_stack(preset, lights, height, width, device, dtype,
                            light.get("ax", 0.0), light.get("ay", 0.0))
         for idx, elem in enabled:
             _accumulate_element(out, x, y, elem, passes_by_idx[idx], light,
-                                theta, g_scale, base_seed, idx, weight)
+                                theta, g_scale, base_seed, idx, weight,
+                                scene_mask=scene_mask)
 
     tint = torch.tensor(g["tint"], device=device, dtype=dtype)
     out.mul_(tint * g_intensity)
@@ -200,11 +241,13 @@ def render_stack(preset, lights, height, width, device, dtype,
 
 
 def render_batch(preset, lights_per_frame, height, width, device, dtype,
-                 extra_seed=0, intensity=1.0, scale=1.0):
+                 extra_seed=0, intensity=1.0, scale=1.0, scene_masks=None):
     """Render a batch: lights_per_frame is a list (length B) of light lists.
 
     Preallocates the (B, height, width, 3) result and renders every frame
-    into it in place — no per-frame copies, no stack doubling.
+    into it in place — no per-frame copies, no stack doubling. scene_masks
+    is an optional (B, height, width) brightness stack for light_mask
+    elements.
     """
     grid = make_grid(height, width, device, dtype)
     out = torch.zeros(len(lights_per_frame), height, width, 3,
@@ -212,7 +255,8 @@ def render_batch(preset, lights_per_frame, height, width, device, dtype,
     for i, lights in enumerate(lights_per_frame):
         render_stack(preset, lights, height, width, device, dtype,
                      extra_seed=extra_seed, intensity=intensity, scale=scale,
-                     grid=grid, out=out[i])
+                     grid=grid, out=out[i],
+                     scene_mask=None if scene_masks is None else scene_masks[i])
     return out
 
 

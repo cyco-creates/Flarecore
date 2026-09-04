@@ -129,12 +129,15 @@ class TestWeights:
         bright = render_stack(p, [light_at(0.5, 0.5, brightness=1.0)], 64, 64, "cpu", torch.float32)
         assert torch.allclose(dim * 4.0, bright, atol=1e-6)
 
-    def test_occlusion_fades(self):
+    def test_occlusion_fades_and_shrinks(self):
+        # a covered light dims AND contracts: brightness scales by (1-occ)
+        # and element size by (1-occ)**OCCLUSION_SHRINK, so total energy
+        # falls faster than the brightness fade alone
         p = preset_of({"type": "glow"})
         full = render_stack(p, [light_at(0.5, 0.5, occlusion=0.0)], 64, 64, "cpu", torch.float32)
         half = render_stack(p, [light_at(0.5, 0.5, occlusion=0.5)], 64, 64, "cpu", torch.float32)
         gone = render_stack(p, [light_at(0.5, 0.5, occlusion=1.0)], 64, 64, "cpu", torch.float32)
-        assert torch.allclose(half * 2.0, full, atol=1e-6)
+        assert 0.0 < half.sum() < full.sum() * 0.5
         assert gone.abs().max() == 0.0
 
     def test_tint_and_intensity(self):

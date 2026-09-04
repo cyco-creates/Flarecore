@@ -6,6 +6,7 @@ import logging
 import torch
 
 from ..flare.colorspace import srgb_to_linear, linear_to_srgb
+from ..flare.depth import blur_depth
 from ..flare.detect import detect_lights, linear_luminance
 from ..flare.engine import render_batch, composite
 from ..flare.grid import uv_to_grid
@@ -134,9 +135,19 @@ class FlareRender:
                 })
             engine_lights.append(frame)
 
+        # Elements with light_mask fade toward the scene's bright areas; the
+        # mask is the frame's normalized luminance, gently blurred. Only
+        # built when the preset actually uses it.
+        scene_masks = None
+        if any(e.get("light_mask", 0.0) > 0.0 for e in preset["elements"]):
+            lum = linear_luminance(image_linear)  # (B, H, W)
+            peak = lum.amax(dim=(-2, -1), keepdim=True).clamp(min=1e-6)
+            scene_masks = blur_depth((lum / peak).clamp(0.0, 1.0), 0.02)
+
         flare_linear = render_batch(
             preset, engine_lights, height, width, device, dtype,
             extra_seed=seed, intensity=intensity, scale=scale,
+            scene_masks=scene_masks,
         )
 
         out_linear = composite(image_linear, flare_linear, blend_mode)
@@ -151,7 +162,12 @@ class FlareRender:
         result = (out, flare_pass, flare_alpha)
         if _folder_paths is None:
             return result
-        return {"ui": _save_preview(out[0]), "result": result}
+        # The picker backdrop is the CLEAN input plate, not the composite —
+        # a rendered flare core on the backdrop reads as a second sun and
+        # makes positioning confusing. It rides a custom ui key so ComfyUI
+        # does not also display it as a preview image under the node.
+        return {"ui": {"fc_preview": _save_preview(rgb[0])["images"]},
+                "result": result}
 
     def _smooth_occlusion(self, lights_per_frame, amount):
         """Low-pass each tracked light's occlusion series along the batch.

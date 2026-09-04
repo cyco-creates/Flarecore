@@ -37,6 +37,8 @@ ELEMENT_COMMON_DEFAULTS = {
     "auto_rotate": True,    # add the flare axis angle to rotation
     "intensity": 1.0,
     "color": [1.0, 1.0, 1.0],
+    "blur": 0.0,            # 0..1 gaussian soften of the rendered element
+    "light_mask": 0.0,      # 0..1: modulate by scene brightness (bloom-like)
     "dispersion": 0.0,
     "dispersion_samples": 3,  # >= 3; 3 = plain R/G/B dispersion
     "count": 1,
@@ -172,6 +174,9 @@ def _validate_element(raw: dict, index: int) -> dict:
     elem["intensity"] = _require_number(elem["intensity"], f"{where}.intensity",
                                         lo=0.0, hi=1000.0)
     elem["color"] = _require_vec(elem["color"], f"{where}.color", 3, lo=0.0, hi=100.0)
+    elem["blur"] = _require_number(elem["blur"], f"{where}.blur", lo=0.0, hi=1.0)
+    elem["light_mask"] = _require_number(elem["light_mask"], f"{where}.light_mask",
+                                         lo=0.0, hi=1.0)
     # dispersion scales coordinates by 1 - d*0.05*w; past 8 the look is junk
     # and at 20 the red sample collapses to a full-frame constant
     elem["dispersion"] = _require_number(elem["dispersion"], f"{where}.dispersion",
