@@ -4,9 +4,16 @@
 try:
     # Normal path: ComfyUI loads this directory as a package, so relative
     # imports work.
-    from .nodes.render import FlareRender
-    from .nodes.preset import FlarePresetLoader
-    from .nodes.depth import FlareDepthAdapter
+    from .nodes import (
+        FlareRender,
+        FlarePresetLoader,
+        FlareDepthAdapter,
+        FlareElementPrompts,
+        FlareTexturePrepare,
+        FlareElementSave,
+        FlareElementPicker,
+    )
+    from .nodes.api import register_routes
 except ImportError:
     # No package context (pytest collecting the repo root, or a direct
     # import of this file). Re-load ourselves under a proper package name so
@@ -30,17 +37,36 @@ except ImportError:
     FlareRender = _pkg.FlareRender
     FlarePresetLoader = _pkg.FlarePresetLoader
     FlareDepthAdapter = _pkg.FlareDepthAdapter
+    FlareElementPrompts = _pkg.FlareElementPrompts
+    FlareTexturePrepare = _pkg.FlareTexturePrepare
+    FlareElementSave = _pkg.FlareElementSave
+    FlareElementPicker = _pkg.FlareElementPicker
+    register_routes = _pkg.register_routes
+
+# Editor and point-picker widgets.
+WEB_DIRECTORY = "./web"
+
+# Same-origin helper routes for the editor; a no-op outside ComfyUI.
+register_routes()
 
 NODE_CLASS_MAPPINGS = {
     "FlareRender": FlareRender,
     "FlarePresetLoader": FlarePresetLoader,
     "FlareDepthAdapter": FlareDepthAdapter,
+    "FlareElementPrompts": FlareElementPrompts,
+    "FlareTexturePrepare": FlareTexturePrepare,
+    "FlareElementSave": FlareElementSave,
+    "FlareElementPicker": FlareElementPicker,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "FlareRender": "Flare Render",
     "FlarePresetLoader": "Flare Preset Loader",
     "FlareDepthAdapter": "Flare Depth Adapter",
+    "FlareElementPrompts": "Flare Element Prompts",
+    "FlareTexturePrepare": "Flare Texture Prepare",
+    "FlareElementSave": "Flare Element Save",
+    "FlareElementPicker": "Flare Element Picker",
 }
 
-__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
+__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]

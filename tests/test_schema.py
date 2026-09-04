@@ -27,11 +27,11 @@ def test_minimal_preset_fills_all_defaults():
     assert preset["global"]["tint"] == [1.0, 1.0, 1.0]
 
 
-def test_all_seven_types_validate():
+def test_all_types_validate():
     preset = validate_preset(
         {"schema_version": 1, "elements": [{"type": t} for t in ELEMENT_TYPES]}
     )
-    assert len(preset["elements"]) == 7
+    assert len(preset["elements"]) == len(ELEMENT_TYPES)
 
 
 def test_unknown_element_type_names_offender_and_valid_types():

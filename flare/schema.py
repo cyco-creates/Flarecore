@@ -52,6 +52,7 @@ PARAM_DEFAULTS = {
     "glint": {"points": 8, "length": 0.5, "thickness": 0.008, "length_jitter": 0.3},
     "spectral": {"shape": "ring", "radius": 0.5, "thickness": 0.08,
                  "blades": 8, "edge_softness": 0.1, "hollow": 0.0},
+    "texture": {"file": "", "channel": "auto"},
 }
 
 # Per-type overrides of the common element defaults.
@@ -183,6 +184,22 @@ def _validate_element(raw: dict, index: int) -> dict:
         p["length_jitter"] = _require_number(
             p["length_jitter"], f"{where}.params.length_jitter", lo=0.0, hi=1.0
         )
+    elif etype == "texture":
+        f = p["file"]
+        if not isinstance(f, str):
+            raise ValueError(f"{where}.params.file must be a string, got {f!r}")
+        norm = f.replace("\\", "/")
+        if norm.startswith("/") or ".." in norm.split("/") or (len(norm) > 1 and norm[1] == ":"):
+            raise ValueError(
+                f"{where}.params.file must be a relative path inside the "
+                f"element library, got {f!r}"
+            )
+        p["file"] = norm
+        if p["channel"] not in ("auto", "rgb", "luminance"):
+            raise ValueError(
+                f"{where}.params.channel must be 'auto', 'rgb' or "
+                f"'luminance', got {p['channel']!r}"
+            )
     elif etype == "spectral":
         if p["shape"] not in ("ring", "iris"):
             raise ValueError(f"{where}.params.shape must be 'ring' or 'iris', got {p['shape']!r}")

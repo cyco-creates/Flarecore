@@ -2,28 +2,32 @@
 """The flare axis model.
 
 Every element sits at a parametric offset t along the vector from the light
-position P to the frame center C. With C at the grid origin:
+position P to the flare anchor E. The anchor defaults to the frame centre
+(the classic lens-flare axis), but it is a free point: moving it changes both
+the direction of the ghost chain and the spacing between elements, which
+scales with |E - P|.
 
-    element_center = P * (1 - t)
+    element_center = P + t * (E - P)
 
     t = 0  -> on the light
-    t = 1  -> at frame center
-    t > 1  -> past center on the opposite side (the ghost chain)
-    t < 0  -> outside the light, away from center
+    t = 1  -> on the anchor
+    t > 1  -> past the anchor (the ghost chain tail)
+    t < 0  -> behind the light, away from the anchor
 
-The axis angle is atan2(-P.y, -P.x): the direction from the light toward
-center. Elements with auto_rotate add this to their own rotation so streaks
-and polygon ghosts orient coherently as the light moves.
+The axis angle is the direction from the light toward the anchor. Elements
+with auto_rotate add this to their own rotation so streaks and polygon ghosts
+orient coherently as either point moves.
 """
 
 import math
 
 
-def axis_angle(px: float, py: float) -> float:
-    """Angle in radians of the light-to-center direction."""
-    return math.atan2(-py, -px)
+def axis_angle(px: float, py: float, ex: float = 0.0, ey: float = 0.0) -> float:
+    """Angle in radians of the light-to-anchor direction."""
+    return math.atan2(ey - py, ex - px)
 
 
-def element_center(px: float, py: float, t: float) -> tuple[float, float]:
+def element_center(px: float, py: float, t: float,
+                   ex: float = 0.0, ey: float = 0.0) -> tuple[float, float]:
     """Position of an element at parametric offset t along the flare axis."""
-    return px * (1.0 - t), py * (1.0 - t)
+    return px + t * (ex - px), py + t * (ey - py)

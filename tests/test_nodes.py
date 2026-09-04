@@ -44,12 +44,15 @@ PRESET = json.dumps({
 def run_node(image, depth=None, **overrides):
     args = dict(
         preset_json=PRESET, position_mode="manual", light_x=0.3, light_y=0.4,
+        flare_x=0.5, flare_y=0.5,
         detect_threshold=0.8, detect_max_lights=1, occlusion_radius=0.02,
         light_depth=0.0, invert_depth=False, intensity=1.0, scale=1.0,
         blend_mode="add", clamp_output=True, seed=0,
     )
     args.update(overrides)
-    return FlareRender().render(image=image, depth=depth, **args)
+    result = FlareRender().render(image=image, depth=depth, **args)
+    # inside ComfyUI render() returns {"ui": ..., "result": ...}
+    return result["result"] if isinstance(result, dict) else result
 
 
 class TestFlareRender:
@@ -63,8 +66,11 @@ class TestFlareRender:
 
     def test_registration_contract(self):
         assert set(PKG.NODE_CLASS_MAPPINGS) == {
-            "FlareRender", "FlarePresetLoader", "FlareDepthAdapter"
+            "FlareRender", "FlarePresetLoader", "FlareDepthAdapter",
+            "FlareElementPrompts", "FlareTexturePrepare",
+            "FlareElementSave", "FlareElementPicker",
         }
+        assert PKG.WEB_DIRECTORY == "./web"
         assert FlareRender.CATEGORY == "flare"
         assert FlareRender.RETURN_TYPES == ("IMAGE", "IMAGE", "MASK")
         it = FlareRender.INPUT_TYPES()

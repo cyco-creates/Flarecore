@@ -1,0 +1,33 @@
+{
+  "glows": {
+    "soft_halo": "A single soft warm glowing orb of light on a pure black background, perfectly centered, smooth radial falloff with a long gentle tail, macro photograph of light through a cinema prime lens, no other objects, no text",
+    "hot_core": "An intense white-hot point of light with a tight bright core and a subtle bloom halo, centered on a pure black background, photographed with a high-end cinema lens wide open, clean and symmetrical, no text",
+    "hazy_veil": "A very soft diffuse cloud of pale golden light, barely-there atmospheric haze glow, centered on a pure black background, extremely smooth gradients, dreamy cinematic look, no text"
+  },
+  "shimmers": {
+    "star_sparkle": "A delicate star-shaped sparkle of light with many thin radiating needle rays, perfectly centered on a pure black background, macro photograph of light caught on a lens coating, crisp symmetrical rays, no text",
+    "diamond_glint": "A four-pointed diamond glint of white light with long tapering rays and a tiny bright core, centered on a pure black background, elegant and clean, cinema lens sparkle, no text",
+    "shimmer_burst": "A shimmering burst of dozens of fine golden light needles radiating from a small bright center, uneven ray lengths, centered on a pure black background, anamorphic lens sparkle photograph, no text"
+  },
+  "iris_ghosts": {
+    "hex_ghost": "A single translucent hexagonal disc of pale blue light, an aperture ghost reflection, soft glowing edges and slightly brighter rim, perfectly centered on a pure black background, photograph of an internal lens reflection, no text",
+    "pentagon_rim": "A single translucent pentagonal ring of light with a bright thin rim and hollow darker center, soft warm amber color, centered on a pure black background, internal lens reflection photograph, no text",
+    "soft_disc": "A single soft-edged circular disc of dim cyan light, a defocused aperture ghost, very smooth translucent interior, centered on a pure black background, cinematic lens reflection, no text"
+  },
+  "streaks": {
+    "anamorphic_line": "A single horizontal streak of intense blue light stretching across the frame, thin bright core with soft vertical falloff, centered on a pure black background, classic anamorphic cinema lens flare photograph, no text",
+    "warm_beam": "A single horizontal beam of warm golden light, brightest at the center fading smoothly to both sides, thin elegant line on a pure black background, anamorphic lens photograph, no text"
+  },
+  "rings": {
+    "thin_halo_ring": "A single thin perfect circle of soft white light, a delicate halo ring, hollow black interior, perfectly centered on a pure black background, photographed lens reflection, crisp and clean, no text",
+    "double_ring": "Two thin concentric circles of soft light, the outer ring slightly warmer and dimmer than the inner one, hollow black interior, centered on a pure black background, lens flare artifact photograph, no text"
+  },
+  "spectral": {
+    "rainbow_arc": "A thin circular ring of light with smooth rainbow spectrum colors, red on the outside blending through green to blue on the inside, hollow black interior, perfectly centered on a pure black background, chromatic dispersion photograph, no text",
+    "prismatic_smear": "A soft arc of prismatic rainbow light smeared radially like light through a prism edge, gentle and translucent, centered on a pure black background, chromatic lens artifact, no text"
+  },
+  "dirt_bokeh": {
+    "lens_dirt": "Scattered tiny dim specks and smudges of soft light like dust on a lens element catching a bright light, sparse and subtle, spread around the center of a pure black background, cinematic lens dirt plate, no text",
+    "bokeh_cluster": "A loose cluster of a few soft hexagonal bokeh discs of varying dim brightness and slight color variation, out of focus light circles on a pure black background, cinema lens bokeh photograph, no text"
+  }
+}

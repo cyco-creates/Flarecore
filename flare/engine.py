@@ -67,6 +67,8 @@ def _render_element_instance(x, y, elem, light, theta, global_scale, seed):
     params["seed"] = seed
 
     px, py = light["x"], light["y"]
+    ax = light.get("ax", 0.0)
+    ay = light.get("ay", 0.0)
     stretch_x, stretch_y = elem["stretch"]
     base_color = elem["color"]
     dispersion = elem["dispersion"]
@@ -84,7 +86,7 @@ def _render_element_instance(x, y, elem, light, theta, global_scale, seed):
         if intensity_i <= 0.0:
             continue
 
-        cx, cy = element_center(px, py, t_i)
+        cx, cy = element_center(px, py, t_i, ax, ay)
         u0 = x - cx
         v0 = y - cy
         # rotate by -rot so the element's local frame is axis-aligned
@@ -99,15 +101,23 @@ def _render_element_instance(x, y, elem, light, theta, global_scale, seed):
                     [rgb[0] * base_color[0], rgb[1] * base_color[1], rgb[2] * base_color[2]],
                     device=field.device, dtype=field.dtype,
                 ) * intensity_i
-                contrib = field.unsqueeze(-1) * weight
+                contrib = _apply_weight(field, weight)
                 out = contrib if out is None else out + contrib
         else:
             field = fn(u, v, params)
             weight = torch.tensor(base_color, device=field.device, dtype=field.dtype) * intensity_i
-            contrib = field.unsqueeze(-1) * weight
+            contrib = _apply_weight(field, weight)
             out = contrib if out is None else out + contrib
 
     return out
+
+
+def _apply_weight(field: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
+    """Colour a field: (H, W) intensity fields broadcast against the RGB
+    weight; (H, W, 3) fields (colour textures) multiply per channel."""
+    if field.dim() == 3:
+        return field * weight
+    return field.unsqueeze(-1) * weight
 
 
 def render_stack(preset, lights, height, width, device, dtype,
@@ -117,7 +127,9 @@ def render_stack(preset, lights, height, width, device, dtype,
     preset: a validated preset dict (see schema.validate_preset).
     lights: list of dicts {"x", "y", "brightness", "occlusion"} with x/y in
         grid coordinates (half-frame-heights, center origin), brightness the
-        linear source brightness, occlusion in [0, 1].
+        linear source brightness, occlusion in [0, 1]. Optional "ax"/"ay"
+        place the flare anchor (the t=1 point); it defaults to the frame
+        centre, and element spacing scales with the light-to-anchor distance.
     intensity/scale: node-level global multipliers on top of the preset's.
 
     Returns (height, width, 3) linear RGB; genuinely zero where no element
@@ -138,7 +150,8 @@ def render_stack(preset, lights, height, width, device, dtype,
         weight = light.get("brightness", 1.0) * (1.0 - light.get("occlusion", 0.0))
         if weight <= 0.0:
             continue
-        theta = axis_angle(light["x"], light["y"])
+        theta = axis_angle(light["x"], light["y"],
+                           light.get("ax", 0.0), light.get("ay", 0.0))
         for idx, elem in enumerate(preset["elements"]):
             if not elem["enabled"]:
                 continue

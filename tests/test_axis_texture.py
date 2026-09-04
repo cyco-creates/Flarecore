@@ -1,0 +1,237 @@
+# SPDX-License-Identifier: Apache-2.0
+"""Tests for the movable flare anchor and texture elements."""
+import sys
+from pathlib import Path
+
+import pytest
+import torch
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from flare.axis import axis_angle, element_center
+from flare.engine import render_stack
+from flare.schema import validate_preset
+from flare.texture_prep import (
+    subtract_floor, center_on_energy, feather_border, prepare_element,
+)
+from flare.grid import uv_to_grid
+
+
+def tiny_glow(**over):
+    elem = {"type": "glow", "offset": 1.0, "scale": 0.15, "auto_rotate": False,
+            "params": {"softness": 0.15, "falloff": 3.0}}
+    elem.update(over)
+    return validate_preset({"schema_version": 1, "elements": [elem]})
+
+
+def argmax_uv(field_hw):
+    idx = field_hw.flatten().argmax().item()
+    h, w = field_hw.shape
+    row, col = divmod(idx, w)
+    return (col + 0.5) / w, (row + 0.5) / h
+
+
+class TestAnchor:
+    def test_axis_math_generalizes(self):
+        # default anchor (0,0) preserves the old behaviour
+        assert element_center(0.7, -0.3, 1.0) == (0.0, 0.0)
+        # custom anchor: t=1 sits on it, t=2 mirrors past it
+        cx1, cy1 = element_center(0.2, 0.2, 1.0, 0.6, -0.4)
+        assert cx1 == pytest.approx(0.6) and cy1 == pytest.approx(-0.4)
+        cx, cy = element_center(0.2, 0.2, 2.0, 0.6, -0.4)
+        assert cx == pytest.approx(1.0) and cy == pytest.approx(-1.0)
+        assert axis_angle(0.0, 0.0, 1.0, 0.0) == pytest.approx(0.0)
+
+    def test_element_lands_on_anchor(self):
+        p = tiny_glow(offset=1.0)
+        ax, ay = uv_to_grid(0.8, 0.7, 256, 256)
+        lx, ly = uv_to_grid(0.2, 0.2, 256, 256)
+        lights = [{"x": lx, "y": ly, "ax": ax, "ay": ay, "brightness": 1.0}]
+        flare = render_stack(p, lights, 256, 256, "cpu", torch.float32)
+        u, v = argmax_uv(flare.sum(-1))
+        assert abs(u - 0.8) < 0.01 and abs(v - 0.7) < 0.01
+
+    def test_spacing_scales_with_anchor_distance(self):
+        # two glows at t=0 and t=1: their pixel distance equals |anchor-light|
+        p = validate_preset({"schema_version": 1, "elements": [
+            {"type": "glow", "offset": 0.0, "scale": 0.1,
+             "params": {"softness": 0.15, "falloff": 3.0}},
+            {"type": "glow", "offset": 1.0, "scale": 0.1,
+             "params": {"softness": 0.15, "falloff": 3.0}},
+        ]})
+        lx, ly = uv_to_grid(0.3, 0.5, 256, 256)
+
+        def peak_distance(anchor_u):
+            ax, ay = uv_to_grid(anchor_u, 0.5, 256, 256)
+            lights = [{"x": lx, "y": ly, "ax": ax, "ay": ay}]
+            flare = render_stack(p, lights, 256, 256, "cpu", torch.float32).sum(-1)
+            row = flare[128]
+            # two distinct peaks on the horizontal axis
+            left = row[:int(0.35 * 256)].argmax().item()
+            right = int(0.35 * 256) + row[int(0.35 * 256):].argmax().item()
+            return (right - left) / 256
+
+        near = peak_distance(0.45)
+        far = peak_distance(0.9)
+        assert far > near * 2.5  # spacing grew with the anchor distance
+        assert near == pytest.approx(0.15, abs=0.02)
+        assert far == pytest.approx(0.6, abs=0.02)
+
+
+class TestTextureElement:
+    def make_tex(self):
+        # bright 8x8 block in the upper-left quadrant of a 64^2 texture
+        tex = torch.zeros(64, 64)
+        tex[12:20, 12:20] = 1.0
+        return tex
+
+    def test_schema_accepts_and_validates(self):
+        p = validate_preset({"schema_version": 1, "elements": [
+            {"type": "texture", "params": {"file": "glows/warm_soft.png"}}]})
+        assert p["elements"][0]["params"]["channel"] == "auto"
+        with pytest.raises(ValueError, match="relative path"):
+            validate_preset({"schema_version": 1, "elements": [
+                {"type": "texture", "params": {"file": "../evil.png"}}]})
+        with pytest.raises(ValueError, match="channel"):
+            validate_preset({"schema_version": 1, "elements": [
+                {"type": "texture", "params": {"file": "a.png", "channel": "alpha"}}]})
+
+    def test_missing_texture_raises_clearly(self):
+        from flare.elements import ELEMENT_FUNCTIONS
+        u = torch.zeros(4, 4)
+        with pytest.raises(ValueError, match="no texture loaded"):
+            ELEMENT_FUNCTIONS["texture"](u, u, {"file": "x.png"})
+
+    def test_renders_through_engine_with_transforms(self):
+        p = validate_preset({"schema_version": 1, "elements": [
+            {"type": "texture", "offset": 0.0, "scale": 0.5,
+             "auto_rotate": False, "params": {"file": "ignored.png"}}]})
+        p["elements"][0]["params"]["_texture"] = self.make_tex()
+        lights = [{"x": 0.0, "y": 0.0}]
+        flare = render_stack(p, lights, 128, 128, "cpu", torch.float32)
+        lum = flare.sum(-1)
+        assert lum.max() > 0.5
+        # the block sits upper-left of texture centre -> upper-left of frame centre
+        u, v = argmax_uv(lum)
+        assert u < 0.5 and v < 0.5
+        # zero outside the texture footprint
+        assert lum[5, 5] == 0.0
+
+    def test_rgb_texture_keeps_colour(self):
+        tex = torch.zeros(32, 32, 3)
+        tex[8:24, 8:24, 0] = 1.0  # pure red block
+        p = validate_preset({"schema_version": 1, "elements": [
+            {"type": "texture", "offset": 0.0, "scale": 0.5,
+             "params": {"file": "ignored.png"}}]})
+        p["elements"][0]["params"]["_texture"] = tex
+        flare = render_stack(p, [{"x": 0.0, "y": 0.0}], 64, 64, "cpu", torch.float32)
+        assert flare[..., 0].max() > 0.5
+        assert flare[..., 1].max() == 0.0
+        assert flare[..., 2].max() == 0.0
+
+
+class TestTexturePrep:
+    def test_subtract_floor(self):
+        img = torch.tensor([[[0.05, 0.05, 0.05], [0.5, 0.5, 0.5]]])
+        out = subtract_floor(img, 0.06)
+        assert out[0, 0].max() == 0.0
+        assert 0.4 < out[0, 1, 0] < 0.5
+
+    def test_center_on_energy(self):
+        img = torch.zeros(32, 32, 3)
+        img[4:8, 4:8] = 1.0
+        out = center_on_energy(img)
+        lum = out.sum(-1)
+        ys, xs = torch.nonzero(lum > 0.5, as_tuple=True)
+        assert abs(ys.float().mean().item() - 15.5) < 1.0
+        assert abs(xs.float().mean().item() - 15.5) < 1.0
+
+    def test_feather_zeroes_borders(self):
+        img = torch.ones(64, 64, 3)
+        out = feather_border(img, 0.2)
+        assert out[0, 0].max() == pytest.approx(0.0, abs=1e-4)
+        assert out[32, 32].min() == pytest.approx(1.0)
+
+    def test_full_pipeline(self):
+        img = torch.rand(80, 120, 3) * 0.1
+        img[30:50, 60:80] = 0.9
+        out = prepare_element(img, mode="rgb", black_point=0.15,
+                              autocenter=True, feather=0.1, size=128)
+        assert out.shape == (128, 128, 3)
+        assert out.min() >= 0.0 and out.max() <= 1.0
+        # borders feathered to black
+        assert out[0, 0].max() == pytest.approx(0.0, abs=1e-4)
+
+
+class TestLibraryAndNodes:
+    def _pkg(self):
+        from test_nodes import PKG
+        return PKG
+
+    def test_library_lists_starters(self):
+        pkg = self._pkg()
+        import sys as _s
+        lib = _s.modules["comfyui_flarecore.nodes.library"]
+        files = lib.list_elements()
+        assert "glows/warm_soft.png" in files
+        assert "spectral/rainbow_ring.png" in files
+
+    def test_load_texture_linear_and_cached(self):
+        import sys as _s
+        lib = _s.modules["comfyui_flarecore.nodes.library"]
+        a = lib.load_texture("spectral/rainbow_ring.png", "rgb")
+        b = lib.load_texture("spectral/rainbow_ring.png", "rgb")
+        assert a is b  # cache hit
+        assert a.dim() == 3 and a.shape[-1] == 3
+        with pytest.raises(ValueError, match="not found"):
+            lib.load_texture("nope/missing.png")
+
+    def test_texture_preset_renders_via_node(self):
+        import json
+        from test_nodes import run_node
+        preset = json.dumps({"schema_version": 1, "elements": [
+            {"type": "texture", "offset": 0.9, "scale": 0.3,
+             "intensity": 1.0, "params": {"file": "iris_ghosts/hex_soft.png"}}]})
+        img = torch.zeros(1, 96, 128, 3)
+        out, flare_pass, _ = run_node(img, preset_json=preset)
+        assert flare_pass.max() > 0.05
+
+    def test_prompts_node(self):
+        pkg = self._pkg()
+        node = pkg.NODE_CLASS_MAPPINGS["FlareElementPrompts"]()
+        options = pkg.NODE_CLASS_MAPPINGS["FlareElementPrompts"].INPUT_TYPES()
+        entries = options["required"]["element"][0]
+        assert any(e.startswith("glows/") for e in entries)
+        prompt, cat, name = node.pick(entries[0], "", "")
+        assert "black background" in prompt
+        prompt2, _, _ = node.pick(entries[0], "cold teal colour", "")
+        assert prompt2.endswith("cold teal colour")
+        prompt3, _, _ = node.pick(entries[0], "", "my own prompt")
+        assert prompt3 == "my own prompt"
+
+    def test_prepare_and_save_roundtrip(self, tmp_path, monkeypatch):
+        import sys as _s
+        pkg = self._pkg()
+        lab = _s.modules["comfyui_flarecore.nodes.elements_lab"]
+        lib = _s.modules["comfyui_flarecore.nodes.library"]
+        monkeypatch.setattr(lab, "ELEMENTS_DIR", tmp_path)
+        monkeypatch.setattr(lib, "ELEMENTS_DIR", tmp_path)
+
+        img = torch.rand(1, 96, 96, 3) * 0.1
+        img[0, 40:60, 40:60] = 0.95
+        prep = pkg.NODE_CLASS_MAPPINGS["FlareTexturePrepare"]()
+        tex, alpha = prep.prepare(img, "rgb", 0.12, True, 0.12, 128)
+        assert tex.shape == (1, 128, 128, 3)
+
+        save = pkg.NODE_CLASS_MAPPINGS["FlareElementSave"]()
+        r = save.save(tex, "My Category!", "Test Element", False)
+        ref = r["result"][0]
+        assert ref == "my_category/test_element.png"
+        assert (tmp_path / ref).is_file()
+        # collision without overwrite picks a new name
+        r2 = save.save(tex, "My Category!", "Test Element", False)
+        assert r2["result"][0] == "my_category/test_element_02.png"
+        # loads back through the library
+        loaded = lib.load_texture(ref)
+        assert loaded.shape[0] == 128

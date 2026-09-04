@@ -25,9 +25,9 @@ def params_for(etype, **overrides):
     return p
 
 
-def test_all_seven_registered():
+def test_all_types_registered():
     assert set(ELEMENT_FUNCTIONS) == {
-        "glow", "iris", "streak", "ring", "hoop", "glint", "spectral"
+        "glow", "iris", "streak", "ring", "hoop", "glint", "spectral", "texture"
     }
 
 
@@ -37,8 +37,10 @@ def test_all_elements_finite_nonnegative_shape():
         p = params_for(etype)
         if etype == "glint":
             p["seed"] = 7
+        if etype == "texture":
+            p["_texture"] = torch.rand(32, 32)
         field = fn(u, v, p)
-        assert field.shape == u.shape, etype
+        assert field.shape[:2] == u.shape, etype
         assert torch.isfinite(field).all(), etype
         assert (field >= 0).all(), etype
 

@@ -11,6 +11,7 @@ here.
 import math
 
 import torch
+import torch.nn.functional as F
 
 
 def _smoothstep(edge0: float, edge1: float, x: torch.Tensor) -> torch.Tensor:
@@ -149,6 +150,37 @@ def spectral(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     return ring(u, v, p)
 
 
+def texture(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
+    """Sample a texture as an element field.
+
+    The texture spans [-1, 1] of local element space and is zero outside, so
+    it obeys the same transform pipeline (offset, scale, stretch, rotation,
+    auto_rotate, count, dispersion) as procedural elements. The tensor itself
+    is injected at render time as params['_texture'] — (H, W) for an
+    intensity field or (H, W, 3) for a colour texture, in LINEAR light —
+    because presets only carry a file reference, not pixels.
+    """
+    tex = p.get("_texture")
+    if tex is None:
+        raise ValueError(
+            "texture element has no texture loaded; set params.file to a "
+            "file in the element library (elements/<category>/<name>.png)"
+        )
+    tex = tex.to(device=u.device, dtype=u.dtype)
+    if tex.dim() == 2:
+        tex_in = tex.unsqueeze(0).unsqueeze(0)          # (1, 1, H, W)
+    else:
+        tex_in = tex.permute(2, 0, 1).unsqueeze(0)      # (1, 3, H, W)
+
+    grid = torch.stack([u, v], dim=-1).unsqueeze(0)     # (1, Hout, Wout, 2)
+    sampled = F.grid_sample(tex_in, grid, mode="bilinear",
+                            padding_mode="zeros", align_corners=False)
+    out = sampled[0].permute(1, 2, 0)                    # (Hout, Wout, C)
+    if out.shape[-1] == 1:
+        return out.squeeze(-1)
+    return out
+
+
 ELEMENT_FUNCTIONS = {
     "glow": glow,
     "iris": iris,
@@ -157,4 +189,5 @@ ELEMENT_FUNCTIONS = {
     "hoop": hoop,
     "glint": glint,
     "spectral": spectral,
+    "texture": texture,
 }
