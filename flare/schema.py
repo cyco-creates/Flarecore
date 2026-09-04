@@ -24,6 +24,24 @@ GLOBAL_DEFAULTS = {
     "aspect": 1.0,          # >1 widens every element (anamorphic squeeze look)
     "tint": [1.0, 1.0, 1.0],
     "seed": 0,
+    "fringe": 0.0,          # 0..1 radial chromatic fringe on the whole flare
+    "flicker_amount": 0.0,  # 0..1 per-light brightness flicker over frames
+    "flicker_speed": 1.0,   # flicker rate multiplier (frames)
+    "edge_fade_start": 0.0,  # half-heights outside the frame where fade begins
+    "edge_fade_range": 0.0,  # fade length; 0 disables (lens-hood behaviour)
+}
+
+# Rule-based modulation without keyframes: as the light (or this element)
+# nears the frame border or centre, brightness/scale/colour shift.
+TRIGGER_DEFAULTS = {
+    "mode": "none",         # none | border | center
+    "source": "light",      # light | element (which position drives it)
+    "inner": 0.0,           # distance (half-heights) where the rule is fully on
+    "outer": 0.3,           # distance where it is fully off
+    "falloff": "smooth",    # linear | smooth | exponential
+    "brightness": 0.0,      # intensity ADDED at full trigger (can be negative)
+    "scale": 0.0,           # added scale multiplier at full trigger
+    "color": [1.0, 1.0, 1.0],  # tint at full trigger
 }
 
 # Keys shared by every element regardless of type.
@@ -32,9 +50,13 @@ ELEMENT_COMMON_DEFAULTS = {
     "label": "",            # optional display name (editor UI); engine ignores
     "slot": "",             # optional element family (editor gallery); ignored
     "enabled": True,
+    "solo": False,          # when any element is soloed, only soloed ones render
     "offset": 0.0,          # t along the flare axis (0 = on light, 1 = center)
     "scale": 0.5,           # size in half-frame-heights
     "stretch": [1.0, 1.0],  # per-axis multiplier on scale
+    "move": [1.0, 1.0],     # how much of the light-driven motion this element
+                            # follows per screen axis: [1, 0] slides only
+                            # horizontally (anamorphic elements)
     "rotation": 0.0,        # degrees
     "auto_rotate": True,    # add the flare axis angle to rotation
     "intensity": 1.0,
@@ -51,24 +73,38 @@ ELEMENT_COMMON_DEFAULTS = {
     "spread": 0.0,          # t step between duplicated instances
     "count_falloff": 1.0,   # intensity multiplier per instance step
     "count_scale_step": 1.0,  # scale multiplier per instance step
+    "trigger": None,        # see TRIGGER_DEFAULTS
 }
+
+# Angular window shared by the circular element types: completion in degrees
+# (360 = whole circle) and a feathered fade at the window's ends.
+_COMPLETION_DEFAULTS = {"completion": 360.0, "completion_feather": 0.2}
 
 # Per-type params defaults (the "params" sub-dict).
 PARAM_DEFAULTS = {
     "glow": {"softness": 0.35, "falloff": 1.2},
     "iris": {"blades": 6, "edge_softness": 0.15, "hollow": 0.0},
     "streak": {"length": 0.8, "thickness": 0.02, "count": 1},
-    "ring": {"radius": 0.5, "thickness": 0.05},
-    "hoop": {"radius": 0.6, "thickness": 0.15, "angular_falloff": 0.8},
-    "glint": {"points": 8, "length": 0.5, "thickness": 0.008, "length_jitter": 0.3},
+    "ring": {"radius": 0.5, "thickness": 0.05, **_COMPLETION_DEFAULTS},
+    "hoop": {"radius": 0.6, "thickness": 0.15, "angular_falloff": 0.8,
+             **_COMPLETION_DEFAULTS},
+    "glint": {"points": 8, "length": 0.5, "thickness": 0.008, "length_jitter": 0.3,
+              **_COMPLETION_DEFAULTS},
     "spectral": {"shape": "ring", "radius": 0.5, "thickness": 0.08,
-                 "blades": 8, "edge_softness": 0.1, "hollow": 0.0},
+                 "blades": 8, "edge_softness": 0.1, "hollow": 0.0,
+                 **_COMPLETION_DEFAULTS},
     "texture": {"file": "", "channel": "auto"},
+    # procedural out-of-focus spots on the lens, lit by proximity to the light
+    "orbs": {"count": 24, "size": 0.12, "size_jitter": 0.6, "spread": 1.0,
+             "edge_softness": 0.3, "illumination": 0.8, "shape": "disc",
+             "blades": 6},
 }
 
 # Per-type overrides of the common element defaults.
 ELEMENT_TYPE_OVERRIDES = {
     "spectral": {"dispersion": 1.0, "dispersion_samples": 7},
+    "orbs": {"screen_space": True, "auto_rotate": False, "scale": 1.0,
+             "intensity": 0.5},
 }
 
 ELEMENT_TYPES = tuple(sorted(PARAM_DEFAULTS.keys()))
@@ -125,6 +161,36 @@ def normalize_texture_ref(ref, key="params.file") -> str:
     return norm
 
 
+def _validate_trigger(raw, where: str):
+    """Fill and range-check an element's trigger block; None/absent -> None
+    (no rule), which the engine treats as 'mode: none'."""
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise ValueError(f"{where}.trigger must be an object or null")
+    t = copy.deepcopy(TRIGGER_DEFAULTS)
+    for key, value in raw.items():
+        if key not in TRIGGER_DEFAULTS:
+            warnings.warn(f"{where}.trigger has unknown key '{key}' (ignored)")
+            continue
+        t[key] = value
+    if t["mode"] not in ("none", "border", "center"):
+        raise ValueError(f"{where}.trigger.mode must be none, border or center")
+    if t["source"] not in ("light", "element"):
+        raise ValueError(f"{where}.trigger.source must be light or element")
+    if t["falloff"] not in ("linear", "smooth", "exponential"):
+        raise ValueError(f"{where}.trigger.falloff must be linear, smooth or exponential")
+    t["inner"] = _require_number(t["inner"], f"{where}.trigger.inner", lo=-2.0, hi=4.0)
+    t["outer"] = _require_number(t["outer"], f"{where}.trigger.outer", lo=-2.0, hi=4.0)
+    if t["outer"] <= t["inner"]:
+        t["outer"] = t["inner"] + 1e-3
+    t["brightness"] = _require_number(t["brightness"], f"{where}.trigger.brightness",
+                                      lo=-20.0, hi=20.0)
+    t["scale"] = _require_number(t["scale"], f"{where}.trigger.scale", lo=-0.95, hi=20.0)
+    t["color"] = _require_vec(t["color"], f"{where}.trigger.color", 3, lo=0.0, hi=100.0)
+    return None if t["mode"] == "none" else t
+
+
 def _validate_element(raw: dict, index: int) -> dict:
     where = f"elements[{index}]"
     if not isinstance(raw, dict):
@@ -169,6 +235,7 @@ def _validate_element(raw: dict, index: int) -> dict:
     elem["label"] = str(elem["label"])
     elem["slot"] = str(elem["slot"])
     elem["enabled"] = bool(elem["enabled"])
+    elem["solo"] = bool(elem["solo"])
     elem["offset"] = _require_number(elem["offset"], f"{where}.offset", lo=-10.0, hi=10.0)
     elem["scale"] = _require_number(elem["scale"], f"{where}.scale", lo=1e-6, hi=100.0)
     # colour is linear-light and may exceed 1 (HDR), but never go negative:
@@ -176,6 +243,7 @@ def _validate_element(raw: dict, index: int) -> dict:
     elem["stretch"] = _require_vec(elem["stretch"], f"{where}.stretch", 2)
     if elem["stretch"][0] <= 0 or elem["stretch"][1] <= 0:
         raise ValueError(f"{where}.stretch components must be > 0")
+    elem["move"] = _require_vec(elem["move"], f"{where}.move", 2, lo=0.0, hi=1.0)
     elem["rotation"] = _require_number(elem["rotation"], f"{where}.rotation")
     elem["auto_rotate"] = bool(elem["auto_rotate"])
     elem["intensity"] = _require_number(elem["intensity"], f"{where}.intensity",
@@ -201,9 +269,16 @@ def _validate_element(raw: dict, index: int) -> dict:
     elem["count_scale_step"] = _require_number(
         elem["count_scale_step"], f"{where}.count_scale_step", lo=0.05, hi=10.0
     )
+    elem["trigger"] = _validate_trigger(elem["trigger"], where)
 
     # Validate per-type params.
     p = elem["params"]
+    if etype in ("ring", "hoop", "glint", "spectral"):
+        p["completion"] = _require_number(p["completion"], f"{where}.params.completion",
+                                          lo=0.0, hi=360.0)
+        p["completion_feather"] = _require_number(
+            p["completion_feather"], f"{where}.params.completion_feather", lo=0.0, hi=1.0
+        )
     if etype == "glow":
         p["softness"] = _require_number(p["softness"], f"{where}.params.softness", lo=1e-4)
         p["falloff"] = _require_number(p["falloff"], f"{where}.params.falloff", lo=0.05)
@@ -241,6 +316,20 @@ def _validate_element(raw: dict, index: int) -> dict:
                 f"{where}.params.channel must be 'auto', 'rgb' or "
                 f"'luminance', got {p['channel']!r}"
             )
+    elif etype == "orbs":
+        p["count"] = _require_int(p["count"], f"{where}.params.count", lo=1, hi=200)
+        p["size"] = _require_number(p["size"], f"{where}.params.size", lo=1e-3, hi=2.0)
+        p["size_jitter"] = _require_number(p["size_jitter"], f"{where}.params.size_jitter",
+                                           lo=0.0, hi=1.0)
+        p["spread"] = _require_number(p["spread"], f"{where}.params.spread", lo=0.0, hi=5.0)
+        p["edge_softness"] = _require_number(
+            p["edge_softness"], f"{where}.params.edge_softness", lo=0.0, hi=1.0
+        )
+        p["illumination"] = _require_number(p["illumination"],
+                                            f"{where}.params.illumination", lo=0.01, hi=10.0)
+        if p["shape"] not in ("disc", "polygon"):
+            raise ValueError(f"{where}.params.shape must be 'disc' or 'polygon', got {p['shape']!r}")
+        p["blades"] = _require_int(p["blades"], f"{where}.params.blades", lo=3, hi=32)
     elif etype == "spectral":
         if p["shape"] not in ("ring", "iris"):
             raise ValueError(f"{where}.params.shape must be 'ring' or 'iris', got {p['shape']!r}")
@@ -307,6 +396,15 @@ def validate_preset(raw: dict) -> dict:
     g["aspect"] = _require_number(g["aspect"], "global.aspect", lo=0.2, hi=5.0)
     g["tint"] = _require_vec(g["tint"], "global.tint", 3, lo=0.0, hi=100.0)
     g["seed"] = _require_int(g["seed"], "global.seed")
+    g["fringe"] = _require_number(g["fringe"], "global.fringe", lo=0.0, hi=1.0)
+    g["flicker_amount"] = _require_number(g["flicker_amount"], "global.flicker_amount",
+                                          lo=0.0, hi=1.0)
+    g["flicker_speed"] = _require_number(g["flicker_speed"], "global.flicker_speed",
+                                         lo=0.0, hi=10.0)
+    g["edge_fade_start"] = _require_number(g["edge_fade_start"], "global.edge_fade_start",
+                                           lo=0.0, hi=4.0)
+    g["edge_fade_range"] = _require_number(g["edge_fade_range"], "global.edge_fade_range",
+                                           lo=0.0, hi=4.0)
 
     for i, raw_elem in enumerate(raw["elements"]):
         out["elements"].append(_validate_element(raw_elem, i))

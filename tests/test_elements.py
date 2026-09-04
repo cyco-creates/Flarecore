@@ -27,7 +27,8 @@ def params_for(etype, **overrides):
 
 def test_all_types_registered():
     assert set(ELEMENT_FUNCTIONS) == {
-        "glow", "iris", "streak", "ring", "hoop", "glint", "spectral", "texture"
+        "glow", "iris", "streak", "ring", "hoop", "glint", "spectral", "texture",
+        "orbs",
     }
 
 

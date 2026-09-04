@@ -289,6 +289,7 @@ const CATEGORY_OF = {
   streak: "streaks", stripe: "streaks",
   ring: "rings", spectral: "rings", hoop: "hoops",
   caustic: "caustics", "lens dirt": "lens_dirt",
+  "lens orbs": "ghosts", orbs: "ghosts",
 };
 
 // Old presets and saved workflows may carry pre-consolidation family names.
@@ -301,6 +302,7 @@ const LEGACY_CATEGORY = {
 const ADD_MENU = [
   ["Glow", "glow"], ["Bloom (bright areas)", "bloom"],
   ["Lens dirt (bright areas)", "lens_dirt"],
+  ["Lens orbs (procedural)", "orbs"],
   ["Fog", "fog"], ["Disc", "disc"],
   ["Iris ghost", "iris"], ["Multi-iris", "multi_iris"],
   ["Spike ball", "spike_ball"], ["Shimmer", "shimmer"],
@@ -328,7 +330,21 @@ const ADD_DEFAULTS = {
   hoop: { type: "hoop", label: "hoop", offset: 0.5, scale: 0.8, intensity: 0.12, dispersion: 1, color: [1, 0.8, 0.6], params: { radius: 0.9, thickness: 0.22, angular_falloff: 0.8 } },
   spectral: { type: "spectral", label: "spectral", offset: 1.7, scale: 0.45, intensity: 0.15, params: { shape: "ring", radius: 1, thickness: 0.06 } },
   texture: { type: "texture", label: "element", offset: 0.6, scale: 0.3, intensity: 0.6, params: { file: "", channel: "auto" } },
+  orbs: { type: "orbs", label: "lens orbs", offset: 0, scale: 1.0, intensity: 0.35, auto_rotate: false, screen_space: true, color: [0.9, 0.95, 1], params: { count: 24, size: 0.12, size_jitter: 0.6, spread: 1.2, edge_softness: 0.3, illumination: 0.8, shape: "disc", blades: 6 } },
 };
+
+// Trigger block defaults (mirror of the schema's TRIGGER_DEFAULTS).
+const TRIGGER_DEFAULTS = {
+  mode: "none", source: "light", inner: 0, outer: 0.3, falloff: "smooth",
+  brightness: 0, scale: 0, color: [1, 1, 1],
+};
+const TRIGGER_SPECS = {
+  inner: [-1, 2, 0.01], outer: [-1, 2, 0.01],
+  brightness: [-2, 8, 0.05], scale: [-0.9, 6, 0.05],
+};
+
+// Element settings copied with "copy settings" (everything but identity).
+let clipboardElem = null;
 
 const COMMON_SPECS = {
   irregular: [0, 1, 0.01],
@@ -347,26 +363,31 @@ const COMMON_DEFAULTS = {
   count_falloff: 1, count_scale_step: 1,
 };
 
+const COMPLETION_FALLBACK = { completion: 360, completion_feather: 0.2 };
+const COMPLETION_SPEC = { completion: [10, 360, 1], completion_feather: [0, 1, 0.01] };
+
 const PARAM_FALLBACKS = {
   glow: { softness: 0.35, falloff: 1.2 },
   iris: { blades: 6, edge_softness: 0.15, hollow: 0 },
   streak: { length: 0.8, thickness: 0.02, count: 1 },
-  ring: { radius: 0.5, thickness: 0.05 },
-  hoop: { radius: 0.6, thickness: 0.15, angular_falloff: 0.8 },
-  glint: { points: 8, length: 0.5, thickness: 0.008, length_jitter: 0.3 },
-  spectral: { radius: 0.5, thickness: 0.08, blades: 8, edge_softness: 0.1, hollow: 0 },
+  ring: { radius: 0.5, thickness: 0.05, ...COMPLETION_FALLBACK },
+  hoop: { radius: 0.6, thickness: 0.15, angular_falloff: 0.8, ...COMPLETION_FALLBACK },
+  glint: { points: 8, length: 0.5, thickness: 0.008, length_jitter: 0.3, ...COMPLETION_FALLBACK },
+  spectral: { radius: 0.5, thickness: 0.08, blades: 8, edge_softness: 0.1, hollow: 0, ...COMPLETION_FALLBACK },
   texture: {},
+  orbs: { count: 24, size: 0.12, size_jitter: 0.6, spread: 1.0, edge_softness: 0.3, illumination: 0.8, blades: 6 },
 };
 
 const PARAM_SPECS = {
   glow: { softness: [0.01, 2, 0.01], falloff: [0.05, 6, 0.05] },
   iris: { blades: [3, 24, 1], edge_softness: [0, 1, 0.01], hollow: [0, 0.95, 0.01] },
   streak: { length: [0.01, 4, 0.01], thickness: [0.001, 0.5, 0.001], count: [1, 8, 1] },
-  ring: { radius: [0, 2, 0.01], thickness: [0.001, 0.5, 0.001] },
-  hoop: { radius: [0, 2, 0.01], thickness: [0.001, 1, 0.001], angular_falloff: [0, 1, 0.01] },
-  glint: { points: [2, 256, 1], length: [0.01, 3, 0.01], thickness: [0.001, 0.1, 0.001], length_jitter: [0, 1, 0.01] },
-  spectral: { radius: [0, 2, 0.01], thickness: [0.001, 0.5, 0.001], blades: [3, 24, 1], edge_softness: [0, 1, 0.01], hollow: [0, 0.95, 0.01] },
+  ring: { radius: [0, 2, 0.01], thickness: [0.001, 0.5, 0.001], ...COMPLETION_SPEC },
+  hoop: { radius: [0, 2, 0.01], thickness: [0.001, 1, 0.001], angular_falloff: [0, 1, 0.01], ...COMPLETION_SPEC },
+  glint: { points: [2, 256, 1], length: [0.01, 3, 0.01], thickness: [0.001, 0.1, 0.001], length_jitter: [0, 1, 0.01], ...COMPLETION_SPEC },
+  spectral: { radius: [0, 2, 0.01], thickness: [0.001, 0.5, 0.001], blades: [3, 24, 1], edge_softness: [0, 1, 0.01], hollow: [0, 0.95, 0.01], ...COMPLETION_SPEC },
   texture: {},
+  orbs: { count: [1, 200, 1], size: [0.01, 1, 0.005], size_jitter: [0, 1, 0.01], spread: [0, 3, 0.01], edge_softness: [0, 1, 0.01], illumination: [0.05, 5, 0.01], blades: [3, 16, 1] },
 };
 
 const CSS = `
@@ -428,6 +449,13 @@ const CSS = `
   cursor: pointer; border-radius: 6px; width: 26px; height: 26px;
   font-size: 12px; display: flex; align-items: center; justify-content: center; }
 .fcore-mini:hover { color: #fff; border-color: #e8a33d; }
+.fcore-mini.on { background: #2f4a75; border-color: #4f7ac0; color: #fff; }
+.fcore-mini:disabled { opacity: .35; cursor: default; }
+.fcore-row.dim { opacity: .4; }
+.fcore-sec { grid-column: 1 / -1; color: #8a8fa8; font-size: 11px;
+  letter-spacing: .04em; text-transform: uppercase; margin-top: 4px;
+  border-top: 1px solid #2b2b33; padding-top: 5px; }
+.fcore-global.lens { margin-top: 4px; }
 .fcore-adv { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px 10px;
   padding: 8px 2px 2px 40px; border-top: 1px dashed #2b2b33; margin-top: 7px; }
 .fcore-adv select { background: #1e1e25; color: #ddd; border: 1px solid #34343e;
@@ -647,6 +675,18 @@ class FlareEditor {
     this.root.className = "fcore";
     this.lastText = null;
     this._pending = null;
+    // undo/redo over preset text; a slider drag collapses into one state
+    this.history = [];
+    this.future = [];
+    this._lastQuietPush = 0;
+    this.lensOpen = false;
+    this.root.tabIndex = 0;
+    this.root.addEventListener("keydown", (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const k = e.key.toLowerCase();
+      if (k === "z" && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); this.undo(); }
+      else if (k === "y" || (k === "z" && e.shiftKey)) { e.preventDefault(); e.stopPropagation(); this.redo(); }
+    });
     this.fetchLibrary();
     this.build();
 
@@ -691,13 +731,64 @@ class FlareEditor {
     }
   }
 
-  write(preset) {
+  write(preset, { quiet = false } = {}) {
     const text = JSON.stringify(preset, null, 2);
+    this.snapshot(quiet);
     if (this.widget) { this.widget.value = text; this.lastText = text; }
     this.node.setDirtyCanvas(true, false);
   }
 
+  // Push the CURRENT text onto the undo stack before it changes. Quiet
+  // (slider) writes within half a second of each other share one state, so
+  // a drag undoes in one step instead of a hundred.
+  snapshot(quiet) {
+    const cur = this.widget?.value;
+    if (cur == null) return;
+    const now = Date.now();
+    if (quiet && now - this._lastQuietPush < 500 && this.history.length) {
+      this._lastQuietPush = now;
+      return;
+    }
+    if (this.history[this.history.length - 1] === cur) return;
+    this.history.push(cur);
+    if (this.history.length > 60) this.history.shift();
+    this.future = [];
+    this._lastQuietPush = quiet ? now : 0;
+  }
+
+  undo() {
+    this.flushPending();
+    if (!this.history.length || !this.widget) return;
+    this.future.push(this.widget.value);
+    const text = this.history.pop();
+    this.widget.value = text; this.lastText = text;
+    this.node.setDirtyCanvas(true, false);
+    this.build();
+  }
+
+  redo() {
+    this.flushPending();
+    if (!this.future.length || !this.widget) return;
+    this.history.push(this.widget.value);
+    const text = this.future.pop();
+    this.widget.value = text; this.lastText = text;
+    this.node.setDirtyCanvas(true, false);
+    this.build();
+  }
+
+  // Land any coalesced slider write NOW so a structural edit (or an undo)
+  // starts from the latest state instead of the widget's stale text.
+  flushPending() {
+    if (this._flushTimer) { clearTimeout(this._flushTimer); this._flushTimer = null; }
+    if (this._pending) {
+      const p = this._pending;
+      this._pending = null;
+      this.write(p, { quiet: true });
+    }
+  }
+
   mutate(fn) {
+    this.flushPending();
     const preset = this.read();
     if (!preset) return;
     fn(preset);
@@ -722,12 +813,16 @@ class FlareEditor {
     }
     if (!this._pending) {
       this._pending = preset;
-      requestAnimationFrame(() => {
+      // a timer, not requestAnimationFrame: rAF stalls in a hidden tab and
+      // the pending write would sit there until the tab is fronted again
+      this._flushTimer = setTimeout(() => {
+        this._flushTimer = null;
         if (this._pending) {
-          this.write(this._pending);
+          const p = this._pending;
           this._pending = null;
+          this.write(p, { quiet: true });
         }
-      });
+      }, 16);
     }
   }
 
@@ -840,13 +935,27 @@ class FlareEditor {
       try {
         const r = await api.fetchApi("/flarecore/presets");
         const d = await r.json();
-        popupMenu(e, (d.presets || []).map((n) => [n.replace(/\.json$/, ""), n]),
-          async (name) => {
+        const names = (d.presets || []).map((n) => n.replace(/\.json$/, ""));
+        // every preset twice: load it, or merge its elements into the stack
+        const entries = names.map((n) => [n, "load:" + n])
+          .concat(names.map((n) => ["+ merge: " + n, "add:" + n]));
+        popupMenu(e, entries,
+          async (pick) => {
+            const [action, name] = [pick.slice(0, pick.indexOf(":")), pick.slice(pick.indexOf(":") + 1)];
             try {
               const rr = await api.fetchApi(
-                `/flarecore/preset/${encodeURIComponent(name.replace(/\.json$/, ""))}`);
+                `/flarecore/preset/${encodeURIComponent(name)}`);
               const dd = await rr.json();
-              if (dd.json && this.widget) {
+              if (dd.json && this.widget && action === "add") {
+                const incoming = JSON.parse(dd.json);
+                this.mutate((p) => {
+                  for (const el of incoming.elements || []) {
+                    el.id = this.mintId(el.type || "elem");
+                    p.elements.push(el);
+                  }
+                });
+              } else if (dd.json && this.widget) {
+                this.snapshot(false);
                 this.widget.value = dd.json;
                 this.lastText = dd.json;
                 this.build();
@@ -899,7 +1008,20 @@ class FlareEditor {
     advBtn.title = "show the node's inputs (preset JSON, detection, occlusion, blending, seed)";
     advBtn.onclick = () => { setAdvanced(this.node, !this.node._fcAdvanced); this.build(); };
 
-    bar.append(addBtn, loadBtn, saveBtn, libBtn, advBtn);
+    const undoBtn = document.createElement("button");
+    undoBtn.className = "fcore-btn";
+    undoBtn.textContent = "↶";
+    undoBtn.title = "undo (Ctrl+Z)";
+    undoBtn.disabled = !this.history.length;
+    undoBtn.onclick = () => this.undo();
+    const redoBtn = document.createElement("button");
+    redoBtn.className = "fcore-btn";
+    redoBtn.textContent = "↷";
+    redoBtn.title = "redo (Ctrl+Y)";
+    redoBtn.disabled = !this.future.length;
+    redoBtn.onclick = () => this.redo();
+
+    bar.append(addBtn, loadBtn, saveBtn, libBtn, undoBtn, redoBtn, advBtn);
     if (this.error) {
       const badge = document.createElement("span");
       badge.className = "fcore-badge";
@@ -957,12 +1079,35 @@ class FlareEditor {
     for (const el of [gRange, gNum, aRange, aNum, tint]) {
       el.addEventListener("pointerdown", (e) => e.stopPropagation());
     }
-    gRow.append(gLab, gRange, gNum, aLab, aRange, aNum, tint);
+    const lensBtn = document.createElement("button");
+    lensBtn.className = "fcore-btn" + (this.lensOpen ? " on" : "");
+    lensBtn.textContent = this.lensOpen ? "lens ▴" : "lens ▾";
+    lensBtn.title = "lens-wide behaviour: chromatic fringe, flicker, edge fade";
+    lensBtn.onclick = () => { this.lensOpen = !this.lensOpen; this.build(); };
+    gRow.append(gLab, gRange, gNum, aLab, aRange, aNum, tint, lensBtn);
     this.root.appendChild(gRow);
+
+    if (this.lensOpen) {
+      const lens = document.createElement("div");
+      lens.className = "fcore-global lens";
+      const gslider = (label, key, spec, fallback) => {
+        const col = sliderCol(label, g[key] ?? fallback, spec,
+          (v) => this.mutateQuiet((p) => { p.global[key] = v; }));
+        col.style.flex = "1";
+        lens.appendChild(col);
+      };
+      gslider("fringe", "fringe", [0, 1, 0.01], 0);
+      gslider("flicker", "flicker_amount", [0, 1, 0.01], 0);
+      gslider("flicker speed", "flicker_speed", [0, 5, 0.05], 1);
+      gslider("edge fade start", "edge_fade_start", [0, 2, 0.01], 0);
+      gslider("edge fade range", "edge_fade_range", [0, 2, 0.01], 0);
+      this.root.appendChild(lens);
+    }
 
     /* element rows */
     const list = document.createElement("div");
     list.className = "fcore-list";
+    this.anySolo = preset.elements.some((e) => e.solo);
     preset.elements.forEach((elem, i) => list.appendChild(this.buildRow(elem, i)));
     if (!preset.elements.length) {
       const empty = document.createElement("div");
@@ -990,7 +1135,8 @@ class FlareEditor {
 
   buildRow(elem, i) {
     const row = document.createElement("div");
-    row.className = "fcore-row" + (elem.enabled === false ? " off" : "");
+    row.className = "fcore-row" + (elem.enabled === false ? " off" : "")
+      + (this.anySolo && !elem.solo ? " dim" : "");
 
     const head = document.createElement("div");
     head.className = "fcore-head";
@@ -1020,6 +1166,11 @@ class FlareEditor {
     name.onclick = pick;
     chip.style.cursor = "pointer";
     chip.onclick = pick;
+    const rename = () => {
+      const v = prompt("Rename element:", elem.label || elem.type);
+      if (v != null && v.trim()) this.mutate((p) => { p.elements[i].label = v.trim(); });
+    };
+    name.ondblclick = (e) => { e.stopPropagation(); rename(); };
 
     head.append(en, chip, name);
     head.appendChild(sliderCol("pos", elem.offset ?? 0, [-1, 3, 0.01],
@@ -1055,6 +1206,26 @@ class FlareEditor {
       return b;
     };
     mk(this.expanded.has(i) ? "▴" : "▾", "settings", toggle);
+    const solo = mk("S", "solo (render only soloed elements)", () =>
+      this.mutate((p) => { p.elements[i].solo = !p.elements[i].solo; }));
+    if (elem.solo) solo.classList.add("on");
+    mk("⋯", "more: rename, copy / paste settings", (e) => popupMenu(e, [
+      ["rename", "rename"], ["copy settings", "copy"],
+      [clipboardElem ? "paste settings" : "paste settings (nothing copied)", "paste"],
+    ], (a) => {
+      if (a === "rename") rename();
+      else if (a === "copy") {
+        clipboardElem = JSON.parse(JSON.stringify(elem));
+        delete clipboardElem.id; delete clipboardElem.label; delete clipboardElem.slot;
+      } else if (a === "paste" && clipboardElem) {
+        this.mutate((p) => {
+          const keep = p.elements[i];
+          const merged = JSON.parse(JSON.stringify(clipboardElem));
+          merged.id = keep.id; merged.label = keep.label; merged.slot = keep.slot;
+          p.elements[i] = merged;
+        });
+      }
+    }));
     mk("⧉", "duplicate", () => {
       this.remapExpanded((e) => (e > i ? e + 1 : e));
       this.mutate((p) => {
@@ -1157,14 +1328,64 @@ class FlareEditor {
         p.elements[i].stretch = [s[0], v];
       })));
 
+    adv.appendChild(sliderCol("move x", elem.move?.[0] ?? 1, [0, 1, 0.01],
+      (v) => this.mutateQuiet((p) => {
+        const m = p.elements[i].move || [1, 1];
+        p.elements[i].move = [v, m[1]];
+      })));
+    adv.appendChild(sliderCol("move y", elem.move?.[1] ?? 1, [0, 1, 0.01],
+      (v) => this.mutateQuiet((p) => {
+        const m = p.elements[i].move || [1, 1];
+        p.elements[i].move = [m[0], v];
+      })));
+
     if (elem.type === "spectral") {
       adv.appendChild(dropdown("shape", elem.params?.shape || "ring",
         ["ring", "iris"], (v) => setParam("shape", v)));
+    }
+    if (elem.type === "orbs") {
+      adv.appendChild(dropdown("shape", elem.params?.shape || "disc",
+        ["disc", "polygon"], (v) => setParam("shape", v)));
     }
     for (const [key, spec] of Object.entries(PARAM_SPECS[elem.type] || {})) {
       adv.appendChild(sliderCol(key.replace(/_/g, " "),
         elem.params?.[key] ?? PARAM_FALLBACKS[elem.type]?.[key], spec,
         (v) => setParam(key, spec[2] >= 1 ? Math.round(v) : v)));
+    }
+
+    /* trigger: rule-based animation without keyframes */
+    const sec = document.createElement("div");
+    sec.className = "fcore-sec";
+    sec.textContent = "trigger — react to the light nearing the frame border or centre";
+    adv.appendChild(sec);
+    const trig = Object.assign({}, TRIGGER_DEFAULTS, elem.trigger || {});
+    const setTrig = (k, v) => this.mutateQuiet((p) => {
+      const t = Object.assign({}, TRIGGER_DEFAULTS, p.elements[i].trigger || {});
+      t[k] = v;
+      p.elements[i].trigger = t.mode === "none" ? null : t;
+    });
+    const setTrigRebuild = (k, v) => { setTrig(k, v); this.flushPending(); this.build(); };
+    adv.appendChild(dropdown("mode", trig.mode, ["none", "border", "center"],
+      (v) => setTrigRebuild("mode", v)));
+    if (trig.mode !== "none") {
+      adv.appendChild(dropdown("driven by", trig.source, ["light", "element"],
+        (v) => setTrig("source", v)));
+      adv.appendChild(dropdown("falloff", trig.falloff, ["smooth", "linear", "exponential"],
+        (v) => setTrig("falloff", v)));
+      for (const [key, spec] of Object.entries(TRIGGER_SPECS)) {
+        adv.appendChild(sliderCol(key, trig[key], spec, (v) => setTrig(key, v)));
+      }
+      const cwrap = document.createElement("div");
+      cwrap.className = "fcore-col";
+      const cl = document.createElement("label");
+      cl.textContent = "colour at full trigger";
+      const tc = document.createElement("input");
+      tc.type = "color"; tc.className = "fcore-swatch";
+      tc.value = colorToHex(trig.color || [1, 1, 1]);
+      tc.addEventListener("pointerdown", (e) => e.stopPropagation());
+      tc.addEventListener("input", () => setTrig("color", hexToColor(tc.value)));
+      cwrap.append(cl, tc);
+      adv.appendChild(cwrap);
     }
     return adv;
   }

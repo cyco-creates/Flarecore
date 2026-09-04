@@ -55,6 +55,33 @@ def _irregular(p: dict) -> float:
     return float(p.get("irregular", 0.0))
 
 
+def _completion_mask(phi: torch.Tensor, p: dict):
+    """Angular window for the circular types: params.completion degrees of
+    arc centred on local +u (rotation aims it), with a feathered fade at the
+    ends. Returns None for a full circle so the common case costs nothing."""
+    completion = float(p.get("completion", 360.0))
+    if completion >= 360.0:
+        return None
+    half = math.radians(completion) / 2.0
+    feather = float(p.get("completion_feather", 0.2)) * max(half, 1e-4)
+    a = torch.abs(torch.remainder(phi + math.pi, 2.0 * math.pi) - math.pi)
+    if feather <= 1e-6:
+        return (a <= half).to(phi.dtype)
+    return _smoothstep(half, half - feather, a)
+
+
+def _aa_thickness(thickness: float, p: dict) -> tuple[float, float]:
+    """Sub-pixel thin features alias and shimmer frame to frame. The engine
+    passes the local size of one pixel as params['_px']; a feature thinner
+    than ~0.8 px is widened to that and its gain reduced to conserve energy,
+    so a hairline ray keeps its brightness budget instead of flickering."""
+    px = float(p.get("_px", 0.0))
+    floor = 0.8 * px
+    if px <= 0.0 or thickness >= floor:
+        return thickness, 1.0
+    return floor, thickness / floor
+
+
 def glow(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     """Soft radial halo: inverse-power (Moffat-style) profile.
 
@@ -122,7 +149,7 @@ def streak(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     spacing is pi / count).
     """
     length = p["length"]
-    thickness = p["thickness"]
+    thickness, gain = _aa_thickness(p["thickness"], p)
     count = max(int(p["count"]), 1)
 
     irr = _irregular(p)
@@ -142,24 +169,26 @@ def streak(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
                 uu * (2.5 / max(length, 1e-4)), int(p.get("seed", 0)), 4 + i)
             line = line * wav.clamp(min=0.0)
         field = field + line
-    return field
+    return field * gain if gain != 1.0 else field
 
 
 def ring(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     """Thin gaussian annulus."""
     radius = p["radius"]
-    thickness = p["thickness"]
+    thickness, gain = _aa_thickness(p["thickness"], p)
     r = torch.sqrt(u * u + v * v)
     irr = _irregular(p)
+    needs_phi = irr > 0.0 or float(p.get("completion", 360.0)) < 360.0
+    phi = torch.atan2(v, u) if needs_phi else None
     if irr > 0.0:
         # circumferential unevenness: one side of the ring runs brighter,
         # and the radius drifts slightly, like a real reflection ring
-        phi = torch.atan2(v, u)
         seed = int(p.get("seed", 0))
         radius = radius * (1.0 + irr * 0.03 * _harmonic_noise(phi, seed, 5))
-        gain = (1.0 + irr * 0.6 * _harmonic_noise(phi, seed, 6)).clamp(min=0.0)
-        return torch.exp(-(((r - radius) / thickness) ** 2)) * gain
-    return torch.exp(-(((r - radius) / thickness) ** 2))
+        gain = gain * (1.0 + irr * 0.6 * _harmonic_noise(phi, seed, 6)).clamp(min=0.0)
+    field = torch.exp(-(((r - radius) / thickness) ** 2)) * gain
+    mask = _completion_mask(phi, p) if phi is not None else None
+    return field * mask if mask is not None else field
 
 
 def hoop(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
@@ -170,7 +199,7 @@ def hoop(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     spec's cos(phi - theta_axis) form.
     """
     radius = p["radius"]
-    thickness = p["thickness"]
+    thickness, gain = _aa_thickness(p["thickness"], p)
     angular_falloff = p["angular_falloff"]
     r = torch.sqrt(u * u + v * v)
     phi = torch.atan2(v, u)
@@ -178,10 +207,13 @@ def hoop(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     if irr > 0.0:
         seed = int(p.get("seed", 0))
         radius = radius * (1.0 + irr * 0.03 * _harmonic_noise(phi, seed, 5))
-    radial = torch.exp(-(((r - radius) / thickness) ** 2))
+    radial = torch.exp(-(((r - radius) / thickness) ** 2)) * gain
     angular = (1.0 - angular_falloff * torch.abs(torch.cos(phi))).clamp(min=0.0)
     if irr > 0.0:
         angular = angular * (1.0 + irr * 0.6 * _harmonic_noise(phi, seed, 6)).clamp(min=0.0)
+    mask = _completion_mask(phi, p)
+    if mask is not None:
+        angular = angular * mask
     return radial * angular
 
 
@@ -193,7 +225,7 @@ def glint(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     """
     points = max(int(p["points"]), 2)
     length = p["length"]
-    thickness = p["thickness"]
+    thickness, gain = _aa_thickness(p["thickness"], p)
     jitter = p["length_jitter"]
     seed = int(p.get("seed", 0))
 
@@ -218,7 +250,10 @@ def glint(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
         li = max(float(lengths[i]), 1e-4)
         ray = torch.exp(-uu.clamp(min=0.0) / li) * torch.exp(-((vv / thickness) ** 2))
         field = field + ray * (uu > 0.0) * max(float(gains[i]), 0.1)
-    return field
+    if gain != 1.0:
+        field = field * gain
+    mask = _completion_mask(torch.atan2(v, u), p)
+    return field * mask if mask is not None else field
 
 
 def spectral(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
@@ -264,6 +299,57 @@ def texture(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     return out
 
 
+def orbs(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
+    """Procedural out-of-focus spots on the lens.
+
+    Seeded discs (or polygons) scattered within `spread` of the element
+    centre, each lit by its proximity to the light: the engine passes the
+    light's position in this element's local frame as params['_light_local'],
+    and an orb's brightness falls off as 1 / (1 + (d / illumination)^2). With
+    the type's default screen_space=True the orbs stay glued to the lens while
+    the light sweeps across them, which is what real lens dirt does.
+    """
+    count = max(int(p["count"]), 1)
+    size = float(p["size"])
+    jitter = float(p["size_jitter"])
+    spread = float(p["spread"])
+    edge = max(float(p["edge_softness"]), 1e-3)
+    illum = max(float(p["illumination"]), 1e-3)
+    seed = int(p.get("seed", 0))
+    lx, ly = p.get("_light_local", (0.0, 0.0))
+
+    gen = torch.Generator(device="cpu")
+    gen.manual_seed(seed & 0x7FFFFFFFFFFFFFFF)
+    rnd = torch.rand(count, 5, generator=gen)
+    radii = spread * torch.sqrt(rnd[:, 0])          # uniform over the disc
+    angles = rnd[:, 1] * 2.0 * math.pi
+    ox = radii * torch.cos(angles)
+    oy = radii * torch.sin(angles)
+    sizes = size * (1.0 + jitter * (rnd[:, 2] * 2.0 - 1.0)).clamp(min=0.15)
+    gains = 0.6 + 0.8 * rnd[:, 3]
+    rots = rnd[:, 4] * 2.0 * math.pi
+
+    polygon = p.get("shape") == "polygon"
+    blades = max(int(p.get("blades", 6)), 3)
+    sector = 2.0 * math.pi / blades
+
+    field = torch.zeros_like(u)
+    for i in range(count):
+        cx, cy, sz = float(ox[i]), float(oy[i]), float(sizes[i])
+        du = (u - cx) / sz
+        dv = (v - cy) / sz
+        r = torch.sqrt(du * du + dv * dv)
+        if polygon:
+            phi = torch.atan2(dv, du) + float(rots[i])
+            folded = torch.remainder(phi + sector / 2.0, sector) - sector / 2.0
+            r = r / (math.cos(math.pi / blades) / torch.cos(folded))
+        disc = _smoothstep(1.0, 1.0 - edge, r)
+        d_light = math.hypot(cx - lx, cy - ly)
+        lit = 1.0 / (1.0 + (d_light / illum) ** 2)
+        field = field + disc * (float(gains[i]) * lit)
+    return field
+
+
 ELEMENT_FUNCTIONS = {
     "glow": glow,
     "iris": iris,
@@ -273,4 +359,5 @@ ELEMENT_FUNCTIONS = {
     "glint": glint,
     "spectral": spectral,
     "texture": texture,
+    "orbs": orbs,
 }

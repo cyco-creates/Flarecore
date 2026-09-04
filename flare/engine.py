@@ -26,6 +26,7 @@ import math
 import zlib
 
 import torch
+import torch.nn.functional as F
 
 from .axis import axis_angle, element_center
 from .depth import blur_depth
@@ -41,6 +42,10 @@ OCCLUSION_SHRINK = 0.6
 
 # blur = 1.0 softens an element with a gaussian sigma of 4% of frame height.
 BLUR_SIGMA_MAX = 0.04
+
+# fringe = 1.0 spreads red outward / blue inward by 2.5% of the half-height
+# at the frame corners (radial, so nothing happens at the centre).
+FRINGE_MAX = 0.025
 
 # Piecewise-linear spectrum anchors from red to blue.
 _SPECTRUM_ANCHORS = [
@@ -115,6 +120,55 @@ def _element_passes(elem, device, dtype):
     return [(1.0, torch.tensor(base, device=device, dtype=dtype))]
 
 
+def _ramp01(t: float, falloff: str) -> float:
+    t = min(max(t, 0.0), 1.0)
+    if falloff == "linear":
+        return t
+    if falloff == "exponential":
+        return t * t
+    return t * t * (3.0 - 2.0 * t)          # smooth
+
+
+def trigger_factor(trig, x: float, y: float, frame_aspect: float) -> float:
+    """How strongly an element's trigger rule fires (0..1) for a point in
+    grid coordinates. 'border' measures the distance to the nearest frame
+    edge (negative outside the frame, so an element that has left the frame
+    is fully triggered); 'center' measures the distance to the frame centre.
+    inner..outer is the ramp from fully on to fully off."""
+    if trig is None:
+        return 0.0
+    if trig["mode"] == "border":
+        d = min(frame_aspect - abs(x), 1.0 - abs(y))
+    else:
+        d = math.hypot(x, y)
+    span = max(trig["outer"] - trig["inner"], 1e-6)
+    return 1.0 - _ramp01((d - trig["inner"]) / span, trig["falloff"])
+
+
+def flicker_gain(base_seed: int, light_index: int, frame: int,
+                 amount: float, speed: float) -> float:
+    """Per-light brightness flicker: seeded smooth noise over the frame
+    index, different for every light so a row of lamps never pulses in
+    unison. amount 1 swings +-50%."""
+    if amount <= 0.0:
+        return 1.0
+    t = frame * 0.12 * max(speed, 0.0)
+    total = 0.0
+    for k, (freq, w) in enumerate(((1.0, 0.5), (2.3, 0.3), (5.1, 0.2))):
+        phase = (_mix(base_seed, light_index * 31 + k) % 10007) / 10007.0 * 2.0 * math.pi
+        total += w * math.sin(freq * t + phase)
+    return max(1.0 + amount * 0.5 * total, 0.0)
+
+
+def edge_fade(x: float, y: float, frame_aspect: float, start: float, rng: float) -> float:
+    """Lens-hood behaviour: a light that has travelled `start` half-heights
+    beyond the frame edge fades out over the next `rng`. rng 0 disables."""
+    if rng <= 0.0:
+        return 1.0
+    outside = max(abs(x) - frame_aspect, abs(y) - 1.0, 0.0)
+    return 1.0 - _ramp01((outside - start) / rng, "smooth")
+
+
 def _apply_weight(field: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
     """Colour a field: (H, W) intensity fields broadcast against the RGB
     weight; (H, W, 3) fields (colour textures) multiply per channel."""
@@ -131,13 +185,25 @@ def _blur_rgb(rgb: torch.Tensor, amount: float) -> torch.Tensor:
 
 def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
                         base_seed, elem_index, light_weight, scene_mask=None,
-                        global_aspect=1.0):
-    """Add every count-instance of one element for one light into `out`."""
+                        global_aspect=1.0, frame_aspect=1.0, light_rgb=None):
+    """Add every count-instance of one element for one light into `out`.
+
+    light_rgb: optional (3,) tensor multiplying this light's colour into the
+    element (scene-sampled light colour).
+    """
     fn = ELEMENT_FUNCTIONS[elem["type"]]
     px, py = light["x"], light["y"]
     ax = light.get("ax", 0.0)
     ay = light.get("ay", 0.0)
+    # real light position for lens-locked elements (their px/py is the lens
+    # centre); orbs light up by proximity to this
+    real_lx = light.get("lx", px)
+    real_ly = light.get("ly", py)
     stretch_x, stretch_y = elem["stretch"]
+    move_x, move_y = elem.get("move", (1.0, 1.0))
+    trig = elem.get("trigger")
+    # pixel size in grid units: the y axis spans [-1, 1] over the height
+    px_grid = 2.0 / max(out.shape[0], 1)
 
     # Anamorphic widen is a property of the LENS, not of the element: it
     # always stretches along the screen's horizontal axis, so it is applied
@@ -159,12 +225,17 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
         rot += theta
     cos_r, sin_r = math.cos(rot), math.sin(rot)
 
+    # trigger driven by the light's own position is the same for every instance
+    f_light = trigger_factor(trig, real_lx, real_ly, frame_aspect) \
+        if trig is not None and trig["source"] == "light" else 0.0
+
     for i in range(elem["count"]):
         t_i = elem["offset"] + i * elem["spread"]
         intensity_i = elem["intensity"] * (elem["count_falloff"] ** i)
         scale_i = max(elem["scale"] * (elem["count_scale_step"] ** i)
                       * global_scale, 1e-6) * size_mult
-        if intensity_i <= 0.0:
+        # a zero-intensity element may still be lit by its trigger rule
+        if intensity_i <= 0.0 and trig is None:
             continue
 
         params = dict(elem["params"])
@@ -172,15 +243,48 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
         params["irregular"] = elem.get("irregular", 0.0)
 
         cx, cy = element_center(px, py, t_i, ax, ay)
+        # translation locks: follow only part of the light-driven motion per
+        # screen axis (the anchor is the rest position)
+        if move_x != 1.0 or move_y != 1.0:
+            cx = ax + (cx - ax) * move_x
+            cy = ay + (cy - ay) * move_y
+
+        inst_weight = passes
+        if trig is not None:
+            f = f_light if trig["source"] == "light" \
+                else trigger_factor(trig, cx, cy, frame_aspect)
+            if f > 0.0:
+                # brightness is ADDED in intensity units so an element can
+                # sit at 0 and only exist while its rule fires
+                intensity_i = max(intensity_i + f * trig["brightness"], 0.0)
+                scale_i = max(scale_i * (1.0 + f * trig["scale"]), 1e-6)
+                tc = trig["color"]
+                if tc != [1.0, 1.0, 1.0]:
+                    mix = torch.tensor([1.0 + f * (c - 1.0) for c in tc],
+                                       device=out.device, dtype=out.dtype)
+                    inst_weight = [(sc, w * mix) for sc, w in passes]
+        if intensity_i <= 0.0:
+            continue
+        if light_rgb is not None:
+            inst_weight = [(sc, w * light_rgb) for sc, w in inst_weight]
+
+        params["_px"] = px_grid / scale_i
         u0 = x - cx / global_aspect
         v0 = y - cy
         # rotate by -rot so the element's local frame is axis-aligned
         u = (u0 * cos_r + v0 * sin_r) / (scale_i * stretch_x)
         v = (-u0 * sin_r + v0 * cos_r) / (scale_i * stretch_y)
+        if elem["type"] == "orbs":
+            lu0 = real_lx / global_aspect - cx / global_aspect
+            lv0 = real_ly - cy
+            params["_light_local"] = (
+                (lu0 * cos_r + lv0 * sin_r) / (scale_i * stretch_x),
+                (-lu0 * sin_r + lv0 * cos_r) / (scale_i * stretch_y),
+            )
 
         if heavy:
             inst = torch.zeros_like(out)
-            for s, weight in passes:
+            for s, weight in inst_weight:
                 field = fn(u * s, v * s, params) if s != 1.0 else fn(u, v, params)
                 inst.add_(_apply_weight(field, weight))
             if blur > 0.0:
@@ -191,14 +295,14 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
                 inst = inst * factor.unsqueeze(-1)
             out.add_(inst, alpha=intensity_i * light_weight)
         else:
-            for s, weight in passes:
+            for s, weight in inst_weight:
                 field = fn(u * s, v * s, params) if s != 1.0 else fn(u, v, params)
                 out.add_(_apply_weight(field, weight), alpha=intensity_i * light_weight)
 
 
 def render_stack(preset, lights, height, width, device, dtype,
                  extra_seed=0, intensity=1.0, scale=1.0, grid=None, out=None,
-                 scene_mask=None):
+                 scene_mask=None, frame=0):
     """Render one frame's flare stack in linear light.
 
     preset: a validated preset dict (see schema.validate_preset).
@@ -212,6 +316,9 @@ def render_stack(preset, lights, height, width, device, dtype,
         video batch can preallocate one output instead of stacking copies.
     scene_mask: optional (height, width) brightness mask in [0, 1]; elements
         with light_mask > 0 fade toward the mask's bright areas.
+    frame: frame index (drives global flicker). Lights may carry "color"
+        ([r, g, b] linear multiplier, e.g. sampled from the plate) and
+        "index" (stable id for flicker; defaults to list position).
 
     Returns (height, width, 3) linear RGB; genuinely zero where no element
     contributes.
@@ -229,43 +336,94 @@ def render_stack(preset, lights, height, width, device, dtype,
         out = torch.zeros(height, width, 3, device=device, dtype=dtype)
 
     g_aspect = g.get("aspect", 1.0)
+    frame_aspect = width / max(height, 1)
     enabled = [(idx, elem) for idx, elem in enumerate(preset["elements"])
                if elem["enabled"]]
+    # solo: while any element is soloed only the soloed ones render (a
+    # non-destructive way to isolate a layer while tuning it)
+    if any(e.get("solo") for _, e in enabled):
+        enabled = [(i, e) for i, e in enabled if e.get("solo")]
     axis_elems = [(i, e) for i, e in enabled if not e.get("screen_space")]
     screen_elems = [(i, e) for i, e in enabled if e.get("screen_space")]
     passes_by_idx = {idx: _element_passes(elem, device, dtype)
                      for idx, elem in enabled}
 
-    for light in lights:
+    fl_amount = g.get("flicker_amount", 0.0)
+    fl_speed = g.get("flicker_speed", 1.0)
+    ef_start = g.get("edge_fade_start", 0.0)
+    ef_range = g.get("edge_fade_range", 0.0)
+
+    weights = []
+    for k, light in enumerate(lights):
         weight = light.get("brightness", 1.0) * (1.0 - light.get("occlusion", 0.0))
+        weight *= flicker_gain(base_seed, int(light.get("index", k)), frame,
+                               fl_amount, fl_speed)
+        weight *= edge_fade(light["x"], light["y"], frame_aspect, ef_start, ef_range)
+        weights.append(weight)
         if weight <= 0.0:
             continue
+        rgb = light.get("color")
+        light_rgb = (torch.tensor(rgb, device=device, dtype=dtype)
+                     if rgb is not None else None)
         theta = axis_angle(light["x"], light["y"],
                            light.get("ax", 0.0), light.get("ay", 0.0))
         for idx, elem in axis_elems:
             _accumulate_element(out, x, y, elem, passes_by_idx[idx], light,
                                 theta, g_scale, base_seed, idx, weight,
-                                scene_mask=scene_mask, global_aspect=g_aspect)
+                                scene_mask=scene_mask, global_aspect=g_aspect,
+                                frame_aspect=frame_aspect, light_rgb=light_rgb)
 
     # Screen-space elements sit on the LENS, not the flare axis: rendered
     # once per frame at frame centre, driven by the strongest light (lens
     # dirt lights up with the light, it does not duplicate per light).
-    if screen_elems:
-        strongest = max(
-            (l.get("brightness", 1.0) * (1.0 - l.get("occlusion", 0.0))
-             for l in lights), default=0.0)
+    if screen_elems and weights:
+        k_best = max(range(len(weights)), key=lambda k: weights[k])
+        strongest = weights[k_best]
         if strongest > 0.0:
+            best = lights[k_best]
             lens_light = {"x": 0.0, "y": 0.0, "ax": 0.0, "ay": 0.0,
-                          "occlusion": 0.0}
+                          "occlusion": 0.0,
+                          "lx": best["x"], "ly": best["y"]}
+            rgb = best.get("color")
+            light_rgb = (torch.tensor(rgb, device=device, dtype=dtype)
+                         if rgb is not None else None)
             for idx, elem in screen_elems:
                 _accumulate_element(out, x, y, elem, passes_by_idx[idx],
                                     lens_light, 0.0, g_scale, base_seed, idx,
                                     strongest, scene_mask=scene_mask,
-                                    global_aspect=g_aspect)
+                                    global_aspect=g_aspect,
+                                    frame_aspect=frame_aspect,
+                                    light_rgb=light_rgb)
 
     tint = torch.tensor(g["tint"], device=device, dtype=dtype)
     out.mul_(tint * g_intensity)
+
+    fringe = g.get("fringe", 0.0)
+    if fringe > 0.0:
+        out.copy_(chromatic_fringe(out, fringe))
     return out
+
+
+def chromatic_fringe(rgb: torch.Tensor, amount: float) -> torch.Tensor:
+    """Radial lateral chromatic aberration on a finished (H, W, 3) frame:
+    red is magnified outward and blue inward about the frame centre, so
+    colour fringes grow toward the corners like a real wide lens."""
+    h, w = rgb.shape[:2]
+    k = amount * FRINGE_MAX
+    ys = torch.linspace(-1.0, 1.0, h, device=rgb.device, dtype=rgb.dtype)
+    xs = torch.linspace(-1.0, 1.0, w, device=rgb.device, dtype=rgb.dtype)
+    gy, gx = torch.meshgrid(ys, xs, indexing="ij")
+    img = rgb.permute(2, 0, 1).unsqueeze(0)          # (1, 3, H, W)
+
+    def sample(channel, scale):
+        grid = torch.stack([gx * scale, gy * scale], dim=-1).unsqueeze(0)
+        return F.grid_sample(img[:, channel:channel + 1], grid, mode="bilinear",
+                             padding_mode="zeros", align_corners=True)[0, 0]
+
+    # sampling at a SMALLER radius magnifies the channel outward
+    r = sample(0, 1.0 - k)
+    b = sample(2, 1.0 + k)
+    return torch.stack([r, rgb[..., 1], b], dim=-1)
 
 
 def render_batch(preset, lights_per_frame, height, width, device, dtype,
@@ -284,7 +442,8 @@ def render_batch(preset, lights_per_frame, height, width, device, dtype,
         render_stack(preset, lights, height, width, device, dtype,
                      extra_seed=extra_seed, intensity=intensity, scale=scale,
                      grid=grid, out=out[i],
-                     scene_mask=None if scene_masks is None else scene_masks[i])
+                     scene_mask=None if scene_masks is None else scene_masks[i],
+                     frame=i)
     return out
 
 

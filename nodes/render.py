@@ -35,6 +35,17 @@ except ImportError:
 
 _preview_error_logged = False
 
+def _compute_device(home):
+    """ComfyUI's own compute device (CUDA/MPS when present); outside ComfyUI,
+    or when the device cannot be initialised, the renderer simply follows
+    the input tensor. Imported lazily: importing model_management touches
+    the CUDA runtime, which must not happen at module load."""
+    try:
+        from comfy import model_management as mm
+        return mm.get_torch_device()
+    except Exception:
+        return home
+
 
 class FlareRender:
     CATEGORY = "flare"
@@ -70,6 +81,12 @@ class FlareRender:
                                "light across the batch; turns one-frame "
                                "occlusion cuts into fades (video)",
                 }),
+                "scene_color": ("FLOAT", {
+                    "default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "tooltip": "tint each light's flare by the plate colour "
+                               "at the light (0 = preset colours only, 1 = "
+                               "fully takes the source's colour)",
+                }),
             },
             "optional": {
                 "depth": ("IMAGE",),
@@ -84,14 +101,19 @@ class FlareRender:
                flare_x, flare_y, detect_threshold, detect_max_lights,
                occlusion_radius, light_depth, invert_depth, intensity, scale,
                blend_mode, clamp_output, seed, occlusion_smooth=0.4,
-               depth=None, lights=None):
+               scene_color=0.0, depth=None, lights=None):
         preset = load_preset(preset_json)
 
-        device = image.device
+        # ComfyUI passes IMAGE tensors on the CPU regardless of where they
+        # were made, so "follow the input" would pin the whole renderer to
+        # the CPU (about 30x slower at 1080p). Render on the compute device
+        # ComfyUI itself uses and hand the results back on the input's.
+        home = image.device
+        device = _compute_device(home)
         dtype = image.dtype if image.dtype.is_floating_point else torch.float32
         resolve_preset_textures(preset, device=device, dtype=dtype)
 
-        rgb = image[..., :3].to(dtype)
+        rgb = image[..., :3].to(device=device, dtype=dtype)
         batch, height, width, _ = rgb.shape
 
         image_linear = srgb_to_linear(rgb)
@@ -105,7 +127,7 @@ class FlareRender:
             )
 
         if depth is not None:
-            depth_maps = depth[..., :3].to(dtype).mean(dim=-1)  # (Bd, H, W)
+            depth_maps = depth[..., :3].to(device=device, dtype=dtype).mean(dim=-1)  # (Bd, H, W)
             bd = depth_maps.shape[0]
             if 1 < bd < batch:
                 raise ValueError(
@@ -129,19 +151,25 @@ class FlareRender:
         default_anchor = uv_to_grid(flare_x, flare_y, height, width)
 
         engine_lights = []
-        for frame_lights in lights_per_frame:
+        for fi, frame_lights in enumerate(lights_per_frame):
             frame = []
-            for light in frame_lights:
+            for k, light in enumerate(frame_lights):
                 x, y = uv_to_grid(light["u"], light["v"], height, width)
                 if "au" in light and "av" in light:
                     ax, ay = uv_to_grid(light["au"], light["av"], height, width)
                 else:
                     ax, ay = default_anchor
-                frame.append({
+                entry = {
                     "x": x, "y": y, "ax": ax, "ay": ay,
                     "brightness": light.get("brightness", 1.0),
                     "occlusion": light.get("occlusion", 0.0),
-                })
+                    # tracked lights keep their id so flicker stays per-lamp
+                    "index": int(light.get("tid", k)),
+                }
+                if scene_color > 0.0:
+                    entry["color"] = _scene_light_color(
+                        image_linear[fi], light["u"], light["v"], scene_color)
+                frame.append(entry)
             engine_lights.append(frame)
 
         # Elements with light_mask appear where the light is: the mask is the
@@ -183,7 +211,9 @@ class FlareRender:
 
         flare_alpha = linear_luminance(flare_pass).clamp(0.0, 1.0)
 
-        result = (out, flare_pass, flare_alpha)
+        # back to where the input lives (CPU for ComfyUI) so downstream nodes
+        # see the device they expect
+        result = (out.to(home), flare_pass.to(home), flare_alpha.to(home))
         if _folder_paths is None:
             return result
         # The picker backdrop is the COMPOSITE — the point of the panel is
@@ -254,6 +284,30 @@ class FlareRender:
                 for lights in detected
             ]
         raise ValueError(f"unknown position_mode {position_mode!r}")
+
+
+def _scene_light_color(plate_linear, u, v, strength, radius=0.03):
+    """Chromaticity of the plate around the light, as an (r, g, b) multiplier
+    with unit luminance, blended toward neutral by 1 - strength. A pure
+    grey source returns (1, 1, 1); an orange sunset sun returns a warm tint
+    that the whole flare then takes on."""
+    h, w = plate_linear.shape[:2]
+    r = max(int(radius * h), 1)
+    cy, cx = int(v * (h - 1)), int(u * (w - 1))
+    patch = plate_linear[max(cy - r, 0):cy + r + 1, max(cx - r, 0):cx + r + 1, :3]
+    if patch.numel() == 0:
+        return [1.0, 1.0, 1.0]
+    lum = linear_luminance(patch)
+    # weight by brightness so the source dominates over its surroundings
+    wsum = lum.sum()
+    if wsum <= 1e-6:
+        return [1.0, 1.0, 1.0]
+    mean = (patch * lum.unsqueeze(-1)).sum(dim=(0, 1)) / wsum
+    mean_lum = float(linear_luminance(mean.view(1, 1, 3))[0, 0])
+    if mean_lum <= 1e-6:
+        return [1.0, 1.0, 1.0]
+    chroma = (mean / mean_lum).clamp(0.2, 3.0).tolist()
+    return [1.0 + strength * (c - 1.0) for c in chroma]
 
 
 def _save_preview(frame):

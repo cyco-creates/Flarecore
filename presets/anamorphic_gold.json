@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "name": "Anamorphic Gold",
+  "author": "flarecore",
+  "global": {
+    "intensity": 1.0,
+    "scale": 1.0,
+    "aspect": 1.6,
+    "tint": [
+      1.0,
+      0.98,
+      0.94
+    ],
+    "seed": 21,
+    "fringe": 0.2,
+    "edge_fade_start": 0.15,
+    "edge_fade_range": 0.5
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "label": "core",
+      "id": "ag_core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.08,
+      "intensity": 4.5,
+      "color": [
+        1.0,
+        0.98,
+        0.9
+      ],
+      "params": {
+        "softness": 0.3,
+        "falloff": 2.2
+      }
+    },
+    {
+      "type": "glow",
+      "label": "gold bloom",
+      "id": "ag_bloom",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.5,
+      "intensity": 0.85,
+      "irregular": 0.25,
+      "color": [
+        1.0,
+        0.82,
+        0.5
+      ],
+      "params": {
+        "softness": 0.5,
+        "falloff": 1.4
+      }
+    },
+    {
+      "type": "streak",
+      "label": "anamorphic streak",
+      "id": "ag_streak",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.55,
+      "auto_rotate": false,
+      "irregular": 0.3,
+      "blur": 0.04,
+      "color": [
+        1.0,
+        0.86,
+        0.55
+      ],
+      "params": {
+        "length": 2.6,
+        "thickness": 0.006
+      }
+    },
+    {
+      "type": "streak",
+      "label": "streak haze",
+      "id": "ag_streakhaze",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.09,
+      "auto_rotate": false,
+      "blur": 0.3,
+      "color": [
+        1.0,
+        0.8,
+        0.5
+      ],
+      "params": {
+        "length": 1.8,
+        "thickness": 0.05
+      }
+    },
+    {
+      "type": "iris",
+      "label": "anamorphic bars",
+      "id": "ag_bars",
+      "slot": "ghosts",
+      "offset": 0.6,
+      "count": 4,
+      "spread": 0.35,
+      "scale": 0.045,
+      "count_scale_step": 1.3,
+      "count_falloff": 0.85,
+      "intensity": 0.22,
+      "stretch": [
+        3.2,
+        0.45
+      ],
+      "auto_rotate": false,
+      "move": [
+        1.0,
+        0.15
+      ],
+      "irregular": 0.35,
+      "dispersion": 0.5,
+      "blur": 0.03,
+      "color": [
+        1.0,
+        0.75,
+        0.45
+      ],
+      "params": {
+        "blades": 4,
+        "edge_softness": 0.35
+      }
+    },
+    {
+      "type": "iris",
+      "label": "ghost chain",
+      "id": "ag_ghosts",
+      "slot": "ghosts",
+      "offset": 1.35,
+      "count": 3,
+      "spread": 0.28,
+      "scale": 0.11,
+      "count_scale_step": 1.2,
+      "count_falloff": 0.85,
+      "intensity": 0.16,
+      "irregular": 0.3,
+      "dispersion": 0.6,
+      "blur": 0.1,
+      "color": [
+        1.0,
+        0.8,
+        0.55
+      ],
+      "params": {
+        "blades": 8,
+        "edge_softness": 0.6
+      }
+    },
+    {
+      "type": "glint",
+      "label": "rays",
+      "id": "ag_rays",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.55,
+      "intensity": 0.35,
+      "irregular": 0.5,
+      "blur": 0.05,
+      "color": [
+        1.0,
+        0.94,
+        0.8
+      ],
+      "params": {
+        "points": 36,
+        "length": 0.4,
+        "thickness": 0.003,
+        "length_jitter": 0.75
+      }
+    },
+    {
+      "type": "hoop",
+      "label": "gold hoop",
+      "id": "ag_hoop",
+      "slot": "hoops",
+      "offset": 0.5,
+      "scale": 0.9,
+      "intensity": 0.06,
+      "irregular": 0.4,
+      "dispersion": 1.2,
+      "blur": 0.06,
+      "color": [
+        1.0,
+        0.7,
+        0.4
+      ],
+      "params": {
+        "radius": 0.9,
+        "thickness": 0.2,
+        "angular_falloff": 0.85,
+        "completion": 220,
+        "completion_feather": 0.35
+      }
+    },
+    {
+      "type": "glow",
+      "label": "edge gleam",
+      "id": "ag_gleam",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 1.8,
+      "intensity": 0.0,
+      "auto_rotate": false,
+      "stretch": [
+        1.0,
+        0.08
+      ],
+      "blur": 0.2,
+      "color": [
+        1.0,
+        0.7,
+        0.35
+      ],
+      "trigger": {
+        "mode": "border",
+        "source": "light",
+        "inner": -0.1,
+        "outer": 0.35,
+        "falloff": "smooth",
+        "brightness": 0.45,
+        "scale": 0.3,
+        "color": [
+          1.0,
+          0.55,
+          0.25
+        ]
+      },
+      "params": {
+        "softness": 0.9,
+        "falloff": 1.2
+      }
+    },
+    {
+      "type": "orbs",
+      "label": "lens orbs",
+      "id": "ag_orbs",
+      "slot": "ghosts",
+      "scale": 1.0,
+      "intensity": 0.07,
+      "blur": 0.06,
+      "color": [
+        1.0,
+        0.9,
+        0.7
+      ],
+      "params": {
+        "count": 26,
+        "size": 0.045,
+        "size_jitter": 0.7,
+        "spread": 1.4,
+        "edge_softness": 0.35,
+        "illumination": 0.55,
+        "shape": "disc",
+        "blades": 6
+      }
+    }
+  ]
+}

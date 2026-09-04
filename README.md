@@ -7,8 +7,12 @@ CUDA, MPS, and CPU.
 ## What it does
 
 - Renders a stack of parametric flare elements (glow, iris ghosts, anamorphic
-  streaks, rings, hoops, starbursts, spectral rings) along a physically
-  motivated flare axis from the light position through frame center.
+  streaks, rings, hoops, starbursts, spectral rings, procedural lens orbs,
+  and your own photographed textures) along a physically motivated flare
+  axis from the light position through a movable anchor.
+- Every procedural element can be made imperfect (`irregular`): uneven ring
+  brightness, wobbly iris edges, rays of differing length and gain — seeded,
+  so it holds still across a video.
 - All math happens in linear light; sRGB decode on input, encode on output.
 - HDR internally (intensities may exceed 1.0); clamping is optional and only
   applied at the final encode.
@@ -39,12 +43,52 @@ FlareRender carries its own UI:
   directly on the last rendered frame. Elements sit at
   `P + t · (anchor − P)`, so the ghost chain aims at the anchor and its
   spacing grows with the distance between the two points.
-- **Stack editor** — add, reorder, duplicate and delete elements; every row
-  has sliders for position along the axis, size, and opacity, and the
-  twirl-down exposes everything else (color, dispersion, count chains,
-  stretch, per-type parameters, texture file picker). It reads and writes the
-  `preset_json` widget, so hand-edited JSON and the editor stay in sync.
-  `save…` writes into `presets/`; `presets ▾` loads any shipped or saved look.
+- **Stack editor** — add, reorder, duplicate, solo and delete elements; every
+  row has sliders for position along the axis, size, opacity and blur plus a
+  colour swatch, and the twirl-down exposes everything else (irregularity,
+  dispersion, count chains, stretch, translation locks, per-type parameters,
+  trigger rules). Clicking an element's name opens the gallery of your own
+  elements in that family; double-click renames; `⋯` copies and pastes
+  settings between rows. Undo/redo (`↶ ↷`, Ctrl+Z/Y) covers every change.
+  It reads and writes the `preset_json` widget, so hand-edited JSON and the
+  editor stay in sync. `save…` writes into `presets/`; `presets ▾` loads any
+  shipped or saved look, or **merges** one into the current stack.
+- **lens ▾** on the global row: chromatic fringe, per-light flicker, and edge
+  fade (a lens hood — lights that leave the frame fade out).
+
+## Rule-based animation
+
+Elements can react to where the light is without keyframes:
+
+- **Triggers** — each element's twirl-down has a trigger rule: as the light
+  (or the element itself) nears the frame **border** or **centre**, add
+  brightness, scale it up, and shift its colour, over a feathered range with
+  linear, smooth or exponential falloff. Set an element's opacity to 0 and it
+  exists only while its rule fires — a gleam that blooms as the sun leaves
+  frame, or a flash when a headlight crosses centre.
+- **Translation locks** (`move x / move y`) — how much of the light's motion
+  an element follows per screen axis. `move y = 0` gives the horizontal-only
+  ghost bars of an anamorphic lens; fractional values give the loose,
+  not-quite-on-the-axis drift of real flares.
+- **Flicker** — seeded per-light brightness noise over the frame index, so a
+  row of stage lamps never pulses in unison.
+
+## Lens character
+
+- `global.aspect` widens every element along the screen's horizontal axis
+  regardless of the flare angle (anamorphic squeeze).
+- `global.fringe` adds lateral chromatic aberration to the finished flare —
+  red outward, blue inward, growing toward the corners.
+- **Completion** on rings, hoops, glints and spectral rings limits them to a
+  feathered arc; rotation aims the arc.
+- **Lens orbs** — procedural out-of-focus specks locked to the lens, each lit
+  by its distance to the light (`illumination`). Duplicate with a new seed and
+  a different size for layered grime.
+- `scene_color` on FlareRender tints each light's flare by the plate colour
+  at the source, so a sunset sun flares warm and a sodium lamp flares orange.
+- Thin rays and rings are anti-aliased at sub-pixel widths with their energy
+  conserved: a hairline glint keeps its brightness at every resolution
+  instead of shimmering between frames.
 
 ## Video
 
@@ -78,8 +122,11 @@ Shipped workflows (ComfyUI → Workflow → Browse Templates → flarecore):
 - **flarecore_video_lab** — video in, tracked/occluded flare video out.
 - **flarecore_element_forge** — generate custom element textures with your
   local image model (wired for Krea2), condition them, and file them in the
-  library. Pick a prompt from the bank, queue, then use the new element from
-  the editor's texture dropdown. The engine itself never runs a model; the
+  library at 2K with a black margin so nothing ever crops. Pick a prompt from
+  the bank, queue, then click any element's name in the editor to swap in
+  your new element. The bank's eight categories (glows, ghosts, rays,
+  streaks, rings, hoops, caustics, lens_dirt) are the same families the
+  editor's gallery filters by. The engine itself never runs a model; the
   `texture` element just samples your library through the same transform
   pipeline (dispersion included) as the procedural elements.
 
@@ -124,8 +171,10 @@ minimal preset is just:
 { "schema_version": 1, "elements": [{ "type": "glow" }] }
 ```
 
-See `presets/` for full examples and `flare/schema.py` for the complete key
-reference. Unknown element types fail loudly; unknown extra keys warn.
+See `presets/` for full examples (`cine_blue` is the default; `anamorphic_gold`,
+`sun_natural` and `stage_spot` show move locks, triggers, orbs, completion and
+flicker) and `flare/schema.py` for the complete key reference. Unknown element
+types fail loudly; unknown extra keys warn.
 
 ## Notes for compositors
 

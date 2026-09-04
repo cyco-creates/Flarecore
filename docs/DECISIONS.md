@@ -132,6 +132,88 @@ stack is reordered. New node inputs are only ever APPENDED to INPUT_TYPES:
 widgets_values is positional, and the QA loop showed both an insert and a
 front-loaded DOM widget corrupt every previously saved workflow.
 
+## 3h. Anamorphic aspect is screen-space (2026-09-04, bugfix)
+
+`global.aspect` originally multiplied every element's `stretch_x`, which is
+applied in the element's rotated local frame — with `auto_rotate` the
+"anamorphic" widening followed the light-to-anchor angle instead of the
+screen's horizontal. A squeeze lens stretches the image horizontally
+regardless of where the light is, so the engine now divides the screen x
+coordinate by the aspect BEFORE the local rotation. Element positions are
+untouched (only shapes widen) — the axis geometry is a property of the
+scene, the widening a property of the lens.
+
+## 3i. Procedural irregularity (2026-09-04, owner-approved)
+
+A common `irregular` key (0..1) drives seeded low-order harmonic noise in the
+element math — uneven ring/hoop brightness and radius drift, iris edge wobble
+and shading, per-ray gain and angular wobble on glints, asymmetric glows,
+brightness waver along streaks. The noise is a sum of integer harmonics of
+the angle so it is seam-free and identity-seeded (same `_mix` chain as
+jitter), which is what keeps it stable across a video. Textures skip it:
+photographed elements are already imperfect.
+
+## 3j. Element library consolidated to eight families (2026-09-04)
+
+Seventeen folders (fog vs glows, discs vs iris ghosts vs orbs, four kinds of
+ray, stripes vs streaks, spectral vs rings) meant the forge, the add menu and
+the gallery each spoke a different taxonomy. The library is now glows,
+ghosts, rays, streaks, rings, hoops, caustics, lens_dirt — the same eight
+names in the prompt bank, `CATEGORY_OF`, and `elements/`. Legacy folder names
+are remapped in both the loader and the editor so old presets keep loading.
+
+## 3k. Rule-based animation and lens behaviour (2026-09-05)
+
+Owner shared tutorial transcripts of a commercial flare plug-in as
+inspiration; the ideas below are original implementations of behaviours
+real lenses (and that tool) exhibit. None of its code, formats or names are
+referenced.
+
+- **Translation locks** (`move: [mx, my]`): an element follows only that
+  fraction of the light-driven motion per screen axis, with the anchor as
+  its rest position. `[1, 0]` gives the horizontal-only ghost bars of an
+  anamorphic flare.
+- **Triggers** (`trigger` block): brightness (additive, so an element can
+  sit at 0 and exist only while its rule fires), scale (multiplicative) and
+  colour driven by the distance of the light or of the element itself to the
+  frame border or centre, with linear/smooth/exponential ramps. Animation
+  without keyframes; deterministic per frame.
+- **Flicker** (`global.flicker_amount/speed`): per-light seeded harmonic
+  noise over the frame index; tracked lights carry their track id as the
+  flicker index so each lamp pulses on its own.
+- **Edge fade** (`global.edge_fade_start/range`): a lens-hood — lights that
+  travel beyond the frame edge fade out over a set distance.
+- **Chromatic fringe** (`global.fringe`): a post-op on the finished frame,
+  red magnified outward and blue inward about the frame centre.
+- **Circular completion** (`params.completion/completion_feather` on ring,
+  hoop, glint, spectral): a feathered angular window centred on local +u.
+- **Orbs** element type: seeded out-of-focus discs/polygons on the lens
+  (screen_space by default) each lit by 1 / (1 + (d / illumination)^2) of its
+  distance to the light; the engine hands the light's position in element-
+  local coordinates as `params["_light_local"]`.
+- **Solo** element key: while any element is soloed only soloed elements
+  render (non-destructive isolation while tuning).
+- **Sub-pixel anti-aliasing**: the engine passes one pixel's size in local
+  units (`params["_px"]`); ring/streak/glint thickness below 0.8 px is widened
+  to that with gain reduced to conserve energy. A 0.002-thick ray at 1080p
+  used to alias and shimmer frame to frame; now its energy is the same
+  fraction of the frame at 108 px and 864 px (tested).
+- **Scene-sampled light colour** (`FlareRender.scene_color`): luminance-
+  weighted chromaticity of the plate around each light, normalised to unit
+  luminance and blended toward neutral, multiplied into that light's flare.
+
+## 3l. Nodes render on ComfyUI's compute device (2026-09-05)
+
+The engine follows the device of the tensors it is handed (spec constraint).
+ComfyUI, however, hands every IMAGE to a node on the CPU regardless of where
+it was produced, so "follow the input" at the NODE level pinned the whole
+renderer to the CPU: 2.3 s per 540p frame on a machine whose GPU does a 1080p
+frame in 60-90 ms. FlareRender now asks `comfy.model_management` for the
+compute device (lazily — importing it touches the CUDA runtime, which must
+not happen at module load or in headless tests), renders there, and returns
+results on the input's device. Outside ComfyUI nothing changes. Measured:
+253 ms per 1080p frame through the node including PNG encoding, from 2.3 s.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning
