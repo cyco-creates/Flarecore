@@ -140,7 +140,7 @@
    ],
    "size": [
     470,
-    1330
+    770
    ],
    "flags": {},
    "order": 4,
@@ -393,7 +393,7 @@
    ],
    "size": [
     340,
-    300
+    330
    ],
    "flags": {},
    "order": 10,
@@ -402,7 +402,7 @@
    "outputs": [],
    "properties": {},
    "widgets_values": [
-    "FLARE LAB\n\n1. Drag the orange LIGHT point and the cyan FLARE ANCHOR directly on\n   the preview inside Flare Render. Ghost spacing follows the distance\n   between the two points.\n2. Build the flare in the editor below the picker: + add element,\n   then use the pos / size / opac sliders. The small arrow opens the\n   full parameter set (color, dispersion, count chains, textures...).\n3. presets loads shipped looks; save... writes your own next to them.\n4. The depth branch keeps the flare occluded when the light hides\n   behind the pillar - drag the light behind it and render.\n5. flare_pass output is the flare over black for external compositing."
+    "FLARE LAB\n\n1. Drag the orange LIGHT point and the cyan FLARE ANCHOR directly on\n   the picker at the top of Flare Render. Ghost spacing follows the\n   distance between the two points.\n2. Build the flare in the editor below it: + add, then the\n   pos / size / opac sliders. The small arrow on a row opens the full\n   parameter set (color, dispersion, count chains, textures...).\n3. presets loads shipped looks; save... writes your own next to them.\n   The gear reveals the node's advanced inputs (detection, occlusion,\n   raw point coordinates).\n4. The depth branch keeps the flare occluded when the light hides\n   behind the pillar - drag the light behind it and render.\n5. flare_pass output is the flare over black for external compositing.\n\nThe panels hide below ~50% zoom - that is a ComfyUI DOM widget rule,\nzoom back in and they return."
    ],
    "color": "#432",
    "bgcolor": "#653"
