@@ -28,6 +28,7 @@ GLOBAL_DEFAULTS = {
 # Keys shared by every element regardless of type.
 ELEMENT_COMMON_DEFAULTS = {
     "id": "",               # optional stable identity; seeds derive from it
+    "label": "",            # optional display name (editor UI); engine ignores
     "enabled": True,
     "offset": 0.0,          # t along the flare axis (0 = on light, 1 = center)
     "scale": 0.5,           # size in half-frame-heights
@@ -157,6 +158,7 @@ def _validate_element(raw: dict, index: int) -> dict:
     # text field: an unbounded count or dispersion is a denial of service or a
     # coordinate-scale sign flip, not a creative choice.
     elem["id"] = str(elem["id"])
+    elem["label"] = str(elem["label"])
     elem["enabled"] = bool(elem["enabled"])
     elem["offset"] = _require_number(elem["offset"], f"{where}.offset", lo=-10.0, hi=10.0)
     elem["scale"] = _require_number(elem["scale"], f"{where}.scale", lo=1e-6, hi=100.0)

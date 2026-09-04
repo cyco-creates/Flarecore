@@ -48,11 +48,24 @@ def register_routes() -> bool:
         return False
     _registered = True
 
-    from .library import list_elements
+    from .library import list_elements, ELEMENTS_DIR
+    from ..flare.schema import normalize_texture_ref
 
     @routes.get("/flarecore/elements")
     async def flarecore_elements(request):
         return web.json_response({"elements": list_elements()})
+
+    @routes.get("/flarecore/element/{ref:.*}")
+    async def flarecore_element(request):
+        """Serve one library texture so the editor gallery can show thumbnails."""
+        try:
+            ref = normalize_texture_ref(request.match_info["ref"])
+        except ValueError:
+            return web.json_response({"error": "bad reference"}, status=400)
+        path = ELEMENTS_DIR / ref
+        if not path.is_file() or path.suffix.lower() != ".png":
+            return web.json_response({"error": "not found"}, status=404)
+        return web.FileResponse(path)
 
     @routes.get("/flarecore/presets")
     async def flarecore_presets(request):

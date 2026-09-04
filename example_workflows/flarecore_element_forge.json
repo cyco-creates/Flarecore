@@ -49,7 +49,7 @@
     "Node name for S&R": "FlareElementPrompts"
    },
    "widgets_values": [
-    "glows/soft_halo",
+    "glows/soft_glow",
     "",
     ""
    ]

@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // flarecore: the FlareRender interface — a point picker for the light and
-// flare anchor, and a stack editor over preset_json.
+// flare anchor, and a stack editor over preset_json with an element gallery.
 //
-// Both panels live in one extension so a single owner controls widget order
-// and node height. The node would otherwise stack sixteen numeric widgets
-// above the panels and stand ~1300px tall, which at any usable zoom shows
-// the panels alone with no node chrome around them.
+// The editor IS the interface: every node widget stays hidden until the ⚙
+// button reveals them. Both panels live in one extension so a single owner
+// controls widget order and node height.
 
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
@@ -17,13 +16,15 @@ import { api } from "../../scripts/api.js";
 // them, so any other position shifts every real value on reload.
 const PANEL_WIDGETS = new Set(["flare_layout", "flare_editor"]);
 
-// Widgets the picker owns, plus the tuning that does not belong on the face
-// of the node. Revealed by the editor's ⚙ button.
-const ADVANCED = [
+// Everything else on the node hides behind the ⚙ button — the picker and
+// the editor are the interface; the widgets are the escape hatch.
+const NODE_WIDGETS = [
+  "preset_json", "position_mode",
   "light_x", "light_y", "flare_x", "flare_y",
   "detect_threshold", "detect_max_lights",
   "occlusion_radius", "light_depth", "invert_depth",
-  "clamp_output", "control_after_generate", "occlusion_smooth",
+  "intensity", "scale", "blend_mode", "clamp_output",
+  "seed", "control_after_generate", "occlusion_smooth",
 ];
 
 function hideWidget(w) {
@@ -33,6 +34,7 @@ function hideWidget(w) {
   w._fcCompute = w.computeSize;
   w.type = "hidden";
   w.computeSize = () => [0, -4];
+  if (w.element?.style) w.element.style.display = "none";
 }
 
 function showWidget(w) {
@@ -41,6 +43,7 @@ function showWidget(w) {
   w.type = w._fcType;
   if (w._fcCompute) w.computeSize = w._fcCompute;
   else delete w.computeSize;
+  if (w.element?.style) w.element.style.display = "";
 }
 
 function setAdvanced(node, visible) {
@@ -48,7 +51,7 @@ function setAdvanced(node, visible) {
   // properties are serialized with the workflow, so the toggle survives
   // save/load — a plain JS field would silently reset to closed
   if (node.properties) node.properties.fc_advanced = visible;
-  for (const name of ADVANCED) {
+  for (const name of NODE_WIDGETS) {
     const w = node.widgets?.find((x) => x.name === name);
     if (w) (visible ? showWidget : hideWidget)(w);
   }
@@ -74,6 +77,10 @@ function setVal(node, name, value) {
   }
 }
 
+function elementThumbUrl(ref) {
+  return api.apiURL(`/flarecore/element/${ref.split("/").map(encodeURIComponent).join("/")}`);
+}
+
 /* ----------------------------------------------------------- point picker */
 
 class PointPicker {
@@ -85,7 +92,7 @@ class PointPicker {
     this.el = document.createElement("div");
     this.el.style.cssText =
       "width:100%;height:100%;background:#0d0d11;border:1px solid #303038;" +
-      "border-radius:6px;overflow:hidden;box-sizing:border-box;";
+      "border-radius:8px;overflow:hidden;box-sizing:border-box;";
     this.canvas = document.createElement("canvas");
     this.canvas.style.cssText =
       "width:100%;height:100%;display:block;cursor:crosshair;";
@@ -210,7 +217,6 @@ class PointPicker {
     ctx.fillText("flare anchor", fx + 13, fy + 18);
   }
 
-  // Pointer coords in the same CSS-pixel space the drawing uses.
   eventPos(e) {
     const rect = this.canvas.getBoundingClientRect();
     const [W, H] = this.cssSize;
@@ -227,8 +233,6 @@ class PointPicker {
       const [fx, fy] = this.point("flare_x", "flare_y", r);
       const dl = Math.hypot(x - lx, y - ly);
       const df = Math.hypot(x - fx, y - fy);
-      // Anywhere in the frame grabs the nearer handle, so the points stay
-      // reachable when they sit on top of each other.
       this.drag = dl <= df ? "light" : "flare";
       this.canvas.setPointerCapture(e.pointerId);
     } else if (e.type === "pointermove" && this.drag) {
@@ -257,26 +261,36 @@ class PointPicker {
 
 /* ---------------------------------------------------------- stack editor */
 
-const ICONS = {
-  glow: "◉", iris: "⬡", streak: "─", ring: "○",
-  hoop: "◠", glint: "✳", spectral: "◐", texture: "▦",
-};
-
+// Menu entries are looks, not engine types: several map to the same
+// procedural type with tuned parameters, matching the classic element set
+// (glow, disc, iris, multi-iris, spike ball, shimmer, sparkle, rays,
+// streak, stripe, ring, hoop, spectral, fog) plus library textures.
 const ADD_MENU = [
-  ["Glow", "glow"], ["Iris ghost", "iris"], ["Streak", "streak"],
-  ["Ring", "ring"], ["Hoop", "hoop"], ["Glint", "glint"],
-  ["Spectral", "spectral"], ["Texture (library)", "texture"],
+  ["Glow", "glow"], ["Fog", "fog"], ["Disc", "disc"],
+  ["Iris ghost", "iris"], ["Multi-iris", "multi_iris"],
+  ["Spike ball", "spike_ball"], ["Shimmer", "shimmer"],
+  ["Sparkle", "sparkle"], ["Rays", "rays"],
+  ["Streak", "streak"], ["Stripe", "stripe"],
+  ["Ring", "ring"], ["Hoop", "hoop"], ["Spectral", "spectral"],
+  ["From library…", "texture"],
 ];
 
 const ADD_DEFAULTS = {
-  glow: { type: "glow", offset: 0, scale: 0.4, intensity: 1, color: [1, 0.95, 0.85], params: { softness: 0.35, falloff: 1.3 } },
-  iris: { type: "iris", offset: 0.7, scale: 0.12, intensity: 0.25, color: [0.85, 0.93, 1], dispersion: 0.4, params: { blades: 8, edge_softness: 0.3 } },
-  streak: { type: "streak", offset: 0, scale: 1, intensity: 0.6, auto_rotate: false, color: [0.5, 0.7, 1], params: { length: 1.4, thickness: 0.012 } },
-  ring: { type: "ring", offset: 1.4, scale: 0.4, intensity: 0.15, dispersion: 0.8, color: [1, 0.95, 1], params: { radius: 1, thickness: 0.08 } },
-  hoop: { type: "hoop", offset: 0.5, scale: 0.8, intensity: 0.12, dispersion: 1, color: [1, 0.8, 0.6], params: { radius: 0.9, thickness: 0.22, angular_falloff: 0.8 } },
-  glint: { type: "glint", offset: 0, scale: 0.7, intensity: 0.8, color: [1, 0.95, 0.85], params: { points: 12, length: 0.7, thickness: 0.007, length_jitter: 0.35 } },
-  spectral: { type: "spectral", offset: 1.7, scale: 0.45, intensity: 0.15, params: { shape: "ring", radius: 1, thickness: 0.06 } },
-  texture: { type: "texture", offset: 0.6, scale: 0.3, intensity: 0.6, params: { file: "", channel: "auto" } },
+  glow: { type: "glow", label: "glow", offset: 0, scale: 0.4, intensity: 1, color: [1, 0.95, 0.85], params: { softness: 0.35, falloff: 1.3 } },
+  fog: { type: "glow", label: "fog", offset: 0, scale: 1.6, intensity: 0.25, color: [1, 0.97, 0.9], params: { softness: 0.8, falloff: 0.8 } },
+  disc: { type: "iris", label: "disc", offset: 0.5, scale: 0.16, intensity: 0.3, color: [0.8, 0.9, 1], params: { blades: 24, edge_softness: 0.55 } },
+  iris: { type: "iris", label: "iris", offset: 0.7, scale: 0.12, intensity: 0.25, color: [0.85, 0.93, 1], dispersion: 0.4, params: { blades: 8, edge_softness: 0.3 } },
+  multi_iris: { type: "iris", label: "multi-iris", offset: 0.25, scale: 0.07, intensity: 0.15, count: 8, spread: 0.22, count_falloff: 0.82, count_scale_step: 1.25, color: [0.85, 0.93, 1], dispersion: 0.35, params: { blades: 7, edge_softness: 0.35 } },
+  spike_ball: { type: "glint", label: "spike ball", offset: 0, scale: 0.55, intensity: 0.9, color: [1, 0.97, 0.9], params: { points: 48, length: 0.55, thickness: 0.004, length_jitter: 0.5 } },
+  shimmer: { type: "glint", label: "shimmer", offset: 0, scale: 0.85, intensity: 0.7, color: [0.95, 0.95, 1], params: { points: 60, length: 0.8, thickness: 0.003, length_jitter: 0.6 } },
+  sparkle: { type: "glint", label: "sparkle", offset: 0, scale: 0.5, intensity: 0.5, color: [1, 1, 1], params: { points: 90, length: 0.45, thickness: 0.002, length_jitter: 0.8 } },
+  rays: { type: "glint", label: "rays", offset: 0, scale: 1.0, intensity: 0.8, color: [1, 0.96, 0.88], params: { points: 10, length: 1.1, thickness: 0.012, length_jitter: 0.55 } },
+  streak: { type: "streak", label: "streak", offset: 0, scale: 1, intensity: 0.6, auto_rotate: false, color: [0.5, 0.7, 1], params: { length: 1.4, thickness: 0.012 } },
+  stripe: { type: "streak", label: "stripe", offset: 0, scale: 1.2, intensity: 0.5, auto_rotate: false, rotation: 12, color: [0.8, 0.85, 1], params: { length: 2.0, thickness: 0.004 } },
+  ring: { type: "ring", label: "ring", offset: 1.4, scale: 0.4, intensity: 0.15, dispersion: 0.8, color: [1, 0.95, 1], params: { radius: 1, thickness: 0.08 } },
+  hoop: { type: "hoop", label: "hoop", offset: 0.5, scale: 0.8, intensity: 0.12, dispersion: 1, color: [1, 0.8, 0.6], params: { radius: 0.9, thickness: 0.22, angular_falloff: 0.8 } },
+  spectral: { type: "spectral", label: "spectral", offset: 1.7, scale: 0.45, intensity: 0.15, params: { shape: "ring", radius: 1, thickness: 0.06 } },
+  texture: { type: "texture", label: "element", offset: 0.6, scale: 0.3, intensity: 0.6, params: { file: "", channel: "auto" } },
 };
 
 const COMMON_SPECS = {
@@ -285,64 +299,139 @@ const COMMON_SPECS = {
   count_falloff: [0.1, 1, 0.01], count_scale_step: [0.5, 2, 0.01],
 };
 
+// What an ABSENT key means (the schema's defaults) — without these an unset
+// slider would display its range minimum, e.g. rotation reading -180.
+const COMMON_DEFAULTS = {
+  dispersion: 0, dispersion_samples: 3, rotation: 0, count: 1, spread: 0,
+  count_falloff: 1, count_scale_step: 1,
+};
+
+const PARAM_FALLBACKS = {
+  glow: { softness: 0.35, falloff: 1.2 },
+  iris: { blades: 6, edge_softness: 0.15, hollow: 0 },
+  streak: { length: 0.8, thickness: 0.02, count: 1 },
+  ring: { radius: 0.5, thickness: 0.05 },
+  hoop: { radius: 0.6, thickness: 0.15, angular_falloff: 0.8 },
+  glint: { points: 8, length: 0.5, thickness: 0.008, length_jitter: 0.3 },
+  spectral: { radius: 0.5, thickness: 0.08, blades: 8, edge_softness: 0.1, hollow: 0 },
+  texture: {},
+};
+
 const PARAM_SPECS = {
   glow: { softness: [0.01, 2, 0.01], falloff: [0.05, 6, 0.05] },
   iris: { blades: [3, 24, 1], edge_softness: [0, 1, 0.01], hollow: [0, 0.95, 0.01] },
   streak: { length: [0.01, 4, 0.01], thickness: [0.001, 0.5, 0.001], count: [1, 8, 1] },
   ring: { radius: [0, 2, 0.01], thickness: [0.001, 0.5, 0.001] },
   hoop: { radius: [0, 2, 0.01], thickness: [0.001, 1, 0.001], angular_falloff: [0, 1, 0.01] },
-  glint: { points: [2, 64, 1], length: [0.01, 3, 0.01], thickness: [0.001, 0.1, 0.001], length_jitter: [0, 1, 0.01] },
+  glint: { points: [2, 256, 1], length: [0.01, 3, 0.01], thickness: [0.001, 0.1, 0.001], length_jitter: [0, 1, 0.01] },
   spectral: { radius: [0, 2, 0.01], thickness: [0.001, 0.5, 0.001], blades: [3, 24, 1], edge_softness: [0, 1, 0.01], hollow: [0, 0.95, 0.01] },
   texture: {},
 };
 
 const CSS = `
-.fcore { font: 11px/1.35 sans-serif; color: #ccc; background: #18181c;
-  border: 1px solid #303038; border-radius: 6px; padding: 6px;
-  display: flex; flex-direction: column; gap: 5px; box-sizing: border-box;
+.fcore { font: 12px/1.4 sans-serif; color: #ccc; background: #131317;
+  border: 1px solid #2b2b33; border-radius: 10px; padding: 8px;
+  display: flex; flex-direction: column; gap: 7px; box-sizing: border-box;
   height: 100%; overflow: hidden; }
 .fcore * { box-sizing: border-box; }
-.fcore-bar { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
-.fcore-btn { background: #26262e; color: #ddd; border: 1px solid #3a3a44;
-  border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 11px; }
-.fcore-btn:hover { background: #33333e; border-color: #e8a33d; }
+.fcore-bar { display: flex; gap: 6px; align-items: center; }
+.fcore-btn { background: #1e1e25; color: #ddd; border: 1px solid #34343e;
+  border-radius: 7px; padding: 5px 12px; cursor: pointer; font-size: 12px; }
+.fcore-btn:hover { background: #2a2a33; border-color: #e8a33d; }
 .fcore-btn.accent { color: #e8a33d; }
 .fcore-btn.on { border-color: #e8a33d; color: #e8a33d; }
-.fcore-badge { color: #ff7676; margin-left: auto; font-size: 10px; }
+.fcore-badge { color: #ff7676; margin-left: auto; font-size: 11px; }
 .fcore-list { overflow-y: auto; display: flex; flex-direction: column;
-  gap: 3px; flex: 1; min-height: 40px; }
-.fcore-row { background: #202027; border: 1px solid #2e2e37; border-radius: 5px;
-  padding: 3px 5px; }
-.fcore-row.off { opacity: 0.45; }
-.fcore-head { display: flex; align-items: center; gap: 5px; }
-.fcore-ico { color: #e8a33d; width: 13px; text-align: center; }
-.fcore-type { width: 52px; color: #eee; font-weight: 600; }
-.fcore-sl { display: flex; align-items: center; gap: 3px; flex: 1; min-width: 70px; }
-.fcore-sl label { color: #888; font-size: 9px; width: 24px; text-align: right; }
-.fcore-sl input[type=range] { flex: 1; height: 10px; accent-color: #e8a33d;
-  min-width: 30px; }
-.fcore-sl output { width: 32px; font-size: 9px; color: #aaa; text-align: right; }
-.fcore-mini { background: none; border: none; color: #888; cursor: pointer;
-  padding: 0 3px; font-size: 11px; }
-.fcore-mini:hover { color: #fff; }
-.fcore-adv { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px;
-  padding: 4px 2px 2px 20px; border-top: 1px dashed #2e2e37; margin-top: 3px; }
-.fcore-adv .fcore-sl label { width: 74px; }
-.fcore-adv select, .fcore-adv input[type=color] { background: #26262e;
-  color: #ddd; border: 1px solid #3a3a44; border-radius: 3px; font-size: 10px;
-  width: 100%; height: 18px; padding: 0 2px; }
-.fcore-global { display: flex; gap: 8px; align-items: center;
-  background: #202027; border: 1px solid #2e2e37; border-radius: 5px;
-  padding: 3px 6px; }
-.fcore-global .fcore-sl label { width: auto; }
-.fcore-menu { position: fixed; z-index: 10000; background: #202027;
-  border: 1px solid #3a3a44; border-radius: 5px; padding: 3px;
-  display: flex; flex-direction: column; min-width: 150px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+  gap: 5px; flex: 1; min-height: 60px; }
+.fcore-row { background: #1a1a20; border: 1px solid #2b2b33;
+  border-radius: 9px; padding: 7px 9px; }
+.fcore-row.off { opacity: 0.4; }
+.fcore-head { display: flex; align-items: center; gap: 8px; }
+.fcore-chip { width: 30px; height: 30px; border-radius: 7px; flex: 0 0 30px;
+  background: #101014; border: 1px solid #2b2b33; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; }
+.fcore-chip img { width: 100%; height: 100%; object-fit: cover; }
+.fcore-chip .ico { width: 16px; height: 16px; display: block; }
+.ico-glow { border-radius: 50%; background: radial-gradient(circle,#ffe9b8 0%,#ffb648 45%,transparent 75%); }
+.ico-iris { background: #9db8d8aa; clip-path: polygon(50% 0,90% 25%,90% 75%,50% 100%,10% 75%,10% 25%); }
+.ico-streak { height: 3px !important; align-self: center; border-radius: 2px;
+  background: linear-gradient(90deg,transparent,#7fd8d8,#d8f6f6,#7fd8d8,transparent); }
+.ico-ring { border-radius: 50%; border: 2.5px solid #e07fd8; background: transparent; }
+.ico-hoop { border-radius: 50%; border: 2.5px solid transparent;
+  border-top-color: #ffb648; border-right-color: #e07f7f; transform: rotate(-40deg); }
+.ico-glint { background:
+  conic-gradient(from 0deg,#fff 0 4deg,transparent 4deg 26deg,#ddd 26deg 30deg,
+  transparent 30deg 56deg,#fff 56deg 60deg,transparent 60deg 86deg,#ddd 86deg 90deg,
+  transparent 90deg 116deg,#fff 116deg 120deg,transparent 120deg 146deg,#ddd 146deg 150deg,
+  transparent 150deg 176deg,#fff 176deg 180deg,transparent 180deg 206deg,#ddd 206deg 210deg,
+  transparent 210deg 236deg,#fff 236deg 240deg,transparent 240deg 266deg,#ddd 266deg 270deg,
+  transparent 270deg 296deg,#fff 296deg 300deg,transparent 300deg 326deg,#ddd 326deg 330deg,
+  transparent 330deg 356deg,#fff 356deg 360deg); border-radius: 50%; opacity: .8; }
+.ico-spectral { height: 8px !important; align-self: center; border-radius: 4px;
+  background: linear-gradient(90deg,#f44,#fa4,#ff4,#4f4,#4ff,#44f,#a4f); }
+.fcore-name { min-width: 68px; max-width: 96px; color: #eee; font-weight: 600;
+  cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fcore-name:hover { color: #e8a33d; }
+.fcore-col { display: flex; flex-direction: column; gap: 2px; flex: 1;
+  min-width: 62px; }
+.fcore-col label { color: #7a7a86; font-size: 10px; text-align: center; }
+.fcore-col input[type=range] { width: 100%; height: 12px; accent-color: #e8a33d; }
+.fcore-col input[type=number] { width: 100%; background: #101014; color: #ddd;
+  border: 1px solid #2b2b33; border-radius: 5px; font-size: 11px;
+  padding: 2px 4px; text-align: center; -moz-appearance: textfield; }
+.fcore-col input[type=number]::-webkit-inner-spin-button { display: none; }
+.fcore-swatch { width: 24px; height: 24px; padding: 0; border: 1px solid #34343e;
+  border-radius: 6px; background: none; cursor: pointer; flex: 0 0 24px; }
+.fcore-acts { display: flex; gap: 3px; }
+.fcore-mini { background: #1e1e25; border: 1px solid #2b2b33; color: #999;
+  cursor: pointer; border-radius: 6px; width: 26px; height: 26px;
+  font-size: 12px; display: flex; align-items: center; justify-content: center; }
+.fcore-mini:hover { color: #fff; border-color: #e8a33d; }
+.fcore-adv { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px 10px;
+  padding: 8px 2px 2px 40px; border-top: 1px dashed #2b2b33; margin-top: 7px; }
+.fcore-adv select { background: #1e1e25; color: #ddd; border: 1px solid #34343e;
+  border-radius: 5px; font-size: 11px; width: 100%; height: 22px; }
+.fcore-global { display: flex; gap: 10px; align-items: center;
+  background: #1a1a20; border: 1px solid #2b2b33; border-radius: 9px;
+  padding: 7px 10px; }
+.fcore-global label { color: #aaa; font-size: 12px; }
+.fcore-global input[type=range] { flex: 1; accent-color: #e8a33d; height: 12px; }
+.fcore-global input[type=number] { width: 56px; background: #101014;
+  color: #ddd; border: 1px solid #2b2b33; border-radius: 5px;
+  padding: 3px 4px; text-align: center; font-size: 11px; }
+.fcore-menu { position: fixed; z-index: 10000; background: #1a1a20;
+  border: 1px solid #34343e; border-radius: 8px; padding: 4px;
+  display: flex; flex-direction: column; min-width: 160px; max-height: 60vh;
+  overflow-y: auto; box-shadow: 0 6px 24px rgba(0,0,0,0.55); }
 .fcore-menu button { background: none; border: none; color: #ccc;
-  text-align: left; padding: 4px 8px; cursor: pointer; font-size: 11px;
-  border-radius: 3px; }
-.fcore-menu button:hover { background: #33333e; color: #fff; }
+  text-align: left; padding: 6px 10px; cursor: pointer; font-size: 12px;
+  border-radius: 5px; }
+.fcore-menu button:hover { background: #2a2a33; color: #fff; }
+.fcore-shade { position: fixed; inset: 0; z-index: 10001;
+  background: rgba(0,0,0,0.6); display: flex; align-items: center;
+  justify-content: center; }
+.fcore-gal { background: #17171c; border: 1px solid #34343e;
+  border-radius: 12px; width: min(760px, 92vw); max-height: 82vh;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.7); font: 12px/1.4 sans-serif;
+  color: #ccc; }
+.fcore-gal-head { display: flex; align-items: center; padding: 12px 16px;
+  border-bottom: 1px solid #2b2b33; }
+.fcore-gal-head b { color: #eee; font-size: 14px; }
+.fcore-gal-head button { margin-left: auto; }
+.fcore-gal-body { overflow-y: auto; padding: 10px 16px 16px; }
+.fcore-gal-cat { color: #e8a33d; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.08em; margin: 12px 0 6px; }
+.fcore-gal-grid { display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.fcore-thumb { background: #000; border: 1px solid #2b2b33; border-radius: 8px;
+  overflow: hidden; cursor: pointer; text-align: center; }
+.fcore-thumb:hover { border-color: #e8a33d; }
+.fcore-thumb.sel { border-color: #5fd7ff; box-shadow: 0 0 0 1px #5fd7ff; }
+.fcore-thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.fcore-thumb span { display: block; padding: 3px 4px; font-size: 10px;
+  color: #999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fcore-gal-empty { color: #777; text-align: center; padding: 30px 10px; }
 `;
 
 let cssInjected = false;
@@ -373,8 +462,8 @@ function popupMenu(evt, entries, onPick) {
     b.onclick = () => { menu.remove(); onPick(value); };
     menu.appendChild(b);
   }
-  menu.style.left = `${evt.clientX}px`;
-  menu.style.top = `${evt.clientY}px`;
+  menu.style.left = `${Math.min(evt.clientX, window.innerWidth - 200)}px`;
+  menu.style.top = `${Math.min(evt.clientY, window.innerHeight - 300)}px`;
   document.body.appendChild(menu);
   setTimeout(() => {
     const close = (e) => {
@@ -387,21 +476,102 @@ function popupMenu(evt, entries, onPick) {
   }, 0);
 }
 
-function slider(label, value, [min, max, step], onChange) {
+// Full-screen element gallery: thumbnails of everything in the library,
+// grouped by category. Click a thumbnail -> onPick(ref).
+function openGallery(files, { title = "Element library", selected = null }, onPick) {
+  document.querySelectorAll(".fcore-shade").forEach((m) => m.remove());
+  const shade = document.createElement("div");
+  shade.className = "fcore-shade";
+  const gal = document.createElement("div");
+  gal.className = "fcore-gal";
+
+  const head = document.createElement("div");
+  head.className = "fcore-gal-head";
+  const caption = document.createElement("b");
+  caption.textContent = title;
+  const close = document.createElement("button");
+  close.className = "fcore-btn";
+  close.textContent = "close";
+  close.onclick = () => shade.remove();
+  head.append(caption, close);
+
+  const body = document.createElement("div");
+  body.className = "fcore-gal-body";
+
+  if (!files.length) {
+    const empty = document.createElement("div");
+    empty.className = "fcore-gal-empty";
+    empty.textContent =
+      "the library is empty — generate elements with the element forge " +
+      "workflow, they will appear here";
+    body.appendChild(empty);
+  } else {
+    const cats = {};
+    for (const f of files) {
+      const cat = f.includes("/") ? f.split("/")[0] : "misc";
+      (cats[cat] ||= []).push(f);
+    }
+    for (const cat of Object.keys(cats).sort()) {
+      const h = document.createElement("div");
+      h.className = "fcore-gal-cat";
+      h.textContent = cat.replace(/_/g, " ");
+      body.appendChild(h);
+      const grid = document.createElement("div");
+      grid.className = "fcore-gal-grid";
+      for (const ref of cats[cat]) {
+        const t = document.createElement("div");
+        t.className = "fcore-thumb" + (ref === selected ? " sel" : "");
+        const img = document.createElement("img");
+        img.loading = "lazy";
+        img.src = elementThumbUrl(ref);
+        const name = document.createElement("span");
+        name.textContent = ref.split("/").pop().replace(/\.png$/, "");
+        t.append(img, name);
+        t.onclick = () => { shade.remove(); onPick(ref); };
+        grid.appendChild(t);
+      }
+      body.appendChild(grid);
+    }
+  }
+
+  gal.append(head, body);
+  shade.appendChild(gal);
+  shade.addEventListener("pointerdown", (e) => {
+    if (e.target === shade) shade.remove();
+    e.stopPropagation();
+  });
+  document.body.appendChild(shade);
+}
+
+// slider + numeric box column, labelled above — the mockup's control unit
+function sliderCol(label, value, [min, max, step], onChange) {
   const wrap = document.createElement("div");
-  wrap.className = "fcore-sl";
+  wrap.className = "fcore-col";
   const lab = document.createElement("label");
   lab.textContent = label;
-  const inp = document.createElement("input");
-  inp.type = "range"; inp.min = min; inp.max = max; inp.step = step;
-  inp.value = value ?? min;
-  const out = document.createElement("output");
-  const show = (v) => { out.textContent = Number(v).toFixed(step >= 1 ? 0 : 2); };
-  show(inp.value);
-  inp.addEventListener("input", () => { show(inp.value); onChange(Number(inp.value)); });
-  // keep drags inside the panel instead of panning the graph
-  inp.addEventListener("pointerdown", (e) => e.stopPropagation());
-  wrap.append(lab, inp, out);
+  const range = document.createElement("input");
+  range.type = "range"; range.min = min; range.max = max; range.step = step;
+  range.value = value ?? min;
+  const num = document.createElement("input");
+  num.type = "number"; num.min = min; num.max = max; num.step = step;
+  const fmt = (v) => Number(v).toFixed(step >= 1 ? 0 : 2);
+  num.value = fmt(range.value);
+  range.addEventListener("input", () => {
+    num.value = fmt(range.value);
+    onChange(Number(range.value));
+  });
+  num.addEventListener("change", () => {
+    let v = Number(num.value);
+    if (!Number.isFinite(v)) return;
+    v = Math.min(max, Math.max(min, v));
+    num.value = fmt(v);
+    range.value = v;
+    onChange(v);
+  });
+  for (const el of [range, num]) {
+    el.addEventListener("pointerdown", (e) => e.stopPropagation());
+  }
+  wrap.append(lab, range, num);
   return wrap;
 }
 
@@ -502,31 +672,47 @@ class FlareEditor {
     try {
       const r = await api.fetchApi("/flarecore/elements");
       this.libraryFiles = (await r.json()).elements || [];
-      // texture dropdowns rendered before the fetch resolved showed
-      // "<library empty>"; refresh them now the list exists
       if (this.expanded.size) this.build();
     } catch { this.libraryFiles = []; }
+  }
+
+  mintId(type) {
+    return `${type}_${Date.now().toString(36)}${Math.floor(Math.random() * 46656).toString(36)}`;
+  }
+
+  addElement(kind, file = null) {
+    const elem = JSON.parse(JSON.stringify(ADD_DEFAULTS[kind] || ADD_DEFAULTS.texture));
+    elem.id = this.mintId(elem.type);
+    if (elem.type === "texture") {
+      if (file) {
+        elem.params.file = file;
+        elem.label = file.split("/").pop().replace(/\.png$/, "").replace(/_/g, " ");
+      } else if (this.libraryFiles.length) {
+        elem.params.file = this.libraryFiles[0];
+      }
+    }
+    this.mutate((p) => p.elements.push(elem));
   }
 
   build() {
     this.root.textContent = "";
     const preset = this.read();
 
+    /* toolbar: + add | presets | save… | library | ⚙  (no play button —
+       queueing belongs to ComfyUI's own Run) */
     const bar = document.createElement("div");
     bar.className = "fcore-bar";
 
     const addBtn = document.createElement("button");
     addBtn.className = "fcore-btn accent";
     addBtn.textContent = "+ add";
-    addBtn.onclick = (e) => popupMenu(e, ADD_MENU, (type) => {
-      const elem = JSON.parse(JSON.stringify(ADD_DEFAULTS[type]));
-      // a stable id keeps this element's glint jitter its own, no matter how
-      // the stack is later reordered
-      elem.id = `${type}_${Date.now().toString(36)}${Math.floor(Math.random() * 46656).toString(36)}`;
-      if (type === "texture" && this.libraryFiles.length) {
-        elem.params.file = this.libraryFiles[0];
+    addBtn.onclick = (e) => popupMenu(e, ADD_MENU, (kind) => {
+      if (kind === "texture") {
+        openGallery(this.libraryFiles, { title: "Add element from library" },
+          (ref) => this.addElement("texture", ref));
+      } else {
+        this.addElement(kind);
       }
-      this.mutate((p) => p.elements.push(elem));
     });
 
     const loadBtn = document.createElement("button");
@@ -579,19 +765,23 @@ class FlareEditor {
       setTimeout(() => { saveBtn.textContent = "save…"; }, 1800);
     };
 
+    const libBtn = document.createElement("button");
+    libBtn.className = "fcore-btn";
+    libBtn.textContent = "library";
+    libBtn.title = "browse your generated elements; click one to add it to the stack";
+    libBtn.onclick = async () => {
+      await this.fetchLibrary();
+      openGallery(this.libraryFiles, { title: "Element library — click to add" },
+        (ref) => this.addElement("texture", ref));
+    };
+
     const advBtn = document.createElement("button");
     advBtn.className = "fcore-btn" + (this.node._fcAdvanced ? " on" : "");
     advBtn.textContent = "⚙";
-    advBtn.title = "show the node's advanced inputs (detection, occlusion, raw positions)";
+    advBtn.title = "show the node's inputs (preset JSON, detection, occlusion, blending, seed)";
     advBtn.onclick = () => { setAdvanced(this.node, !this.node._fcAdvanced); this.build(); };
 
-    const renderBtn = document.createElement("button");
-    renderBtn.className = "fcore-btn accent";
-    renderBtn.textContent = "▶";
-    renderBtn.title = "queue this workflow";
-    renderBtn.onclick = () => app.queuePrompt(0);
-
-    bar.append(addBtn, loadBtn, saveBtn, advBtn, renderBtn);
+    bar.append(addBtn, loadBtn, saveBtn, libBtn, advBtn);
     if (this.error) {
       const badge = document.createElement("span");
       badge.className = "fcore-badge";
@@ -601,34 +791,66 @@ class FlareEditor {
     this.root.appendChild(bar);
     if (!preset) return;
 
+    /* global row: master slider + value + tint swatch */
     const g = preset.global;
     const gRow = document.createElement("div");
     gRow.className = "fcore-global";
-    gRow.appendChild(slider("master", g.intensity ?? 1, [0, 3, 0.01],
-      (v) => this.mutateQuiet((p) => { p.global.intensity = v; })));
-    gRow.appendChild(slider("size", g.scale ?? 1, [0.1, 3, 0.01],
-      (v) => this.mutateQuiet((p) => { p.global.scale = v; })));
+    const gLab = document.createElement("label");
+    gLab.textContent = "master";
+    const gRange = document.createElement("input");
+    gRange.type = "range"; gRange.min = 0; gRange.max = 3; gRange.step = 0.01;
+    gRange.value = g.intensity ?? 1;
+    const gNum = document.createElement("input");
+    gNum.type = "number"; gNum.min = 0; gNum.max = 3; gNum.step = 0.01;
+    gNum.value = Number(gRange.value).toFixed(2);
+    gRange.addEventListener("input", () => {
+      gNum.value = Number(gRange.value).toFixed(2);
+      this.mutateQuiet((p) => { p.global.intensity = Number(gRange.value); });
+    });
+    gNum.addEventListener("change", () => {
+      const v = Math.min(3, Math.max(0, Number(gNum.value) || 0));
+      gNum.value = v.toFixed(2); gRange.value = v;
+      this.mutateQuiet((p) => { p.global.intensity = v; });
+    });
     const tint = document.createElement("input");
     tint.type = "color";
-    tint.title = "tint";
-    tint.style.width = "26px";
+    tint.className = "fcore-swatch";
+    tint.title = "global tint";
     tint.value = colorToHex(g.tint || [1, 1, 1]);
-    tint.addEventListener("pointerdown", (e) => e.stopPropagation());
     tint.addEventListener("input", () =>
       this.mutateQuiet((p) => { p.global.tint = hexToColor(tint.value); }));
-    gRow.appendChild(tint);
+    for (const el of [gRange, gNum, tint]) {
+      el.addEventListener("pointerdown", (e) => e.stopPropagation());
+    }
+    gRow.append(gLab, gRange, gNum, tint);
     this.root.appendChild(gRow);
 
+    /* element rows */
     const list = document.createElement("div");
     list.className = "fcore-list";
     preset.elements.forEach((elem, i) => list.appendChild(this.buildRow(elem, i)));
     if (!preset.elements.length) {
       const empty = document.createElement("div");
-      empty.style.cssText = "color:#777;text-align:center;padding:12px;";
-      empty.textContent = "no elements — add one above";
+      empty.style.cssText = "color:#777;text-align:center;padding:16px;";
+      empty.textContent = "no elements — + add, or pick from the library";
       list.appendChild(empty);
     }
     this.root.appendChild(list);
+  }
+
+  chipFor(elem) {
+    const chip = document.createElement("div");
+    chip.className = "fcore-chip";
+    if (elem.type === "texture" && elem.params?.file) {
+      const img = document.createElement("img");
+      img.src = elementThumbUrl(elem.params.file);
+      chip.appendChild(img);
+    } else {
+      const ico = document.createElement("span");
+      ico.className = `ico ico-${elem.type}`;
+      chip.appendChild(ico);
+    }
+    return chip;
   }
 
   buildRow(elem, i) {
@@ -644,56 +866,76 @@ class FlareEditor {
     en.addEventListener("pointerdown", (e) => e.stopPropagation());
     en.onchange = () => this.mutate((p) => { p.elements[i].enabled = en.checked; });
 
-    const ico = document.createElement("span");
-    ico.className = "fcore-ico";
-    ico.textContent = ICONS[elem.type] || "?";
-    const ty = document.createElement("span");
-    ty.className = "fcore-type";
-    ty.textContent = elem.type;
-    ty.title = elem.type === "texture" ? (elem.params?.file || "no file") : elem.type;
+    const chip = this.chipFor(elem);
 
-    head.append(en, ico, ty);
-    head.appendChild(slider("pos", elem.offset ?? 0, [-1, 3, 0.01],
+    // the NAME is the door: click it to open this element's panel — for a
+    // texture element that panel leads with the gallery
+    const name = document.createElement("span");
+    name.className = "fcore-name";
+    name.textContent = elem.label || elem.type;
+    name.title = elem.type === "texture"
+      ? (elem.params?.file || "no file") + " — click to change"
+      : "click for all settings";
+    const toggle = () => {
+      this.expanded.has(i) ? this.expanded.delete(i) : this.expanded.add(i);
+      this.build();
+    };
+    name.onclick = toggle;
+    chip.style.cursor = "pointer";
+    chip.onclick = toggle;
+
+    head.append(en, chip, name);
+    head.appendChild(sliderCol("pos", elem.offset ?? 0, [-1, 3, 0.01],
       (v) => this.mutateQuiet((p) => { p.elements[i].offset = v; })));
-    head.appendChild(slider("size", elem.scale ?? 0.5, [0.01, 2.5, 0.01],
+    head.appendChild(sliderCol("size", elem.scale ?? 0.5, [0.01, 2.5, 0.01],
       (v) => this.mutateQuiet((p) => { p.elements[i].scale = v; })));
-    head.appendChild(slider("opac", elem.intensity ?? 1, [0, 3, 0.01],
+    head.appendChild(sliderCol("opac", elem.intensity ?? 1, [0, 3, 0.01],
       (v) => this.mutateQuiet((p) => { p.elements[i].intensity = v; })));
 
+    // recolor lives on the face of the row, not buried in a submenu
+    const col = document.createElement("input");
+    col.type = "color";
+    col.className = "fcore-swatch";
+    col.title = "element color (use luminance channel on textures for a full recolor)";
+    col.value = colorToHex(elem.color || [1, 1, 1]);
+    col.addEventListener("pointerdown", (e) => e.stopPropagation());
+    col.addEventListener("input", () =>
+      this.mutateQuiet((p) => { p.elements[i].color = hexToColor(col.value); }));
+    head.appendChild(col);
+
+    const acts = document.createElement("div");
+    acts.className = "fcore-acts";
     const mk = (txt, title, fn) => {
       const b = document.createElement("button");
       b.className = "fcore-mini";
       b.textContent = txt;
       b.title = title;
       b.onclick = fn;
-      return b;
+      acts.appendChild(b);
     };
-    head.appendChild(mk(this.expanded.has(i) ? "▴" : "▾", "more settings", () => {
-      this.expanded.has(i) ? this.expanded.delete(i) : this.expanded.add(i);
-      this.build();
-    }));
-    head.appendChild(mk("⧉", "duplicate", () => {
+    mk("⧉", "duplicate", () => {
       this.remapExpanded((e) => (e > i ? e + 1 : e));
       this.mutate((p) => {
         const copy = JSON.parse(JSON.stringify(p.elements[i]));
-        copy.id = ""; // the duplicate gets its own random identity
+        copy.id = this.mintId(copy.type);
         p.elements.splice(i + 1, 0, copy);
       });
-    }));
-    head.appendChild(mk("↑", "move up", () => { if (i > 0) {
+    });
+    mk("↑", "move up", () => { if (i > 0) {
       this.remapExpanded((e) => (e === i ? i - 1 : e === i - 1 ? i : e));
       this.mutate((p) => p.elements.splice(i - 1, 0, p.elements.splice(i, 1)[0]));
-    } }));
-    head.appendChild(mk("↓", "move down", () => {
+    } });
+    mk("↓", "move down", () => {
       this.remapExpanded((e) => (e === i ? i + 1 : e === i + 1 ? i : e));
       this.mutate((p) => {
         if (i < p.elements.length - 1) p.elements.splice(i + 1, 0, p.elements.splice(i, 1)[0]);
       });
-    }));
-    head.appendChild(mk("✕", "delete", () => {
+    });
+    mk("🗑", "delete", () => {
       this.remapExpanded((e) => (e === i ? -1 : e > i ? e - 1 : e));
       this.mutate((p) => p.elements.splice(i, 1));
-    }));
+    });
+    head.appendChild(acts);
 
     row.appendChild(head);
     if (this.expanded.has(i)) row.appendChild(this.buildAdvanced(elem, i));
@@ -709,48 +951,9 @@ class FlareEditor {
       p.elements[i].params[k] = v;
     });
 
-    const colorWrap = document.createElement("div");
-    colorWrap.className = "fcore-sl";
-    const cl = document.createElement("label");
-    cl.textContent = "color";
-    const col = document.createElement("input");
-    col.type = "color";
-    col.value = colorToHex(elem.color || [1, 1, 1]);
-    col.addEventListener("pointerdown", (e) => e.stopPropagation());
-    col.addEventListener("input", () => set("color", hexToColor(col.value)));
-    colorWrap.append(cl, col);
-    adv.appendChild(colorWrap);
-
-    const arWrap = document.createElement("div");
-    arWrap.className = "fcore-sl";
-    const al = document.createElement("label");
-    al.textContent = "auto-rotate";
-    const ar = document.createElement("input");
-    ar.type = "checkbox";
-    ar.checked = elem.auto_rotate !== false;
-    ar.addEventListener("pointerdown", (e) => e.stopPropagation());
-    ar.onchange = () => set("auto_rotate", ar.checked);
-    arWrap.append(al, ar);
-    adv.appendChild(arWrap);
-
-    for (const [key, spec] of Object.entries(COMMON_SPECS)) {
-      adv.appendChild(slider(key.replace(/_/g, " "), elem[key], spec,
-        (v) => set(key, spec[2] >= 1 ? Math.round(v) : v)));
-    }
-    adv.appendChild(slider("stretch x", elem.stretch?.[0] ?? 1, [0.1, 4, 0.01],
-      (v) => this.mutateQuiet((p) => {
-        const s = p.elements[i].stretch || [1, 1];
-        p.elements[i].stretch = [v, s[1]];
-      })));
-    adv.appendChild(slider("stretch y", elem.stretch?.[1] ?? 1, [0.1, 4, 0.01],
-      (v) => this.mutateQuiet((p) => {
-        const s = p.elements[i].stretch || [1, 1];
-        p.elements[i].stretch = [s[0], v];
-      })));
-
     const dropdown = (label, value, options, onPick) => {
       const wrap = document.createElement("div");
-      wrap.className = "fcore-sl";
+      wrap.className = "fcore-col";
       const l = document.createElement("label");
       l.textContent = label;
       const sel = document.createElement("select");
@@ -767,20 +970,63 @@ class FlareEditor {
     };
 
     if (elem.type === "texture") {
-      const opts = this.libraryFiles.length ? this.libraryFiles : ["<library empty>"];
-      adv.appendChild(dropdown("file", elem.params?.file || opts[0], opts,
-        (v) => setParam("file", v)));
-      adv.appendChild(dropdown("channel", elem.params?.channel || "auto",
+      // the gallery IS this element's main setting
+      const pickBtn = document.createElement("button");
+      pickBtn.className = "fcore-btn accent";
+      pickBtn.style.gridColumn = "1 / -1";
+      pickBtn.textContent = "choose element from gallery…";
+      pickBtn.onclick = async () => {
+        await this.fetchLibrary();
+        openGallery(this.libraryFiles,
+          { title: "Pick an element", selected: elem.params?.file || null },
+          (ref) => this.mutate((p) => {
+            p.elements[i].params.file = ref;
+            p.elements[i].label =
+              ref.split("/").pop().replace(/\.png$/, "").replace(/_/g, " ");
+          }));
+      };
+      adv.appendChild(pickBtn);
+      adv.appendChild(dropdown("channel (luminance = full recolor)",
+        elem.params?.channel || "auto",
         ["auto", "rgb", "luminance"], (v) => setParam("channel", v)));
-    } else {
-      if (elem.type === "spectral") {
-        adv.appendChild(dropdown("shape", elem.params?.shape || "ring",
-          ["ring", "iris"], (v) => setParam("shape", v)));
-      }
-      for (const [key, spec] of Object.entries(PARAM_SPECS[elem.type] || {})) {
-        adv.appendChild(slider(key.replace(/_/g, " "), elem.params?.[key], spec,
-          (v) => setParam(key, spec[2] >= 1 ? Math.round(v) : v)));
-      }
+    }
+
+    const arWrap = document.createElement("div");
+    arWrap.className = "fcore-col";
+    const al = document.createElement("label");
+    al.textContent = "auto-rotate";
+    const ar = document.createElement("input");
+    ar.type = "checkbox";
+    ar.checked = elem.auto_rotate !== false;
+    ar.addEventListener("pointerdown", (e) => e.stopPropagation());
+    ar.onchange = () => set("auto_rotate", ar.checked);
+    arWrap.append(al, ar);
+    adv.appendChild(arWrap);
+
+    for (const [key, spec] of Object.entries(COMMON_SPECS)) {
+      adv.appendChild(sliderCol(key.replace(/_/g, " "),
+        elem[key] ?? COMMON_DEFAULTS[key], spec,
+        (v) => set(key, spec[2] >= 1 ? Math.round(v) : v)));
+    }
+    adv.appendChild(sliderCol("stretch x", elem.stretch?.[0] ?? 1, [0.1, 4, 0.01],
+      (v) => this.mutateQuiet((p) => {
+        const s = p.elements[i].stretch || [1, 1];
+        p.elements[i].stretch = [v, s[1]];
+      })));
+    adv.appendChild(sliderCol("stretch y", elem.stretch?.[1] ?? 1, [0.1, 4, 0.01],
+      (v) => this.mutateQuiet((p) => {
+        const s = p.elements[i].stretch || [1, 1];
+        p.elements[i].stretch = [s[0], v];
+      })));
+
+    if (elem.type === "spectral") {
+      adv.appendChild(dropdown("shape", elem.params?.shape || "ring",
+        ["ring", "iris"], (v) => setParam("shape", v)));
+    }
+    for (const [key, spec] of Object.entries(PARAM_SPECS[elem.type] || {})) {
+      adv.appendChild(sliderCol(key.replace(/_/g, " "),
+        elem.params?.[key] ?? PARAM_FALLBACKS[elem.type]?.[key], spec,
+        (v) => setParam(key, spec[2] >= 1 ? Math.round(v) : v)));
     }
     return adv;
   }
@@ -805,27 +1051,25 @@ app.registerExtension({
         picker.el, { serialize: false, hideOnZoom: true, getMinHeight: () => 170 });
       pickerWidget.serialize = false;
       pickerWidget.serializeValue = () => undefined;
+      // the frontend sometimes calls computeSize() with no argument
       pickerWidget.computeSize = (w) => {
         const width = Number(w) || node.size?.[0] || 460;
-        return [width, Math.min(Math.max((width - 20) * 0.5, 170), 300)];
+        return [width, Math.min((width * 9) / 16 + 12, 330)];
       };
 
       const editor = new FlareEditor(node);
       node._fcEditor = editor;
       const editorWidget = node.addDOMWidget("flare_editor", "flarecore.editor",
-        editor.root, { serialize: false, hideOnZoom: true, getMinHeight: () => 200 });
+        editor.root, { serialize: false, hideOnZoom: true, getMinHeight: () => 240 });
       editorWidget.serialize = false;
       editorWidget.serializeValue = () => undefined;
-      editorWidget.computeSize = (w) => [Number(w) || node.size?.[0] || 460, 300];
+      editorWidget.computeSize = (w) => [Number(w) || node.size?.[0] || 460, 380];
 
-      // The panels stay at the END of node.widgets. widgets_values is a
-      // positional array and ComfyUI serializes a null for each DOM widget
-      // rather than skipping it, so moving them to the front shifts every
-      // real value two slots on reload — position_mode's "manual" lands in
-      // detect_max_lights and so on. Keeping them last leaves the real
-      // widgets at the indices every saved workflow already uses.
+      // The panels stay at the END of node.widgets: widgets_values is a
+      // positional array and ComfyUI serializes a null for each DOM widget,
+      // so any other position shifts every real value on reload.
       setAdvanced(node, false);
-      node.setSize([Math.max(node.size[0], 460), node.computeSize()[1]]);
+      node.setSize([Math.max(node.size[0], 470), node.computeSize()[1]]);
       setTimeout(() => picker.draw(), 60);
     };
 
