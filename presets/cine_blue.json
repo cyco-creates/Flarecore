@@ -48,7 +48,8 @@
       "params": {
         "softness": 0.55,
         "falloff": 1.5
-      }
+      },
+      "irregular": 0.2
     },
     {
       "type": "glow",
@@ -66,13 +67,14 @@
       "params": {
         "softness": 0.85,
         "falloff": 1.05
-      }
+      },
+      "irregular": 0.25
     },
     {
       "type": "glow",
       "label": "wide haze",
       "id": "cine_haze",
-      "slot": "fog",
+      "slot": "glows",
       "offset": 0.15,
       "scale": 2.2,
       "intensity": 0.025,
@@ -85,7 +87,8 @@
       "params": {
         "softness": 1.0,
         "falloff": 0.85
-      }
+      },
+      "irregular": 0.3
     },
     {
       "type": "glint",
@@ -106,7 +109,8 @@
         "length": 0.3,
         "thickness": 0.0028,
         "length_jitter": 0.8
-      }
+      },
+      "irregular": 0.45
     },
     {
       "type": "streak",
@@ -126,7 +130,8 @@
       "params": {
         "length": 2.2,
         "thickness": 0.007
-      }
+      },
+      "irregular": 0.25
     },
     {
       "type": "streak",
@@ -146,7 +151,8 @@
       "params": {
         "length": 1.4,
         "thickness": 0.035
-      }
+      },
+      "irregular": 0.3
     },
     {
       "type": "ring",
@@ -166,7 +172,8 @@
       "params": {
         "radius": 1.0,
         "thickness": 0.012
-      }
+      },
+      "irregular": 0.4
     },
     {
       "type": "glow",
@@ -186,13 +193,14 @@
       "params": {
         "softness": 0.8,
         "falloff": 1.15
-      }
+      },
+      "irregular": 0.3
     },
     {
       "type": "iris",
       "label": "ghosts near",
       "id": "cine_ghost1",
-      "slot": "iris_ghosts",
+      "slot": "ghosts",
       "offset": 1.3,
       "count": 3,
       "spread": 0.1,
@@ -210,13 +218,14 @@
       "params": {
         "blades": 20,
         "edge_softness": 0.65
-      }
+      },
+      "irregular": 0.3
     },
     {
       "type": "iris",
       "label": "ghosts far",
       "id": "cine_ghost2",
-      "slot": "iris_ghosts",
+      "slot": "ghosts",
       "offset": 2.25,
       "count": 3,
       "spread": 0.24,
@@ -234,13 +243,14 @@
       "params": {
         "blades": 20,
         "edge_softness": 0.7
-      }
+      },
+      "irregular": 0.3
     },
     {
       "type": "iris",
       "label": "hex ghost",
       "id": "cine_hex",
-      "slot": "iris_ghosts",
+      "slot": "ghosts",
       "offset": 1.62,
       "scale": 0.1,
       "intensity": 0.16,
@@ -254,7 +264,8 @@
       "params": {
         "blades": 6,
         "edge_softness": 0.35
-      }
+      },
+      "irregular": 0.3
     },
     {
       "type": "glow",
@@ -279,7 +290,7 @@
       "type": "iris",
       "label": "ghost rim",
       "id": "cine_ghostrim",
-      "slot": "iris_ghosts",
+      "slot": "ghosts",
       "offset": 2.25,
       "count": 3,
       "spread": 0.24,
@@ -298,7 +309,8 @@
         "blades": 20,
         "edge_softness": 0.35,
         "hollow": 0.72
-      }
+      },
+      "irregular": 0.35
     }
   ]
 }

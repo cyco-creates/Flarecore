@@ -1,67 +1,58 @@
 {
   "glows": {
-    "soft_glow": "Abstract lens flare photography: a soft diffuse ball of pure warm light on a pure black background, roughly centered but slightly off-axis, smooth radial falloff with faint uneven blotches in the halo, subtle asymmetry as if photographed through a slightly hazy real lens, no light bulb, no lamp, no physical object, only formless light, no text",
-    "hot_core": "Abstract lens flare photography: an intense white-hot core of pure light with an organic slightly lopsided bloom halo, heavily overexposed center, faint irregular veiling glare drifting to one side, real optical imperfection, pure black background, no physical object, no text",
-    "cool_glow": "Abstract lens flare photography: a soft cold blue-white glow of pure light, gently irregular edges, faint uneven internal texture like breath on glass, slightly off-center energy, pure black background, no object, no text"
-  },
-  "fog": {
+    "soft_glow": "Abstract lens flare photography: a soft diffuse ball of pure warm light on a pure black background, roughly centered but slightly off-axis, smooth radial falloff with faint uneven blotches in the halo, subtle asymmetry as if photographed through a slightly hazy lens, no physical object, no lamp, no sun disc, no text",
+    "hot_core": "Abstract lens flare photography: an intense white-hot core of pure light with an organic slightly lopsided bloom halo, heavily overexposed center, faint irregular veiling glare drifting to one side, real optical imperfection, pure black background, no physical object, no lamp, no sun disc, no text",
+    "cool_glow": "Abstract lens flare photography: a soft cold blue-white glow of pure light, gently irregular edges, faint uneven internal texture like breath on glass, slightly off-center energy, pure black background, no object, no text",
     "veiling_fog": "Abstract lens flare photography: an extremely soft wide veil of dim hazy light spreading unevenly across a pure black background, barely-there fog of light with organic patchiness and no defined edge, like veiling glare on an old uncoated lens, no object, no text",
     "smoky_haze": "Abstract lens flare photography: faint wisps of soft glowing haze with subtle streaky structure, very dim and diffuse, irregular and drifting to one side, pure black background, no object, no text"
   },
-  "discs": {
-    "dirty_disc": "Macro photograph of a single large defocused bokeh disc of pale blue light on a pure black background, soft-edged circle with visible dust specks, tiny dark bubbles and smudges inside it like a dirty lens element, slightly uneven brightness across the disc, real photographic imperfection, no text",
-    "soft_disc": "Macro photograph of a single defocused circular bokeh disc of dim light, softly glowing rim slightly brighter than the interior, gently wobbling imperfect edge, faint internal mottling, on a pure black background, no text",
-    "smeared_disc": "Macro photograph of a single defocused disc of light smeared slightly to one side as if the lens moved, soft irregular oval with a brighter crescent on one edge, subtle chromatic fringe, pure black background, no text"
-  },
-  "iris_ghosts": {
+  "ghosts": {
     "polygon_ghost": "Macro photograph of a single translucent polygonal aperture ghost, soft hexagonal disc of dim light with slightly rounded imperfect corners and a faintly brighter rim, gentle uneven interior, internal lens reflection on a pure black background, no text",
     "pentagon_bokeh": "Macro photograph of a single soft pentagon-shaped bokeh ghost of pale light, edges slightly wobbly and organic, one corner marginally brighter, faint dust texture inside, pure black background, no text",
-    "hollow_ghost": "Macro photograph of a single large hollow aperture ghost: a thin soft-edged polygonal ring of dim light with a darker translucent interior, slightly irregular rim brightness, internal reflection photograph, pure black background, no text"
+    "hollow_ghost": "Macro photograph of a single large hollow aperture ghost: a thin soft-edged polygonal ring of dim light with a darker translucent interior, slightly irregular rim brightness, internal reflection photograph, pure black background, no text",
+    "dirty_disc": "Macro photograph of a single large defocused bokeh disc of pale blue light on a pure black background, soft-edged circle with visible dust specks, tiny dark bubbles and smudges inside it like a dirty lens element, slightly uneven brightness across the disc, no text",
+    "soft_disc": "Macro photograph of a single defocused circular bokeh disc of dim light, softly glowing rim slightly brighter than the interior, gently wobbling imperfect edge, faint internal mottling, on a pure black background, no text",
+    "smeared_disc": "Macro photograph of a single defocused disc of light smeared slightly to one side as if the lens moved, soft irregular oval with a brighter crescent on one edge, subtle chromatic fringe, pure black background, no text",
+    "orb_cluster": "Macro photograph of a loose cluster of overlapping defocused bokeh orbs of very dim light, various sizes, soft imperfect edges, a few with faint dust texture, scattered unevenly across a pure black background, no text",
+    "drifting_orbs": "Macro photograph of scattered faint circular lens orbs drifting diagonally across the frame, different sizes and opacities, some slightly hexagonal, all dim and translucent, pure black background, no text"
   },
-  "spike_balls": {
-    "spike_ball": "Abstract lens flare photography: a dense ball of dozens of fine soft light needles radiating from a small bright core in every direction, ray lengths uneven and organic, some rays brighter than others, slightly asymmetric, photographed optical starburst on a pure black background, no text",
-    "soft_urchin": "Abstract lens flare photography: a soft round burst of many short fuzzy light spikes, irregular lengths, gently clumped in places, dim and delicate, pure black background, no text"
-  },
-  "shimmers": {
+  "rays": {
+    "glint_rays": "Abstract lens flare photography: a bright compact core with long soft rays fanning outward at uneven angles and lengths, a few rays much longer than the rest, gentle haze between rays, organic and slightly askew, pure black background, no text",
+    "broken_rays": "Abstract lens flare photography: irregular clusters of light rays interrupted and uneven as if shining through leaves, asymmetric, soft and dim, pure black background, no text",
     "shimmer": "Abstract lens flare photography: a bright small core with long soft irregular rays fanning out unevenly, a few dominant rays with many faint ones between, slightly hazy, organic anamorphic shimmer photographed on real glass, pure black background, no text",
-    "silky_shimmer": "Abstract lens flare photography: delicate silky light rays radiating with uneven spacing and length from an off-center bright point, soft veiling haze around them, gentle asymmetry, pure black background, no text"
+    "silky_shimmer": "Abstract lens flare photography: delicate silky light rays radiating with uneven spacing and length from an off-center bright point, soft veiling haze around them, gentle asymmetry, pure black background, no text",
+    "spike_ball": "Abstract lens flare photography: a dense ball of dozens of fine soft light needles radiating from a small bright core in every direction, ray lengths uneven and organic, some rays brighter than others, slightly asymmetric, photographed optical starburst on a pure black background, no text",
+    "soft_urchin": "Abstract lens flare photography: a soft round burst of many short fuzzy light spikes, irregular lengths, gently clumped in places, dim and delicate, pure black background, no text",
+    "sparkle_burst": "Abstract lens flare photography: an explosion of dozens of extremely fine hairline light rays from a tiny center, very uneven lengths, sparse and delicate like a frost sparkle, slightly asymmetric distribution, dim, pure black background, no text",
+    "dust_sparkle": "Abstract macro photograph of tiny sparkling light points scattered unevenly around a faint center, each with minute cross-shaped glints, random sizes, dim and subtle, pure black background, no text"
+  },
+  "streaks": {
+    "anamorphic_streak": "Abstract lens flare photography: a single horizontal anamorphic streak of light stretching across a pure black background, thin bright uneven core with soft vertical falloff, slight waviness and brightness variation along its length, faint blue chromatic fringe at the tips, no object, no text",
+    "layered_streak": "Abstract lens flare photography: several overlapping horizontal smears of soft light of different widths and dim colors, uneven and organic like reflections off a filter stack, subtle teal and warm tints, pure black background, no text",
+    "smeared_light": "Abstract long-exposure photograph of a horizontal smear of cool light with ragged soft edges and internal streaky texture, brighter at one end, subtle chromatic color separation, pure black background, no text",
+    "thin_stripe": "Abstract lens flare photography: one very thin long horizontal stripe of soft light crossing a pure black background, slightly uneven brightness along its length, faint glow around the line, a delicate blue-white tint, no text"
+  },
+  "rings": {
+    "thin_ring": "Abstract lens flare photography: a single thin circle of soft light with a delicate rainbow chromatic fringe, slightly uneven thickness and brightness around the circumference, hollow black interior, gently imperfect, pure black background, no text",
+    "double_ring": "Abstract lens flare photography: two thin concentric circles of dim light, the outer slightly warmer and patchier than the inner, uneven brightness around both, hollow interior, photographed lens reflection, pure black background, no text",
+    "spectral_ring": "Abstract lens flare photography: one thin circular ring of light split into a smooth continuous rainbow spectrum around its circumference, red bleeding outward and blue inward, slightly brighter on one side, hollow black center, pure black background, no object, no text"
+  },
+  "hoops": {
+    "chroma_hoop": "Abstract lens flare photography: a large partial circular hoop of light with a smooth rainbow spectrum along its band, red on the outside blending to blue inside, the arc brighter on one side and fading unevenly, organic soft edges with slight wobble, photographed lens reflection, pure black background, no text",
+    "ghost_hoop": "Abstract lens flare photography: a very large faint arc of soft pale light, incomplete circle fading at both ends, subtle warm-cold color drift along the arc, dim and imperfect, pure black background, no text"
   },
   "caustics": {
     "caustic_fold": "Macro photograph of a light caustic inside a glass lens element: a soft dim disc containing a folded four-pointed cusp of concentrated light with organic curved edges, uneven and slightly askew, subtle internal reflections, pure black background, no text",
     "water_caustic": "Macro photograph of an organic caustic light pattern, curved intersecting filaments of soft light forming an irregular net inside a faint disc, like light through rippled glass, dim and imperfect, pure black background, no text",
-    "crystal_burst": "Macro photograph of light refracting through a cracked crystal: sharp organic shards of cool blue-white light bursting asymmetrically from one point, chaotic and imperfect, pure black background, no text"
-  },
-  "streaks": {
-    "anamorphic_streak": "Abstract lens flare photography: a single horizontal anamorphic streak of light stretching across a pure black background, thin bright uneven core with soft vertical falloff, slight waviness and brightness variation along its length, faint blue chromatic fringing at the tips, real cinema lens artifact, no text",
-    "layered_streak": "Abstract lens flare photography: several overlapping horizontal smears of soft light of different widths and dim colors, uneven and organic like reflections off a filter stack, subtle teal and warm tints, pure black background, no text",
-    "smeared_light": "Abstract long-exposure photograph of a horizontal smear of cool light with ragged soft edges and internal streaky texture, brighter at one end, subtle chromatic color separation, pure black background, no text"
-  },
-  "stripes": {
-    "thin_stripe": "Abstract lens flare photography: one very thin long diagonal stripe of soft light crossing a pure black background, slightly uneven brightness along its length, faint glow around the line, a delicate blue-white tint, no text"
-  },
-  "sparkles": {
-    "sparkle_burst": "Abstract lens flare photography: an explosion of dozens of extremely fine hairline light rays from a tiny center, very uneven lengths, sparse and delicate like a frost sparkle, slightly asymmetric distribution, dim, pure black background, no text",
-    "dust_sparkle": "Abstract macro photograph of tiny sparkling light points scattered unevenly around a faint center, each with minute cross-shaped glints, random sizes, dim and subtle, pure black background, no text"
-  },
-  "rays": {
-    "glint_rays": "Abstract lens flare photography: a bright compact core with long soft rays fanning outward at uneven angles and lengths, a few rays much longer than the rest, gentle haze between rays, organic and slightly askew, pure black background, no text",
-    "broken_rays": "Abstract lens flare photography: irregular clusters of light rays interrupted and uneven as if shining through leaves, asymmetric, soft and dim, pure black background, no text"
-  },
-  "hoops": {
-    "chroma_hoop": "Abstract lens flare photography: a large partial circular hoop of light with a smooth rainbow spectrum along its band, red on the outside blending to blue inside, the arc brighter on one side and fading unevenly, organic soft edges with slight wobble, photographed chromatic lens artifact on a pure black background, no text",
-    "ghost_hoop": "Abstract lens flare photography: a very large faint arc of soft pale light, incomplete circle fading at both ends, subtle warm-cold color drift along the arc, dim and imperfect, pure black background, no text"
-  },
-  "rings": {
-    "thin_ring": "Abstract lens flare photography: a single thin circle of soft light with a delicate rainbow chromatic fringe, slightly uneven thickness and brightness around the circumference, hollow black interior, gently imperfect, pure black background, no text",
-    "double_ring": "Abstract lens flare photography: two thin concentric circles of dim light, the outer slightly warmer and patchier than the inner, uneven brightness around both, hollow interior, photographed lens reflection, pure black background, no text"
+    "shard_burst": "Abstract lens flare photography: pure light split into a fan of soft overlapping wedge-shaped beams radiating asymmetrically from one bright point, each wedge a slightly different cool tint, edges soft and organic, only light on a pure black background, no crystal, no glass object, no solid shapes, no text"
   },
   "lens_dirt": {
-    "dust_scratches": "Macro photograph of the surface of a dirty camera lens lit from behind: hundreds of tiny dust particles, faint smudges and a few hairline scratches glowing dimly against a pure black background, scattered unevenly with denser clumps, all very dim and delicate, real optical grime, no text",
+    "dust_scratches": "Macro photograph of the surface of a dirty camera lens lit from behind: hundreds of tiny dust particles, faint smudges and a few hairline scratches glowing dimly against a pure black background, scattered unevenly with denser clumps, all very dim and delicate, no text",
     "greasy_smudge": "Macro photograph of faint greasy fingerprint smudges and streaked wipe marks on glass catching light, barely visible pale smears on a pure black background, organic and irregular, real lens grime, no text",
-    "particle_field": "Macro photograph of sparse floating dust motes of varying size catching light in darkness, each a soft dim speck, a few larger defocused ones, spread over a pure black background, uneven natural distribution, no text"
-  },
-  "lens_orbs": {
-    "orb_cluster": "Macro photograph of a loose cluster of overlapping defocused bokeh orbs of very dim light, various sizes, soft imperfect edges, a few with faint dust texture, scattered unevenly across a pure black background, no text",
-    "drifting_orbs": "Macro photograph of scattered faint circular lens orbs drifting diagonally across the frame, different sizes and opacities, some slightly hexagonal, all dim and translucent, pure black background, no text"
+    "particle_field": "Macro photograph of sparse floating dust motes of varying size catching light in darkness, each a soft dim speck, a few larger defocused ones, spread over a pure black background, uneven natural distribution, no text",
+    "droplet_mist": "Macro photograph of fine condensation mist and a few small water droplets on a glass surface catching faint light, each droplet a tiny dim glint with a darker center, uneven natural spread with drier patches, pure black background, no text",
+    "wipe_marks": "Macro photograph of circular cloth wipe marks and micro-scratch swirls on a lens surface catching glancing light, faint dim arcs sweeping across a pure black background, delicate and barely visible, no text",
+    "oily_film": "Macro photograph of a thin oily film on glass showing very faint iridescent rainbow blotches where light catches it, dim organic patches with soft edges drifting across a pure black background, subtle and irregular, no text",
+    "hairline_scratches": "Macro photograph of a few long fine hairline scratches on a lens catching bright light, each a thin dim glowing line with tiny bright nicks along it, crossing a pure black background at natural uneven angles, sparse and delicate, no text"
   }
 }

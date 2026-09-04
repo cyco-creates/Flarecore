@@ -40,9 +40,24 @@ def list_elements() -> list[str]:
     )
 
 
+# Pre-consolidation category folders, remapped so old presets keep loading.
+_LEGACY_CATEGORY = {
+    "fog": "glows", "discs": "ghosts", "iris_ghosts": "ghosts",
+    "lens_orbs": "ghosts", "dirt_bokeh": "ghosts", "spike_balls": "rays",
+    "shimmers": "rays", "sparkles": "rays", "stripes": "streaks",
+    "spectral": "rings",
+}
+
+
 def _resolve_path(ref: str) -> Path:
     norm = normalize_texture_ref(ref, "texture reference")
     path = ELEMENTS_DIR / norm
+    if not path.is_file() and "/" in norm:
+        cat, _, rest = norm.partition("/")
+        if cat in _LEGACY_CATEGORY:
+            remapped = ELEMENTS_DIR / _LEGACY_CATEGORY[cat] / rest
+            if remapped.is_file():
+                return remapped
     if not path.is_file():
         available = list_elements()
         listing = ", ".join(available[:20]) if available else "(library is empty)"

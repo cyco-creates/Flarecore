@@ -40,6 +40,7 @@ ELEMENT_COMMON_DEFAULTS = {
     "intensity": 1.0,
     "color": [1.0, 1.0, 1.0],
     "blur": 0.0,            # 0..1 gaussian soften of the rendered element
+    "irregular": 0.0,       # 0..1 seeded organic unevenness in the shape math
     "light_mask": 0.0,      # 0..1: modulate by scene brightness
     "screen_space": False,  # lock to the lens (frame), not the flare axis —
                             # rendered once per frame, scaled by the
@@ -181,6 +182,8 @@ def _validate_element(raw: dict, index: int) -> dict:
                                         lo=0.0, hi=1000.0)
     elem["color"] = _require_vec(elem["color"], f"{where}.color", 3, lo=0.0, hi=100.0)
     elem["blur"] = _require_number(elem["blur"], f"{where}.blur", lo=0.0, hi=1.0)
+    elem["irregular"] = _require_number(elem["irregular"], f"{where}.irregular",
+                                        lo=0.0, hi=1.0)
     elem["light_mask"] = _require_number(elem["light_mask"], f"{where}.light_mask",
                                          lo=0.0, hi=1.0)
     elem["screen_space"] = bool(elem["screen_space"])

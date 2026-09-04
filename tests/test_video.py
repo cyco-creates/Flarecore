@@ -539,3 +539,72 @@ class TestVideoNodes:
         lights, n = node.make(999, "0: 0.5,0.5", "", "smooth", 1.0,
                               image=torch.zeros(6, 8, 8, 3))
         assert n == 6 and len(lights) == 6
+
+    def test_aspect_is_screen_horizontal_even_with_rotated_axis(self):
+        # The light sits below the anchor, so with auto_rotate the local +u
+        # axis points almost straight UP. If aspect multiplied stretch_x (the
+        # old bug) the widening would follow that axis and the footprint
+        # would grow VERTICALLY; screen-space aspect must widen along
+        # screen X regardless of the axis angle.
+        base = {"schema_version": 1, "elements": [
+            {"type": "glow", "offset": 0, "scale": 0.3, "auto_rotate": True,
+             "params": {"softness": 0.25, "falloff": 2.0}}]}
+        wide = json.loads(json.dumps(base))
+        wide["global"] = {"aspect": 2.5}
+        lights = [{"x": 0.0, "y": 0.9, "ax": 0.0, "ay": -0.9}]
+        w = render_stack(validate_preset(wide), lights, 128, 128, "cpu",
+                         torch.float32).sum(-1)
+        m = w > w.max() * 0.3
+        ys, xs = torch.nonzero(m, as_tuple=True)
+        ww = (xs.max() - xs.min()).item()
+        wh = (ys.max() - ys.min()).item()
+        assert ww / max(wh, 1) > 1.8
+
+
+class TestIrregular:
+    def _footprint(self, preset):
+        return render_stack(validate_preset(preset),
+                            [{"x": 0.0, "y": 0.0}], 96, 96, "cpu",
+                            torch.float32).sum(-1)
+
+    def test_irregular_changes_shape_and_is_deterministic(self):
+        base = {"schema_version": 1, "global": {"seed": 11}, "elements": [
+            {"type": "ring", "offset": 0, "scale": 0.5, "irregular": 0.8,
+             "auto_rotate": False, "params": {"radius": 1.0, "thickness": 0.1}}]}
+        clean = json.loads(json.dumps(base))
+        clean["elements"][0]["irregular"] = 0.0
+        a = self._footprint(base)
+        b = self._footprint(base)
+        c = self._footprint(clean)
+        assert torch.allclose(a, b)               # seeded, reproducible
+        assert not torch.allclose(a, c)           # visibly different from clean
+
+    def test_irregular_ring_is_uneven_around_circumference(self):
+        p = {"schema_version": 1, "global": {"seed": 3}, "elements": [
+            {"type": "ring", "offset": 0, "scale": 0.5, "irregular": 1.0,
+             "auto_rotate": False, "params": {"radius": 1.0, "thickness": 0.12}}]}
+        f = self._footprint(p)
+        # compare the ring's brightness on the left vs right half: with full
+        # irregularity the sides should differ noticeably
+        left = f[:, :48].sum().item()
+        right = f[:, 48:].sum().item()
+        ratio = max(left, right) / max(min(left, right), 1e-6)
+        assert ratio > 1.05
+
+    def test_irregular_zero_matches_previous_behaviour(self):
+        p = {"schema_version": 1, "elements": [
+            {"type": "glint", "offset": 0, "scale": 0.5,
+             "params": {"points": 8, "length": 0.5, "thickness": 0.01,
+                        "length_jitter": 0.4}}]}
+        a = self._footprint(p)
+        with_key = json.loads(json.dumps(p))
+        with_key["elements"][0]["irregular"] = 0.0
+        b = self._footprint(with_key)
+        assert torch.allclose(a, b)
+
+    def test_irregular_validation_range(self):
+        import pytest
+        from flare.schema import validate_preset as vp
+        with pytest.raises(ValueError):
+            vp({"schema_version": 1, "elements": [
+                {"type": "glow", "irregular": 1.5, "params": {}}]})

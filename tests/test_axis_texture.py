@@ -175,13 +175,13 @@ class TestLibraryAndNodes:
         lib = _s.modules["comfyui_flarecore.nodes.library"]
         files = lib.list_elements()
         assert "glows/warm_soft.png" in files
-        assert "spectral/rainbow_ring.png" in files
+        assert "rings/rainbow_ring.png" in files
 
     def test_load_texture_linear_and_cached(self):
         import sys as _s
         lib = _s.modules["comfyui_flarecore.nodes.library"]
-        a = lib.load_texture("spectral/rainbow_ring.png", "rgb")
-        b = lib.load_texture("spectral/rainbow_ring.png", "rgb")
+        a = lib.load_texture("rings/rainbow_ring.png", "rgb")
+        b = lib.load_texture("rings/rainbow_ring.png", "rgb")
         assert a is b  # cache hit
         assert a.dim() == 3 and a.shape[-1] == 3
         with pytest.raises(ValueError, match="not found"):
@@ -192,7 +192,7 @@ class TestLibraryAndNodes:
         from test_nodes import run_node
         preset = json.dumps({"schema_version": 1, "elements": [
             {"type": "texture", "offset": 0.9, "scale": 0.3,
-             "intensity": 1.0, "params": {"file": "iris_ghosts/hex_soft.png"}}]})
+             "intensity": 1.0, "params": {"file": "ghosts/hex_soft.png"}}]})
         img = torch.zeros(1, 96, 128, 3)
         out, flare_pass, _ = run_node(img, preset_json=preset)
         assert flare_pass.max() > 0.05
@@ -235,3 +235,32 @@ class TestLibraryAndNodes:
         # loads back through the library
         loaded = lib.load_texture(ref)
         assert loaded.shape[0] == 128
+
+
+class TestMarginAndLegacyRefs:
+    def test_margin_leaves_breathing_room(self):
+        from flare.texture_prep import prepare_element
+        img = torch.ones(256, 256, 3)              # content out to every edge
+        out = prepare_element(img, black_point=0.0, autocenter=False,
+                              feather=0.0, size=256, margin=0.25)
+        assert out.shape == (256, 256, 3)
+        border = 256 // 4 - 2                       # just inside the margin
+        assert out[:border].sum() == 0              # top margin is pure black
+        assert out[-border:].sum() == 0
+        assert out[:, :border].sum() == 0
+        assert out[:, -border:].sum() == 0
+        assert out[128 - 20:128 + 20, 128 - 20:128 + 20].min() > 0.5
+
+    def test_margin_zero_is_previous_behaviour(self):
+        from flare.texture_prep import prepare_element
+        img = torch.rand(128, 128, 3)
+        a = prepare_element(img, size=96)
+        b = prepare_element(img, size=96, margin=0.0)
+        assert torch.allclose(a, b)
+
+    def test_legacy_category_refs_still_resolve(self):
+        from test_nodes import PKG
+        lib = PKG.nodes.library
+        # the library was reorganised; old presets may still say iris_ghosts/
+        t = lib.load_texture("iris_ghosts/hex_soft.png", "luminance")
+        assert t.shape[0] > 0

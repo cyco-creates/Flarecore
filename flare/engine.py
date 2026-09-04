@@ -138,7 +138,13 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
     ax = light.get("ax", 0.0)
     ay = light.get("ay", 0.0)
     stretch_x, stretch_y = elem["stretch"]
-    stretch_x = stretch_x * global_aspect  # anamorphic widen for every element
+
+    # Anamorphic widen is a property of the LENS, not of the element: it
+    # always stretches along the screen's horizontal axis, so it is applied
+    # to the screen-space x coordinate BEFORE the element's local rotation
+    # (multiplying stretch_x instead would follow auto_rotate's axis angle).
+    if global_aspect != 1.0:
+        x = x / global_aspect
 
     # a covered light emits from a smaller visible area: shrink with occlusion
     occ = light.get("occlusion", 0.0)
@@ -163,9 +169,10 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
 
         params = dict(elem["params"])
         params["seed"] = element_seed(base_seed, elem, elem_index, i)
+        params["irregular"] = elem.get("irregular", 0.0)
 
         cx, cy = element_center(px, py, t_i, ax, ay)
-        u0 = x - cx
+        u0 = x - cx / global_aspect
         v0 = y - cy
         # rotate by -rot so the element's local frame is axis-aligned
         u = (u0 * cos_r + v0 * sin_r) / (scale_i * stretch_x)

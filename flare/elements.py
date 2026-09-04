@@ -20,6 +20,41 @@ def _smoothstep(edge0: float, edge1: float, x: torch.Tensor) -> torch.Tensor:
     return t * t * (3.0 - 2.0 * t)
 
 
+# --- procedural irregularity -------------------------------------------------
+#
+# Real lens artefacts are never mathematically perfect: rings are brighter on
+# one side, iris ghosts have wobbly edges and uneven fill, rays differ in
+# brightness. The common `irregular` element key (0..1) drives seeded,
+# deterministic low-order harmonic noise so procedural elements pick up that
+# organic unevenness without losing their identity-stable seeding.
+
+_NOISE_HARMONICS = (1, 2, 3, 5)
+
+
+def _noise_coeffs(seed: int, salt: int):
+    """Seeded amplitudes and phases for the harmonic noise (CPU, device-free)."""
+    gen = torch.Generator(device="cpu")
+    gen.manual_seed((int(seed) ^ (salt * 0x9E3779B9)) & 0x7FFFFFFFFFFFFFFF)
+    n = len(_NOISE_HARMONICS)
+    amps = torch.rand(n, generator=gen) + 0.25
+    phases = torch.rand(n, generator=gen) * (2.0 * math.pi)
+    return amps / amps.sum(), phases
+
+
+def _harmonic_noise(x: torch.Tensor, seed: int, salt: int = 0) -> torch.Tensor:
+    """Smooth zero-mean noise in ~[-1, 1] over x (radians for angular use:
+    harmonics are integers, so the field is 2*pi-periodic and seam-free)."""
+    amps, phases = _noise_coeffs(seed, salt)
+    out = torch.zeros_like(x)
+    for k, a, ph in zip(_NOISE_HARMONICS, amps.tolist(), phases.tolist()):
+        out = out + a * torch.sin(k * x + ph)
+    return out
+
+
+def _irregular(p: dict) -> float:
+    return float(p.get("irregular", 0.0))
+
+
 def glow(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     """Soft radial halo: inverse-power (Moffat-style) profile.
 
@@ -28,7 +63,15 @@ def glow(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     """
     softness = p["softness"]
     falloff = p["falloff"]
-    r2 = u * u + v * v
+    irr = _irregular(p)
+    if irr > 0.0:
+        # asymmetric halo: the effective radius breathes with angle, so the
+        # glow bulges to one side instead of being a perfect disc
+        phi = torch.atan2(v, u)
+        wobble = 1.0 + irr * 0.18 * _harmonic_noise(phi, int(p.get("seed", 0)), 1)
+        r2 = (u * u + v * v) * wobble * wobble
+    else:
+        r2 = u * u + v * v
     return (1.0 + r2 / (softness * softness)) ** (-falloff)
 
 
@@ -52,10 +95,21 @@ def iris(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     r_edge = math.cos(math.pi / blades) / torch.cos(phi_folded)
     d = r / r_edge
 
+    irr = _irregular(p)
+    if irr > 0.0:
+        # wobbly blade edge + uneven fill: real iris ghosts are never a
+        # perfect polygon of uniform brightness
+        seed = int(p.get("seed", 0))
+        d = d * (1.0 + irr * 0.08 * _harmonic_noise(phi, seed, 2))
+
     field = _smoothstep(1.0, 1.0 - edge_softness, d)
     if hollow > 0.0:
         inner = _smoothstep(hollow, hollow * (1.0 - edge_softness), d)
         field = (field - inner).clamp(min=0.0)
+
+    if irr > 0.0:
+        shade = 1.0 + irr * 0.45 * _harmonic_noise(phi, seed, 3) * d.clamp(0.0, 1.0)
+        field = field * shade.clamp(min=0.0)
     return field
 
 
@@ -71,6 +125,7 @@ def streak(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     thickness = p["thickness"]
     count = max(int(p["count"]), 1)
 
+    irr = _irregular(p)
     field = torch.zeros_like(u)
     for i in range(count):
         a = i * math.pi / count
@@ -80,7 +135,13 @@ def streak(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
             ca, sa = math.cos(a), math.sin(a)
             uu = u * ca + v * sa
             vv = -u * sa + v * ca
-        field = field + torch.exp(-torch.abs(uu) / length) * torch.exp(-((vv / thickness) ** 2))
+        line = torch.exp(-torch.abs(uu) / length) * torch.exp(-((vv / thickness) ** 2))
+        if irr > 0.0:
+            # brightness waver along the streak's length
+            wav = 1.0 + irr * 0.45 * _harmonic_noise(
+                uu * (2.5 / max(length, 1e-4)), int(p.get("seed", 0)), 4 + i)
+            line = line * wav.clamp(min=0.0)
+        field = field + line
     return field
 
 
@@ -89,6 +150,15 @@ def ring(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     radius = p["radius"]
     thickness = p["thickness"]
     r = torch.sqrt(u * u + v * v)
+    irr = _irregular(p)
+    if irr > 0.0:
+        # circumferential unevenness: one side of the ring runs brighter,
+        # and the radius drifts slightly, like a real reflection ring
+        phi = torch.atan2(v, u)
+        seed = int(p.get("seed", 0))
+        radius = radius * (1.0 + irr * 0.03 * _harmonic_noise(phi, seed, 5))
+        gain = (1.0 + irr * 0.6 * _harmonic_noise(phi, seed, 6)).clamp(min=0.0)
+        return torch.exp(-(((r - radius) / thickness) ** 2)) * gain
     return torch.exp(-(((r - radius) / thickness) ** 2))
 
 
@@ -104,8 +174,14 @@ def hoop(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     angular_falloff = p["angular_falloff"]
     r = torch.sqrt(u * u + v * v)
     phi = torch.atan2(v, u)
+    irr = _irregular(p)
+    if irr > 0.0:
+        seed = int(p.get("seed", 0))
+        radius = radius * (1.0 + irr * 0.03 * _harmonic_noise(phi, seed, 5))
     radial = torch.exp(-(((r - radius) / thickness) ** 2))
     angular = (1.0 - angular_falloff * torch.abs(torch.cos(phi))).clamp(min=0.0)
+    if irr > 0.0:
+        angular = angular * (1.0 + irr * 0.6 * _harmonic_noise(phi, seed, 6)).clamp(min=0.0)
     return radial * angular
 
 
@@ -121,20 +197,27 @@ def glint(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     jitter = p["length_jitter"]
     seed = int(p.get("seed", 0))
 
+    irr = _irregular(p)
+
     gen = torch.Generator(device="cpu")
     gen.manual_seed(seed & 0x7FFFFFFFFFFFFFFF)
     rand = torch.rand(points, generator=gen)
     lengths = length * (1.0 + jitter * (rand * 2.0 - 1.0))
+    # irregular rays: per-ray brightness variation and angular wobble on top
+    # of the length jitter — even spokes are the giveaway of a fake starburst
+    gains = 1.0 + irr * 1.2 * (torch.rand(points, generator=gen) - 0.5)
+    wobble = irr * 0.5 * (torch.rand(points, generator=gen) - 0.5) \
+        * (2.0 * math.pi / points)
 
     field = torch.zeros_like(u)
     for i in range(points):
-        a = i * 2.0 * math.pi / points
+        a = i * 2.0 * math.pi / points + float(wobble[i])
         ca, sa = math.cos(a), math.sin(a)
         uu = u * ca + v * sa
         vv = -u * sa + v * ca
         li = max(float(lengths[i]), 1e-4)
         ray = torch.exp(-uu.clamp(min=0.0) / li) * torch.exp(-((vv / thickness) ** 2))
-        field = field + ray * (uu > 0.0)
+        field = field + ray * (uu > 0.0) * max(float(gains[i]), 0.1)
     return field
 
 

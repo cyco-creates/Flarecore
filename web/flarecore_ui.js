@@ -278,12 +278,24 @@ class PointPicker {
 // streak, stripe, ring, hoop, spectral, fog) plus library textures.
 // Which library category holds alternatives for each element look — the
 // name-click gallery filters to this, so a glow offers other glows.
+// The library's eight canonical families - every look maps into one, and
+// the forge's prompt categories use the same eight names, so what you make
+// in the forge lands exactly where the gallery looks for it.
 const CATEGORY_OF = {
-  glow: "glows", bloom: "glows", fog: "fog", disc: "discs",
-  iris: "iris_ghosts", "multi-iris": "iris_ghosts",
-  "spike ball": "spike_balls", shimmer: "shimmers", sparkle: "sparkles",
-  rays: "rays", glint: "rays", streak: "streaks", stripe: "stripes",
-  ring: "rings", hoop: "hoops", spectral: "rings", "lens dirt": "lens_dirt",
+  glow: "glows", bloom: "glows", fog: "glows",
+  disc: "ghosts", iris: "ghosts", "multi-iris": "ghosts",
+  "spike ball": "rays", shimmer: "rays", sparkle: "rays",
+  rays: "rays", glint: "rays",
+  streak: "streaks", stripe: "streaks",
+  ring: "rings", spectral: "rings", hoop: "hoops",
+  caustic: "caustics", "lens dirt": "lens_dirt",
+};
+
+// Old presets and saved workflows may carry pre-consolidation family names.
+const LEGACY_CATEGORY = {
+  fog: "glows", discs: "ghosts", iris_ghosts: "ghosts", lens_orbs: "ghosts",
+  dirt_bokeh: "ghosts", spike_balls: "rays", shimmers: "rays",
+  sparkles: "rays", stripes: "streaks", spectral: "rings",
 };
 
 const ADD_MENU = [
@@ -319,6 +331,7 @@ const ADD_DEFAULTS = {
 };
 
 const COMMON_SPECS = {
+  irregular: [0, 1, 0.01],
   light_mask: [0, 1, 0.01],
   dispersion: [0, 3, 0.05], dispersion_samples: [3, 15, 2],
   rotation: [-180, 180, 1], count: [1, 24, 1], spread: [0, 1, 0.01],
@@ -328,6 +341,7 @@ const COMMON_SPECS = {
 // What an ABSENT key means (the schema's defaults) — without these an unset
 // slider would display its range minimum, e.g. rotation reading -180.
 const COMMON_DEFAULTS = {
+  irregular: 0,
   light_mask: 0,
   dispersion: 0, dispersion_samples: 3, rotation: 0, count: 1, spread: 0,
   count_falloff: 1, count_scale_step: 1,
@@ -757,7 +771,7 @@ class FlareEditor {
   // that row a glows row forever, and every swapped row ended up offering
   // glows.
   categoryOf(elem) {
-    if (elem.slot) return elem.slot;
+    if (elem.slot) return LEGACY_CATEGORY[elem.slot] || elem.slot;
     if (elem.type === "texture" && elem.params?.file?.includes("/")) {
       return elem.params.file.split("/")[0];
     }

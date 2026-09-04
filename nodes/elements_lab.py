@@ -107,16 +107,23 @@ class FlareTexturePrepare:
                 "black_point": ("FLOAT", {"default": 0.06, "min": 0.0, "max": 0.5, "step": 0.005}),
                 "autocenter": ("BOOLEAN", {"default": True}),
                 "feather": ("FLOAT", {"default": 0.12, "min": 0.0, "max": 0.5, "step": 0.005}),
-                "size": ("INT", {"default": 512, "min": 64, "max": 2048, "step": 64}),
+                "size": ("INT", {"default": 2048, "min": 64, "max": 4096, "step": 64}),
+                # appended after size (widgets_values is positional)
+                "margin": ("FLOAT", {
+                    "default": 0.25, "min": 0.0, "max": 0.45, "step": 0.01,
+                    "tooltip": "Black breathing room on every side; 0.25 keeps "
+                               "the content in the middle half so it never crops.",
+                }),
             },
         }
 
-    def prepare(self, image, mode, black_point, autocenter, feather, size):
+    def prepare(self, image, mode, black_point, autocenter, feather, size,
+                margin=0.25):
         dtype = image.dtype if image.dtype.is_floating_point else torch.float32
         frames = [
             prepare_element(frame[..., :3].to(dtype), mode=mode,
                             black_point=black_point, autocenter=autocenter,
-                            feather=feather, size=size)
+                            feather=feather, size=size, margin=margin)
             for frame in image
         ]
         out = torch.stack(frames, dim=0)

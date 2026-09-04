@@ -86,6 +86,25 @@ def feather_border(img: torch.Tensor, feather: float) -> torch.Tensor:
     return img * fade.unsqueeze(-1)
 
 
+def pad_margin(img: torch.Tensor, size: int, margin: float) -> torch.Tensor:
+    """Centre the content in a black (size, size) canvas with `margin` of
+    breathing room on every side (margin 0.25 -> content spans the middle
+    half). The margin is what guarantees a texture element never crops:
+    rotation, stretch and dispersion all sample inside [-1, 1] of element
+    space, and content that reaches the texture edge clips against it.
+    """
+    margin = min(max(float(margin), 0.0), 0.45)
+    inner = max(int(round(size * (1.0 - 2.0 * margin))), 8)
+    if inner >= size:
+        return resize_square(img, size)
+    content = resize_square(img, inner)
+    canvas = torch.zeros(size, size, img.shape[-1],
+                         device=img.device, dtype=img.dtype)
+    o = (size - inner) // 2
+    canvas[o:o + inner, o:o + inner] = content
+    return canvas
+
+
 def resize_square(img: torch.Tensor, size: int) -> torch.Tensor:
     """Resize a (S, S, C) square texture to (size, size, C), antialiased."""
     if img.shape[0] == size:
@@ -98,11 +117,14 @@ def resize_square(img: torch.Tensor, size: int) -> torch.Tensor:
 
 def prepare_element(img: torch.Tensor, mode: str = "rgb",
                     black_point: float = 0.06, autocenter: bool = True,
-                    feather: float = 0.12, size: int = 512) -> torch.Tensor:
+                    feather: float = 0.12, size: int = 512,
+                    margin: float = 0.0) -> torch.Tensor:
     """Full pipeline: (H, W, 3) in [0, 1] -> (size, size, 3) element texture.
 
     mode 'luminance' collapses to a neutral intensity element (returned as
-    grey RGB so it stays an IMAGE); 'rgb' keeps the colour.
+    grey RGB so it stays an IMAGE); 'rgb' keeps the colour. margin > 0 shrinks
+    the content into the middle of the canvas with that fraction of black on
+    every side, so the element has room to breathe and never clips.
     """
     if mode not in ("rgb", "luminance"):
         raise ValueError(f"mode must be 'rgb' or 'luminance', got {mode!r}")
@@ -113,6 +135,10 @@ def prepare_element(img: torch.Tensor, mode: str = "rgb",
     out = center_crop_square(out)
     if autocenter:
         out = center_on_energy(out)
-    out = resize_square(out, size)
-    out = feather_border(out, feather)
+    if margin > 0.0:
+        out = feather_border(out, feather)
+        out = pad_margin(out, size, margin)
+    else:
+        out = resize_square(out, size)
+        out = feather_border(out, feather)
     return out.clamp(0.0, 1.0)
