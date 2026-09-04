@@ -12,6 +12,11 @@ import { api } from "../../scripts/api.js";
 
 /* ------------------------------------------------------------------ utils */
 
+// The two DOM panels. They must stay at the end of node.widgets: ComfyUI
+// writes a null into widgets_values for each of them instead of omitting
+// them, so any other position shifts every real value on reload.
+const PANEL_WIDGETS = new Set(["flare_layout", "flare_editor"]);
+
 // Widgets the picker owns, plus the tuning that does not belong on the face
 // of the node. Revealed by the editor's ⚙ button.
 const ADVANCED = [
@@ -719,26 +724,40 @@ app.registerExtension({
       editorWidget.serializeValue = () => undefined;
       editorWidget.computeSize = (w) => [Number(w) || node.size?.[0] || 460, 300];
 
-      // Panels first: the picker and editor are the interface, the numeric
-      // widgets are the fallback. Without this they sit under ~16 rows of
-      // numbers and the node needs 1300px before either panel is visible.
-      const front = (name, index) => {
-        const i = node.widgets.findIndex((w) => w.name === name);
-        if (i >= 0) node.widgets.splice(index, 0, node.widgets.splice(i, 1)[0]);
-      };
-      front("flare_layout", 0);
-      front("flare_editor", 1);
-
+      // The panels stay at the END of node.widgets. widgets_values is a
+      // positional array and ComfyUI serializes a null for each DOM widget
+      // rather than skipping it, so moving them to the front shifts every
+      // real value two slots on reload — position_mode's "manual" lands in
+      // detect_max_lights and so on. Keeping them last leaves the real
+      // widgets at the indices every saved workflow already uses.
       setAdvanced(node, false);
       node.setSize([Math.max(node.size[0], 460), node.computeSize()[1]]);
       setTimeout(() => picker.draw(), 60);
     };
 
-    // Restore the compact layout for nodes loaded from a saved workflow.
+    // Restore the compact layout for nodes loaded from a saved workflow, and
+    // repair values saved by the build that placed the panels first.
     const onConfigure = nodeType.prototype.onConfigure;
     nodeType.prototype.onConfigure = function (info) {
       onConfigure?.apply(this, arguments);
       const node = this;
+
+      // A workflow written by that build starts with a null per panel widget;
+      // a correct one ends with them. Shift the values back onto the real
+      // widgets so an already-saved graph loads intact.
+      const vals = info?.widgets_values;
+      if (Array.isArray(vals) && vals.length > 2 &&
+          vals[0] === null && vals[1] === null) {
+        const shifted = vals.slice(2);
+        const real = node.widgets.filter((w) => !PANEL_WIDGETS.has(w.name));
+        real.forEach((w, i) => {
+          if (i < shifted.length && shifted[i] !== null && shifted[i] !== undefined) {
+            w.value = shifted[i];
+          }
+        });
+        console.log("[flarecore] repaired widget values from a shifted save");
+      }
+
       setTimeout(() => {
         setAdvanced(node, !!node._fcAdvanced);
         node._fcEditor?.build();
