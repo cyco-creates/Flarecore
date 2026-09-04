@@ -31,6 +31,7 @@ class FlareRender:
                 "detect_threshold": ("FLOAT", {"default": 0.8, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "detect_max_lights": ("INT", {"default": 1, "min": 1, "max": 16}),
                 "occlusion_radius": ("FLOAT", {"default": 0.02, "min": 0.001, "max": 0.5, "step": 0.001}),
+                "light_depth": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "invert_depth": ("BOOLEAN", {"default": False}),
                 "intensity": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.01}),
                 "scale": ("FLOAT", {"default": 1.0, "min": 0.01, "max": 10.0, "step": 0.01}),
@@ -45,8 +46,8 @@ class FlareRender:
 
     def render(self, image, preset_json, position_mode, light_x, light_y,
                detect_threshold, detect_max_lights, occlusion_radius,
-               invert_depth, intensity, scale, blend_mode, clamp_output,
-               seed, depth=None):
+               light_depth, invert_depth, intensity, scale, blend_mode,
+               clamp_output, seed, depth=None):
         preset = load_preset(preset_json)
 
         device = image.device
@@ -69,6 +70,7 @@ class FlareRender:
                     light["occlusion"] = occlusion_factor(
                         dmap, light["u"], light["v"],
                         radius=occlusion_radius, invert=invert_depth,
+                        light_depth=light_depth,
                     )
 
         engine_lights = []

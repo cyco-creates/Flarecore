@@ -6,6 +6,7 @@ try:
     # imports work.
     from .nodes.render import FlareRender
     from .nodes.preset import FlarePresetLoader
+    from .nodes.depth import FlareDepthAdapter
 except ImportError:
     # No package context (pytest collecting the repo root, or a direct
     # import of this file). Re-load ourselves under a proper package name so
@@ -28,15 +29,18 @@ except ImportError:
         _spec.loader.exec_module(_pkg)
     FlareRender = _pkg.FlareRender
     FlarePresetLoader = _pkg.FlarePresetLoader
+    FlareDepthAdapter = _pkg.FlareDepthAdapter
 
 NODE_CLASS_MAPPINGS = {
     "FlareRender": FlareRender,
     "FlarePresetLoader": FlarePresetLoader,
+    "FlareDepthAdapter": FlareDepthAdapter,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "FlareRender": "Flare Render",
     "FlarePresetLoader": "Flare Preset Loader",
+    "FlareDepthAdapter": "Flare Depth Adapter",
 }
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]

@@ -45,8 +45,8 @@ def run_node(image, depth=None, **overrides):
     args = dict(
         preset_json=PRESET, position_mode="manual", light_x=0.3, light_y=0.4,
         detect_threshold=0.8, detect_max_lights=1, occlusion_radius=0.02,
-        invert_depth=False, intensity=1.0, scale=1.0, blend_mode="add",
-        clamp_output=True, seed=0,
+        light_depth=0.0, invert_depth=False, intensity=1.0, scale=1.0,
+        blend_mode="add", clamp_output=True, seed=0,
     )
     args.update(overrides)
     return FlareRender().render(image=image, depth=depth, **args)
@@ -62,7 +62,9 @@ class TestFlareRender:
         assert out.dtype == torch.float32
 
     def test_registration_contract(self):
-        assert set(PKG.NODE_CLASS_MAPPINGS) == {"FlareRender", "FlarePresetLoader"}
+        assert set(PKG.NODE_CLASS_MAPPINGS) == {
+            "FlareRender", "FlarePresetLoader", "FlareDepthAdapter"
+        }
         assert FlareRender.CATEGORY == "flare"
         assert FlareRender.RETURN_TYPES == ("IMAGE", "IMAGE", "MASK")
         it = FlareRender.INPUT_TYPES()
@@ -116,15 +118,29 @@ class TestFlareRender:
 
     def test_depth_occlusion_dims_flare(self):
         img = torch.rand(1, 64, 64, 3) * 0.2
-        # light at (0.3, 0.4); depth: near-is-white, wall nearer than light
-        # covering the whole light neighbourhood
-        depth = torch.zeros(1, 64, 64, 3)
-        depth[..., :] = 0.9
-        lit_px = (int(0.4 * 64), int(0.3 * 64))
-        depth[0, lit_px[0], lit_px[1], :] = 0.2  # light itself far
+        # near-is-white wall covering the light's neighbourhood entirely,
+        # including the light's own pixel: this is the case that used to
+        # report zero occlusion and render a full flare over the occluder.
+        depth = torch.full((1, 64, 64, 3), 0.9)
         _, blocked, _ = run_node(img, depth=depth, occlusion_radius=0.1)
         _, free, _ = run_node(img, depth=None)
         assert blocked.sum() < free.sum() * 0.05
+
+    def test_open_sky_depth_does_not_occlude(self):
+        img = torch.rand(1, 64, 64, 3) * 0.2
+        sky = torch.zeros(1, 64, 64, 3)  # everything at the far plane
+        _, with_depth, _ = run_node(img, depth=sky, occlusion_radius=0.1)
+        _, free, _ = run_node(img, depth=None)
+        assert torch.allclose(with_depth, free, atol=1e-5)
+
+    def test_light_depth_controls_what_blocks(self):
+        img = torch.rand(1, 64, 64, 3) * 0.2
+        mid = torch.full((1, 64, 64, 3), 0.5)  # a mid-scene layer
+        _, light_behind, _ = run_node(img, depth=mid, occlusion_radius=0.1,
+                                      light_depth=0.0)
+        _, light_in_front, _ = run_node(img, depth=mid, occlusion_radius=0.1,
+                                        light_depth=0.9)
+        assert light_behind.sum() < light_in_front.sum() * 0.05
 
     def test_screen_blend_bounded(self):
         img = torch.rand(1, 48, 48, 3)
@@ -136,6 +152,63 @@ class TestFlareRender:
         img = torch.rand(1, 32, 32, 4)
         out, _, _ = run_node(img)
         assert out.shape == (1, 32, 32, 3)
+
+
+class TestFlareDepthAdapter:
+    def node(self):
+        return PKG.NODE_CLASS_MAPPINGS["FlareDepthAdapter"]()
+
+    def run(self, depth, **over):
+        args = dict(normalize="per_batch", invert=False, blur=0.0,
+                    black_point=0.0, white_point=1.0)
+        args.update(over)
+        return self.node().adapt(depth=depth, **args)
+
+    def test_outputs_image_and_mask(self):
+        d = torch.rand(2, 32, 48, 3)
+        image, mask = self.run(d)
+        assert image.shape == (2, 32, 48, 3)
+        assert mask.shape == (2, 32, 48)
+        assert image.min() >= 0.0 and image.max() <= 1.0
+
+    def test_channels_agree(self):
+        d = torch.rand(1, 16, 16, 3)
+        image, mask = self.run(d)
+        assert torch.allclose(image[..., 0], image[..., 1])
+        assert torch.allclose(image[..., 0], mask)
+
+    def test_invert_flips_convention(self):
+        d = torch.zeros(1, 8, 8, 3)
+        d[:, :, 4:, :] = 1.0
+        plain, _ = self.run(d, invert=False)
+        flipped, _ = self.run(d, invert=True)
+        assert torch.allclose(plain, 1.0 - flipped, atol=1e-5)
+
+    def test_normalizes_out_of_range_source(self):
+        d = torch.rand(1, 16, 16, 3) * 50.0 + 10.0  # e.g. a raw Z-pass
+        image, _ = self.run(d)
+        assert image.min() == pytest.approx(0.0, abs=1e-5)
+        assert image.max() == pytest.approx(1.0, abs=1e-5)
+
+    def test_registration_contract(self):
+        cls = PKG.NODE_CLASS_MAPPINGS["FlareDepthAdapter"]
+        assert cls.CATEGORY == "flare"
+        assert cls.RETURN_TYPES == ("IMAGE", "MASK")
+        assert "depth" in cls.INPUT_TYPES()["required"]
+
+    def test_invalid_levels_raise(self):
+        with pytest.raises(ValueError, match="white_point"):
+            self.run(torch.rand(1, 8, 8, 3), black_point=0.9, white_point=0.2)
+
+    def test_feeds_flare_render(self):
+        # end to end: a near-is-black source, adapted, then used as the
+        # occluder for a render
+        img = torch.rand(1, 48, 48, 3) * 0.2
+        raw = torch.full((1, 48, 48, 3), 0.05)  # near everywhere, near-is-black
+        adapted, _ = self.run(raw, normalize="none", invert=True)
+        _, blocked, _ = run_node(img, depth=adapted, occlusion_radius=0.1)
+        _, free, _ = run_node(img, depth=None)
+        assert blocked.sum() < free.sum() * 0.05
 
 
 class TestFlarePresetLoader:

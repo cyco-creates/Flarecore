@@ -80,40 +80,73 @@ class TestDetect:
 
 
 class TestOcclude:
-    def make_depth(self, h=64, w=64, light_depth=0.5):
-        return torch.full((h, w), light_depth)
+    """Occlusion compares the scene against an explicit light_depth.
+
+    Default light_depth=0.0 models a light at infinity (sun/sky), which is
+    the dominant flare case.
+    """
+
+    def sky(self, h=64, w=64):
+        """A far-everywhere map: sky at depth 0, nothing occluding."""
+        return torch.zeros((h, w))
 
     def test_unoccluded(self):
-        depth = self.make_depth()
-        assert occlusion_factor(depth, 0.5, 0.5, radius=0.05) == 0.0
+        assert occlusion_factor(self.sky(), 0.5, 0.5, radius=0.05) == 0.0
 
-    def test_fully_occluded(self):
-        depth = self.make_depth(light_depth=0.5)
-        # nearer object (larger value = nearer) covering everything except
-        # the exact light pixel
+    def test_fully_occluded_even_when_covering_the_light(self):
+        # The regression this model exists for: an occluder covering the
+        # light's own pixel must still read as fully blocking.
+        depth = self.sky()
         depth[:, :] = 0.9
-        depth[32, 32] = 0.5
         occ = occlusion_factor(depth, 0.5, 0.5, radius=0.2)
         assert occ == 1.0
 
     def test_partial_occlusion_smooth(self):
-        depth = self.make_depth(light_depth=0.5)
-        depth[:, :32] = 0.9  # left half covered by nearer object
-        depth[32, 32] = 0.5
+        depth = self.sky()
+        depth[:, :32] = 0.9  # left half covered by a nearer object
         occ = occlusion_factor(depth, 0.5, 0.5, radius=0.2)
         assert 0.0 < occ < 1.0
 
+    def test_monotonic_as_occluder_advances(self):
+        # Sweeping an occluder across the light must not pop: occlusion
+        # increases monotonically and ends fully blocked.
+        prev = -1.0
+        for edge in range(0, 65, 8):
+            depth = self.sky()
+            depth[:, :edge] = 0.9
+            occ = occlusion_factor(depth, 0.5, 0.5, radius=0.25)
+            assert occ >= prev - 1e-6, f"occlusion dropped at edge={edge}"
+            prev = occ
+        assert prev == 1.0
+
     def test_invert_depth(self):
-        # near-is-black map: smaller = nearer
-        depth = torch.full((64, 64), 0.5)
-        depth[:, :32] = 0.1  # nearer in inverted convention
-        depth[32, 32] = 0.5
+        # near-is-black map: an occluder sits at a low value
+        depth = torch.ones((64, 64))
+        depth[:, :] = 0.05
         occ_wrong = occlusion_factor(depth, 0.5, 0.5, radius=0.2, invert=False)
         occ_right = occlusion_factor(depth, 0.5, 0.5, radius=0.2, invert=True)
-        assert occ_right > occ_wrong
+        assert occ_wrong == 0.0
+        assert occ_right == 1.0
 
     def test_farther_object_does_not_occlude(self):
-        depth = self.make_depth(light_depth=0.5)
-        depth[:, :32] = 0.1  # farther (near-is-white)
-        depth[32, 32] = 0.5
+        depth = self.sky()
+        depth[:, :32] = 0.05  # within margin of the light's own depth
         assert occlusion_factor(depth, 0.5, 0.5, radius=0.2) == 0.0
+
+    def test_light_depth_selects_which_objects_occlude(self):
+        # A mid-scene light: only things nearer than it should block.
+        depth = self.sky()
+        depth[:, :] = 0.5
+        far_light = occlusion_factor(depth, 0.5, 0.5, radius=0.2, light_depth=0.0)
+        near_light = occlusion_factor(depth, 0.5, 0.5, radius=0.2, light_depth=0.9)
+        assert far_light == 1.0   # light behind the 0.5 layer -> blocked
+        assert near_light == 0.0  # light in front of it -> clear
+
+    def test_margin_tolerates_noise(self):
+        depth = self.sky() + 0.02  # small uniform noise floor
+        assert occlusion_factor(depth, 0.5, 0.5, radius=0.2) == 0.0
+
+    def test_device_dtype_preserved(self):
+        depth = torch.zeros((32, 32), dtype=torch.float32)
+        occ = occlusion_factor(depth, 0.5, 0.5)
+        assert isinstance(occ, float)

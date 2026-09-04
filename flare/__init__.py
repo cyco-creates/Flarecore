@@ -10,6 +10,7 @@ from .schema import validate_preset, load_preset, ELEMENT_TYPES, SCHEMA_VERSION
 from .engine import render_stack, render_batch, composite
 from .detect import detect_lights, linear_luminance
 from .occlude import occlusion_factor
+from .depth import condition_depth, normalize_depth, blur_depth, remap_levels
 
 __all__ = [
     "srgb_to_linear",
@@ -24,4 +25,8 @@ __all__ = [
     "detect_lights",
     "linear_luminance",
     "occlusion_factor",
+    "condition_depth",
+    "normalize_depth",
+    "blur_depth",
+    "remap_levels",
 ]

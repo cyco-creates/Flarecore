@@ -23,6 +23,40 @@ CUDA, MPS, and CPU.
 - **FlarePresetLoader** — picks a preset file from `presets/` and outputs its
   JSON as a string. Drop new `.json` files in; the list rescans without
   restarting ComfyUI.
+- **FlareDepthAdapter** — conditions a depth map for occlusion use: normalize
+  range, flip near/far convention, remap levels, blur edges. Pure tensor math.
+
+## Depth occlusion
+
+This pack does not estimate depth — that needs a model, which the engine
+deliberately has no part of. Feed `FlareRender.depth` from any depth source:
+
+```
+Load Image ──> Depth Anything V2 ──> Flare Depth Adapter ──> FlareRender.depth
+           └────────────────────────────────────────────────> FlareRender.image
+```
+
+MiDaS, Zoe, Metric3D, LeReS and rendered Z-passes work equally well. The
+adapter is optional but makes any source behave predictably.
+
+Two controls decide the result:
+
+- `light_depth` (on FlareRender) is where the light sits on the depth scale:
+  `0.0` = infinitely far, which is right for a sun or sky light and is the
+  default. Raise it for a light that sits mid-scene, so only things in front
+  of it block the flare.
+- `invert_depth` states the source's convention. Depth Anything, MiDaS and Zoe
+  emit near-as-white, so leave it off; turn it on for near-as-black sources.
+  It is never guessed.
+
+`occlusion_radius` sets how gradually the flare fades as an object crosses the
+light — about 20 px of travel at the `0.02` default on a 1024-wide frame, and
+roughly 46 px at `0.08`. Raise it, and the adapter's `blur`, for a softer fade
+on moving shots.
+
+For video, leave the adapter's `normalize` on `per_batch`. Per-frame
+normalization rescales each frame on its own range, so a static object's depth
+drifts as other content enters and leaves the shot and the occlusion breathes.
 
 ## Preset format
 
