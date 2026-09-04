@@ -7,6 +7,9 @@ import anything from ComfyUI; the nodes/ package wraps it.
 
 from .colorspace import srgb_to_linear, linear_to_srgb
 from .schema import validate_preset, load_preset, ELEMENT_TYPES, SCHEMA_VERSION
+from .engine import render_stack, render_batch, composite
+from .detect import detect_lights, linear_luminance
+from .occlude import occlusion_factor
 
 __all__ = [
     "srgb_to_linear",
@@ -15,4 +18,10 @@ __all__ = [
     "load_preset",
     "ELEMENT_TYPES",
     "SCHEMA_VERSION",
+    "render_stack",
+    "render_batch",
+    "composite",
+    "detect_lights",
+    "linear_luminance",
+    "occlusion_factor",
 ]
