@@ -1021,6 +1021,32 @@ class TestWholeClipSolve:
                                   motion_cost=1000.0)
         assert all(len(f) == 1 for f in solved), "the light dropped out"
 
+    def test_smoothing_irons_out_wobble_a_still_source_cannot_have(self):
+        """The detector honestly reports the centre of whatever part of the
+        source is visible, and foliage keeps eating different parts of it.
+        A source that never moved must come out not moving."""
+        from flare.track import solve_light_path
+        import math, random
+        rng = random.Random(4)
+        det = [[{"u": 0.8 + rng.uniform(-0.05, 0.05),
+                 "v": 0.3 + rng.uniform(-0.05, 0.05),
+                 "brightness": 1.0, "energy": 1.0}] for _ in range(40)]
+        def travel(sol):
+            p = [(f[0]["u"], f[0]["v"]) for f in sol]
+            return max(math.hypot(b[0]-a[0], b[1]-a[1]) for a, b in zip(p, p[1:]))
+        raw = travel(solve_light_path(det, 1, motion_cost=1000.0, smoothing=0.0))
+        ironed = travel(solve_light_path(det, 1, motion_cost=1000.0, smoothing=1.0))
+        assert raw > 0.02, "the fixture was supposed to wobble"
+        assert ironed < raw / 10, f"still wobbling: {ironed:.4f} vs {raw:.4f}"
+
+    def test_a_real_drift_survives_the_smoothing(self):
+        """Ironing out wobble must not pin a light that genuinely travels."""
+        from flare.track import solve_light_path
+        det = [[{"u": 0.2 + 0.6 * i / 39, "v": 0.5,
+                 "brightness": 1.0, "energy": 1.0}] for i in range(40)]
+        sol = solve_light_path(det, 1, motion_cost=1000.0, smoothing=1.0)
+        assert sol[0][0]["u"] < 0.25 and sol[-1][0]["u"] > 0.75,             f"the drift was flattened: {sol[0][0]['u']:.2f} -> {sol[-1][0]['u']:.2f}"
+
     def test_an_empty_clip_is_handled(self):
         from flare.track import solve_light_path
         assert solve_light_path([], max_tracks=1) == []

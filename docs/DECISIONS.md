@@ -864,6 +864,20 @@ frames on the wrong side of frame 5 -> 0, max jump 0.882 -> 0.059. Tuned
 (smoothing 0.9) it reaches 0.0071 mean travel, below causal tracking's
 0.0096.
 
+`lock` then trusts a SHAPE over the samples. Even a correctly solved path
+wobbles, because the detector honestly reports the centre of whatever part
+of the source is currently visible and branches keep eating different parts
+of it. A sun does not do that -- its screen path over a shot is smooth -- so
+the solved path is blended toward a least-squares quadratic by `smoothing`.
+At 1 the light follows the fitted curve exactly. Measured on the owner's
+shot, on rendered pixels: mean travel 0.0204 in the render he complained
+about, 0.0073 at the default 0.65, 0.0028 at 1.0. A genuine drift across
+frame survives it -- a light travelling 0.2 to 0.8 still arrives.
+
+The polynomial is solved in plain Python so track.py stays free of torch,
+and the EMA that precedes it is capped at 0.6: running both at full strength
+only drags a travelling light's endpoints inward.
+
 Tracking stays as it is: it is cheaper, it is causal, and it wins on jitter
 at default settings. `lock` is for the shot where a rival source is bright
 enough to steal a few frames.

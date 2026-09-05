@@ -115,11 +115,69 @@ def solve_light_path(detections: list[list[dict]], max_tracks: int = 1,
             break
         _fill_gaps(path)
 
-        us = smooth_series([p[0] for p in path], smoothing)
-        vs = smooth_series([p[1] for p in path], smoothing)
+        # The EMA only has to kill single-frame noise; the fit below does
+        # the steadying. Running both at full strength drags a genuinely
+        # travelling light's endpoints inward for no gain.
+        ema = min(smoothing, 0.6)
+        us = smooth_series([p[0] for p in path], ema)
+        vs = smooth_series([p[1] for p in path], ema)
+        # Then trust a SHAPE over the samples. Even a correctly solved path
+        # wobbles, because the detector honestly reports the centre of the
+        # sky patch that is currently visible, and branches keep eating
+        # different parts of it. A sun does not do that: its screen path
+        # over a shot is smooth. Blending toward a quadratic fit removes the
+        # wobble without flattening a real drift across frame -- measured on
+        # the owner's shot, mean travel 0.0178 raw against 0.0017 fitted.
+        us = _blend_toward_fit(us, smoothing)
+        vs = _blend_toward_fit(vs, smoothing)
         for t in range(frames):
             out[t].append({"u": us[t], "v": vs[t],
                            "brightness": path[t][2], "tid": slot})
+    return out
+
+
+def _blend_toward_fit(values: list[float], amount: float, degree: int = 2) -> list[float]:
+    """Pull a series toward its least-squares polynomial by `amount`.
+
+    0 leaves the solved samples alone, 1 returns the fitted curve -- the
+    path a source that never moves erratically would have taken. Degree 2,
+    so a light may drift and turn across a shot without the fit chasing
+    per-frame noise.
+
+    Solved in plain Python (normal equations, Gaussian elimination with
+    partial pivoting) to keep this module free of torch: it is a handful of
+    coefficients over a few hundred frames, not tensor work.
+    """
+    n = len(values)
+    if amount <= 0.0 or n < degree + 2:
+        return list(values)
+    k = min(max(amount, 0.0), 1.0)
+    # t in [-1, 1] keeps the powers well conditioned
+    ts = [-1.0 + 2.0 * i / (n - 1) for i in range(n)]
+    cols = degree + 1
+    # normal equations: (B^T B) c = B^T y, built from power sums
+    powers = [sum(t ** m for t in ts) for m in range(2 * degree + 1)]
+    mat = [[powers[r + c] for c in range(cols)] + [sum(values[i] * ts[i] ** r
+                                                      for i in range(n))]
+           for r in range(cols)]
+    for col in range(cols):
+        pivot = max(range(col, cols), key=lambda r: abs(mat[r][col]))
+        if abs(mat[pivot][col]) < 1e-12:
+            return list(values)          # degenerate; leave the path alone
+        mat[col], mat[pivot] = mat[pivot], mat[col]
+        inv = 1.0 / mat[col][col]
+        for r in range(cols):
+            if r == col:
+                continue
+            f = mat[r][col] * inv
+            if f:
+                for c in range(col, cols + 1):
+                    mat[r][c] -= f * mat[col][c]
+    coef = [mat[r][cols] / mat[r][r] for r in range(cols)]
+    out = []
+    for i, t in enumerate(ts):
+        fit = sum(coef[r] * t ** r for r in range(cols))
+        out.append(values[i] * (1.0 - k) + fit * k)
     return out
 
 
