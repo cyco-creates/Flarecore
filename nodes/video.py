@@ -21,6 +21,12 @@ _TRACK_COLORS = [
 ]
 
 
+# Spare candidates per frame for the tracker to choose from. Cheap (the
+# detector already caps its search) and the whole point of the pool is that
+# a busy frame still contains a candidate near the light we are following.
+CANDIDATE_POOL_MIN = 12
+
+
 class FlareTrack:
     CATEGORY = "flare"
     FUNCTION = "track"
@@ -33,7 +39,13 @@ class FlareTrack:
             "required": {
                 "image": ("IMAGE",),
                 "detect_threshold": ("FLOAT", {"default": 0.8, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "detect_max_lights": ("INT", {"default": 1, "min": 1, "max": 8}),
+                "detect_max_lights": ("INT", {
+                    "default": 1, "min": 1, "max": 8,
+                    "tooltip": "how many flares may exist at once. More "
+                               "candidates than this are always detected so a "
+                               "busy frame keeps feeding the light already "
+                               "being followed.",
+                }),
                 "smoothing": ("FLOAT", {
                     "default": 0.65, "min": 0.0, "max": 0.98, "step": 0.01,
                     "tooltip": "position/brightness EMA: 0 = raw detections, higher = stiller",
@@ -50,32 +62,83 @@ class FlareTrack:
                     "default": 4, "min": 1, "max": 30,
                     "tooltip": "frames over which a light fades in when found and out when lost",
                 }),
+                # appended last so widgets_values in saved workflows stay aligned
+                "search_radius": ("FLOAT", {
+                    "default": 0.0, "min": 0.0, "max": 2.0, "step": 0.01,
+                    "tooltip": "0 = search the whole frame. Above 0, only "
+                               "look for lights within this distance "
+                               "(fraction of frame height) of search_u/"
+                               "search_v — the way to say WHICH light to "
+                               "follow in a busy shot.",
+                }),
+                "search_u": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.001}),
+                "search_v": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.001}),
             },
         }
 
     def track(self, image, detect_threshold, detect_max_lights, smoothing,
-              max_jump, hold_frames, fade_frames):
+              max_jump, hold_frames, fade_frames, search_radius=0.0,
+              search_u=0.5, search_v=0.5):
         dtype = image.dtype if image.dtype.is_floating_point else torch.float32
         rgb = image[..., :3].to(dtype)
         image_linear = srgb_to_linear(rgb)
 
+        # Detect a POOL of candidates, not just the number of flares wanted:
+        # association picks the nearest candidate to each track, so having
+        # spares is what keeps a light being followed through a frame where
+        # some rival blob is momentarily the brightest thing on screen.
+        pool = max(detect_max_lights * 8, CANDIDATE_POOL_MIN)
         raw = detect_lights(image_linear, threshold=detect_threshold,
-                            max_lights=detect_max_lights)
+                            max_lights=pool)
+        dropped = 0
+        if search_radius > 0.0:
+            # u spans the width and v the height, so compare in units of
+            # frame height (same convention as max_jump)
+            aspect = image.shape[2] / max(image.shape[1], 1)
+            kept = []
+            for frame in raw:
+                near = [d for d in frame
+                        if ((d["u"] - search_u) * aspect) ** 2
+                        + (d["v"] - search_v) ** 2 <= search_radius ** 2]
+                dropped += len(frame) - len(near)
+                kept.append(near)
+            raw = kept
         tracked = track_lights(raw, smoothing=smoothing, max_jump=max_jump,
-                               hold=hold_frames, fade=fade_frames)
+                               hold=hold_frames, fade=fade_frames,
+                               max_tracks=detect_max_lights)
 
-        overlay = self._draw_overlay(rgb.clone(), tracked)
+        overlay = self._draw_overlay(
+            rgb.clone(), tracked,
+            roi=(search_u, search_v, search_radius) if search_radius > 0 else None)
 
         frames = len(tracked)
         tids = {light["tid"] for frame in tracked for light in frame}
         total = sum(len(frame) for frame in tracked)
         report = (f"{frames} frames, {len(tids)} tracks, "
                   f"{total / max(frames, 1):.2f} lights/frame")
+        if search_radius > 0.0:
+            report += f"; search region rejected {dropped} candidates"
+        if len(tids) > detect_max_lights:
+            report += (f"; {len(tids)} different lights were followed over the "
+                       f"clip — raise detect_threshold or set a search region "
+                       f"if the flare moves between sources")
         return (tracked, overlay, report)
 
-    def _draw_overlay(self, rgb, tracked):
+    def _draw_overlay(self, rgb, tracked, roi=None):
         b, height, width, _ = rgb.shape
         arm = max(3, height // 72)
+        if roi is not None:
+            # dotted ring showing where the tracker is allowed to look
+            cu, cv, rad = roi
+            aspect = width / max(height, 1)
+            ys = torch.linspace(0.0, 1.0, height, device=rgb.device, dtype=rgb.dtype)
+            xs = torch.linspace(0.0, 1.0, width, device=rgb.device, dtype=rgb.dtype)
+            gy, gx = torch.meshgrid(ys, xs, indexing="ij")
+            d = torch.sqrt(((gx - cu) * aspect) ** 2 + (gy - cv) ** 2)
+            ring = (d - rad).abs() < (1.5 / max(height, 1))
+            dash = ((gx * width).long() + (gy * height).long()) % 12 < 6
+            rgb[:, ring & dash] = torch.tensor(
+                [0.25, 0.9, 1.0], device=rgb.device, dtype=rgb.dtype)
         for i in range(min(b, len(tracked))):
             for light in tracked[i]:
                 color = torch.tensor(

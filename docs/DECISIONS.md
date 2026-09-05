@@ -281,6 +281,41 @@ Keyframing both points already existed (FlareKeyframes `anchor_keys`); it was
 simply not wired into any shipped workflow. The video lab now carries Track,
 Keyframes and the Switch together.
 
+## 3p. detect_max_lights caps flares, not detections (2026-09-05)
+
+Owner reported the tracker jumping between sides of frame on a drive down an
+avenue of trees. Reproduced with two dappled patches of near-equal brightness
+trading places: the per-frame argmax hops, and because `detect_max_lights`
+was passed to the DETECTOR, the tracker received exactly one candidate per
+frame. Every candidate that could not continue an existing track opened a new
+one, uncapped, so the clip ended up with two (then three) permanent tracks
+alternately brightening — read on screen as one flare teleporting.
+
+Two changes:
+
+- **Detect a pool, keep N tracks.** The node now detects
+  `max(detect_max_lights * 8, 12)` candidates and passes
+  `max_tracks=detect_max_lights` to the tracker. Association already prefers
+  the NEAREST candidate, so spares are exactly what keeps the followed light
+  fed through a frame some rival blob wins. `detect_max_lights` now means
+  what its name says: how many flares may exist.
+- **The birth cap counts every live track, not just matched ones.** Counting
+  matched tracks let a rival be born beside a track that was merely holding
+  or fading — the same two-flares-taking-turns failure in slower motion. A
+  light that reappears near a fading track re-matches and revives it.
+
+Measured on a synthetic avenue-of-trees clip (a sun plus nine flickering
+canopy gaps): lights per frame went from [1,2,2,3,2,2,3,3,3,3,3,3] to all 1s.
+
+Capping tracks introduces one new failure mode — the tracker locks onto
+whatever won frame 0, and if that is the wrong light there is no escape — so
+FlareTrack also gained an optional **search region** (`search_radius`,
+`search_u`, `search_v`, appended last; radius 0 = whole frame). Candidates
+outside it are dropped before tracking, the overlay draws a dashed cyan ring
+showing where the tracker may look, and the report says how many candidates
+the region rejected. Distances are in units of frame height, matching
+`max_jump`.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

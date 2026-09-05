@@ -32,16 +32,24 @@ def _smooth01(r: float) -> float:
 
 def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
                  max_jump: float = 0.12, hold: int = 3,
-                 fade: int = 4) -> list[list[dict]]:
+                 fade: int = 4, max_tracks: int | None = None) -> list[list[dict]]:
     """Stabilize per-frame detections into temporally coherent lights.
 
     detections: per frame, a list of {"u", "v", "brightness"} dicts (the
-        output of detect.detect_lights).
+        output of detect.detect_lights). Pass MORE candidates than the
+        number of flares wanted: association prefers the nearest candidate,
+        so a busy frame (dappled light through trees, a row of lamps) keeps
+        feeding the existing track instead of leaving it to coast while a
+        rival blob elsewhere wins the frame's brightness contest.
     smoothing: 0 = raw positions, ->1 = heavier position/brightness EMA.
     max_jump: maximum per-frame travel (fraction of frame height) for a
         detection to continue an existing track; beyond it a new track opens.
     hold: frames a track survives unmatched at full strength-decay grace.
     fade: frames over which a track ramps in when born and out when lost.
+    max_tracks: cap on how many lights may exist at once. Without it every
+        unmatched candidate opens a track, so two blobs trading places make
+        two permanent flares that alternately brighten — which reads as the
+        flare jumping from one side of frame to the other.
 
     Returns per frame a list of {"u", "v", "brightness", "tid"} lights,
     brightness already multiplied by the fade ramp, ordered by track id so
@@ -93,9 +101,22 @@ def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
             tr["out_u"], tr["out_v"] = det["u"], det["v"]
 
         born: set[int] = set()
+        # A track that is still matched holds its slot; only genuinely spare
+        # capacity opens a new one, so the brightest rival blob cannot start
+        # a competing flare while the light we are following is still visible.
+        # Count every LIVE track, not just the matched ones: a track that
+        # missed this frame is still on screen (holding, coasting or fading
+        # out), so letting a rival be born beside it is exactly the "two
+        # flares taking turns" the cap exists to prevent. A light that comes
+        # back near a fading track re-matches it and revives instead.
+        room = None if max_tracks is None else max(max_tracks, 1) - len(tracks)
         for di, det in enumerate(dets):
             if di in matched_dets:
                 continue
+            if room is not None:
+                if room <= 0:
+                    break
+                room -= 1
             tracks[next_tid] = {
                 "u": det["u"], "v": det["v"], "vu": 0.0, "vv": 0.0,
                 "out_u": det["u"], "out_v": det["v"],

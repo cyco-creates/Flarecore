@@ -84,7 +84,7 @@
    ],
    "size": [
     300,
-    240
+    330
    ],
    "flags": {},
    "order": 2,
@@ -129,7 +129,10 @@
     0.6,
     0.15,
     3,
-    4
+    4,
+    0.0,
+    0.5,
+    0.5
    ],
    "title": "1. detect the light (Flare Track)"
   },
@@ -559,7 +562,7 @@
    "outputs": [],
    "properties": {},
    "widgets_values": [
-    "VIDEO LAB\n\nWHERE THE LIGHT COMES FROM - the switch decides:\n  detect (tracked) - Flare Track follows the brightest spot. The\n     picker's light handle greys out, because tracking owns it.\n  keyframes        - Flare Keyframes drives BOTH points by hand:\n     light_keys and anchor_keys, each 'frame: u,v; frame: u,v'.\n  manual           - nothing is passed on, so Flare Render uses its\n     own picker: drag the light and the anchor where you want them.\nThe anchor (cyan) always follows flare_x/flare_y unless keyframed.\n\n1. Pick a video in Load Video. Frames flow as one batch.\n2. Flare Track gives stable ids, smoothed positions, fade in/out and\n   velocity coasting through moments the detector loses the light.\n   The overlay preview shows the tracked points per frame.\n3. Depth Anything + Flare Depth Adapter (temporal_smooth) drive\n   occlusion; occlusion_smooth on Flare Render (gear panel) spreads\n   any hard occlusion cut into a fade across frames.\n4. The flare animates itself as the light moves - no keyframes:\n   - rows with a RED EDGE in the editor carry a trigger rule.\n     Anamorphic Gold's edge gleam blooms as the light nears the frame\n     border. Twirl a row open and hit 'show' under preview region to\n     paint the trigger area over the picker.\n   - lens (global row): flicker gives every tracked light its own\n     brightness wobble; edge fade cuts a light that leaves frame.\n   - scene_color (gear panel) tints each flare by the plate colour at\n     the light, so a warm street lamp flares warm.\n5. Both video outputs: composite and the flare pass over black for\n   external compositing."
+    "VIDEO LAB\n\nWHERE THE LIGHT COMES FROM - the switch decides:\n  detect (tracked) - Flare Track follows the brightest spot. The\n     picker's light handle greys out, because tracking owns it.\n     detect_max_lights caps how many FLARES exist, not how many\n     candidates are looked at, so a busy shot (dappled light in\n     trees) cannot spawn a second flare across the frame. If it\n     locks onto the wrong light, set search_radius above 0 and put\n     search_u/search_v on the one you want - the overlay draws a\n     cyan ring showing where it is allowed to look.\n  keyframes        - Flare Keyframes drives BOTH points by hand:\n     light_keys and anchor_keys, each 'frame: u,v; frame: u,v'.\n  manual           - nothing is passed on, so Flare Render uses its\n     own picker: drag the light and the anchor where you want them.\nThe anchor (cyan) always follows flare_x/flare_y unless keyframed.\n\n1. Pick a video in Load Video. Frames flow as one batch.\n2. Flare Track gives stable ids, smoothed positions, fade in/out and\n   velocity coasting through moments the detector loses the light.\n   The overlay preview shows the tracked points per frame.\n3. Depth Anything + Flare Depth Adapter (temporal_smooth) drive\n   occlusion; occlusion_smooth on Flare Render (gear panel) spreads\n   any hard occlusion cut into a fade across frames.\n4. The flare animates itself as the light moves - no keyframes:\n   - rows with a RED EDGE in the editor carry a trigger rule.\n     Anamorphic Gold's edge gleam blooms as the light nears the frame\n     border. Twirl a row open and hit 'show' under preview region to\n     paint the trigger area over the picker.\n   - lens (global row): flicker gives every tracked light its own\n     brightness wobble; edge fade cuts a light that leaves frame.\n   - scene_color (gear panel) tints each flare by the plate colour at\n     the light, so a warm street lamp flares warm.\n5. Both video outputs: composite and the flare pass over black for\n   external compositing."
    ],
    "color": "#432",
    "bgcolor": "#653"

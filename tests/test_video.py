@@ -679,3 +679,65 @@ class TestLightsSwitch:
         fp = run_node(clip, lights=lights)[1]
         # the light is static, so any frame-to-frame change is the anchor
         assert not torch.allclose(fp[0], fp[-1])
+
+
+class TestBusySceneTracking:
+    """Dappled light (an avenue of trees, a row of lamps) puts several blobs
+    of near-equal brightness on screen and the per-frame argmax hops between
+    them. detect_max_lights must cap FLARES, not detections."""
+
+    def _dappled(self, b=16, h=180, w=320):
+        clip = torch.zeros(b, h, w, 3)
+        for i in range(b):
+            clip[i, 60:76, 44:60] = 0.90 + 0.10 * math.sin(i * 1.1)
+            clip[i, 60:76, 250:266] = 0.90 + 0.10 * math.sin(i * 1.1 + 2.0)
+        return clip
+
+    def _track(self, clip, **kw):
+        args = dict(detect_threshold=0.75, detect_max_lights=1, smoothing=0.6,
+                    max_jump=0.15, hold_frames=3, fade_frames=4)
+        args.update(kw)
+        return PKG.NODE_CLASS_MAPPINGS["FlareTrack"]().track(clip, **args)
+
+    def test_one_light_means_one_flare(self):
+        lights, _, report = self._track(self._dappled())
+        assert all(len(f) == 1 for f in lights), \
+            f"expected a single flare per frame, got {[len(f) for f in lights]}"
+        us = [f[0]["u"] for f in lights]
+        assert max(us) - min(us) < 0.05        # it stays on one side
+
+    def test_raw_detections_really_do_hop(self):
+        # the input genuinely flips sides — the stability is the tracker's
+        # doing, not a quiet test fixture
+        from flare.detect import detect_lights
+        from flare.colorspace import srgb_to_linear
+        det = detect_lights(srgb_to_linear(self._dappled()), threshold=0.75,
+                            max_lights=1)
+        us = [f[0]["u"] for f in det if f]
+        assert max(us) - min(us) > 0.5
+
+    def test_two_lights_allows_two_flares(self):
+        lights, _, _ = self._track(self._dappled(), detect_max_lights=2)
+        assert max(len(f) for f in lights) == 2
+
+    def test_search_region_selects_which_light(self):
+        clip = self._dappled()
+        left, _, report = self._track(clip, search_radius=0.35,
+                                      search_u=0.16, search_v=0.38)
+        right, _, _ = self._track(clip, search_radius=0.35,
+                                  search_u=0.81, search_v=0.38)
+        assert all(f[0]["u"] < 0.3 for f in left if f)
+        assert all(f[0]["u"] > 0.6 for f in right if f)
+        assert "search region rejected" in report
+
+    def test_search_region_off_by_default(self):
+        a = self._track(self._dappled())[0]
+        b = self._track(self._dappled(), search_radius=0.0)[0]
+        assert [len(f) for f in a] == [len(f) for f in b]
+
+    def test_overlay_marks_the_search_region(self):
+        clip = self._dappled()
+        plain = self._track(clip)[1]
+        ringed = self._track(clip, search_radius=0.3, search_u=0.5,
+                             search_v=0.5)[1]
+        assert not torch.allclose(plain, ringed)

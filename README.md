@@ -107,6 +107,14 @@ The parts that make flares hold together across frames:
   an occluder keeps travelling, so depth occlusion completes its fade and the
   track re-acquires the light on the far side. Outputs `FLARE_LIGHTS` plus a
   colour-coded overlay for checking the track.
+  `detect_max_lights` caps how many **flares** exist, not how many candidates
+  are examined: many more are detected than kept, because having a spare
+  candidate near the light you are following is what stops a busy frame
+  (dappled light through trees, a row of lamps) from handing the flare to
+  whichever blob happens to win that frame's brightness contest.
+  If it locks onto the wrong light, set `search_radius` above 0 and put
+  `search_u`/`search_v` on the one you want — only that region is searched,
+  and the overlay draws a dashed ring showing where.
 - **FlareKeyframes** hand-animates instead: `frame: u,v` paths for the light
   and optionally the flare anchor, linear or eased.
 - **FlareLightsSwitch** decides which one drives the flare, so a graph can
