@@ -9,6 +9,11 @@ from ..flare.colorspace import srgb_to_linear, linear_to_srgb
 from ..flare.depth import blur_depth
 from ..flare.depth import condition_depth, temporal_smooth_depth
 from ..flare.detect import detect_lights, linear_luminance
+
+# Blur applied to the above-floor luminance before per-frame detection picks
+# a light, as a fraction of frame height. Big enough to turn a clipped sky
+# into one hill, small enough to keep two genuinely separate sources apart.
+DETECT_REGION_SIGMA = 0.02
 from ..flare.track import track_lights, parse_path, sample_path
 from ..flare.engine import render_batch, composite
 from ..flare.grid import uv_to_grid
@@ -456,11 +461,12 @@ class FlareRender:
             return [[{"u": u, "v": v, "brightness": 1.0}]
                     for u, v in sample_path(points, batch)]
 
-        def detect_chunked(threshold, pool):
+        def detect_chunked(threshold, pool, region_sigma=0.0):
             dets = []
             for s in range(0, batch, chunk):
                 dets += detect_lights(linear_chunk(s, min(s + chunk, batch)),
-                                      threshold=threshold, max_lights=pool)
+                                      threshold=threshold, max_lights=pool,
+                                      region_sigma=region_sigma)
             return dets
 
         if position_mode in ("track", "track_dots"):
@@ -483,7 +489,12 @@ class FlareRender:
             return track_lights(raw, smoothing=smoothing, max_jump=max_jump,
                                 hold=3, fade=4, max_tracks=detect_max_lights)
 
-        detected = detect_chunked(detect_threshold, detect_max_lights)
+        # Per-frame detection picks by REGION, not by brightest pixel: a
+        # blown-out sky is a plateau where the brightest pixel is an
+        # arbitrary tie-break that moves every frame. Tracking deliberately
+        # does not do this -- it wants the fine-grained pool above.
+        detected = detect_chunked(detect_threshold, detect_max_lights,
+                                  region_sigma=DETECT_REGION_SIGMA)
         if position_mode == "detect":
             return detected
         if position_mode == "detect_with_manual_offset":

@@ -150,3 +150,65 @@ class TestOcclude:
         depth = torch.zeros((32, 32), dtype=torch.float32)
         occ = occlusion_factor(depth, 0.5, 0.5)
         assert isinstance(occ, float)
+
+
+class TestClippedSky:
+    """A blown-out sky is a plateau thousands of pixels wide, all at exactly
+    1.0. The brightest PIXEL there is an arbitrary tie-break that moves with
+    compression noise, so per-frame detection teleports across frame. Picking
+    by region instead gives one stable point."""
+
+    def _clip(self, frames=12, h=180, w=320, seed=0):
+        """A big saturated blob, dead still, with a little sensor noise."""
+        g = torch.Generator().manual_seed(seed)
+        ys, xs = torch.meshgrid(torch.arange(h).float(),
+                                torch.arange(w).float(), indexing="ij")
+        blob = (((xs - 0.7 * w) ** 2 + (ys - 0.25 * h) ** 2) < (0.16 * h) ** 2)
+        out = torch.zeros(frames, h, w, 3)
+        for i in range(frames):
+            img = blob.float() * 1.4                      # over 1.0 -> clips
+            img = img + torch.rand((h, w), generator=g) * 0.02
+            out[i] = img.clamp(0, 1).unsqueeze(-1).expand(-1, -1, 3)
+        return out
+
+    def _travel(self, lights):
+        import math
+        pts = [(f[0]["u"], f[0]["v"]) for f in lights if f]
+        assert len(pts) == len(lights), "the light was lost"
+        return max(math.hypot(b[0] - a[0], b[1] - a[1])
+                   for a, b in zip(pts, pts[1:]))
+
+    def test_region_selection_resists_a_rival_source(self):
+        """The centroid window is wide enough to find a plateau's middle, so
+        it must not be so wide that a second source drags the answer off."""
+        clip = self._clip()
+        h, w = clip.shape[1], clip.shape[2]
+        ys, xs = torch.meshgrid(torch.arange(h).float(),
+                                torch.arange(w).float(), indexing="ij")
+        rival = ((xs - 0.42 * w) ** 2 + (ys - 0.30 * h) ** 2) < (0.05 * h) ** 2
+        clip[:, rival] = 1.0
+        u = detect_lights(clip, threshold=0.75, max_lights=1,
+                          region_sigma=0.02)[0][0]["u"]
+        assert abs(u - 0.7) < 0.03, f"the rival pulled the light to {u:.3f}"
+
+    def test_region_selection_holds_still(self):
+        clip = self._clip()
+        lights = detect_lights(clip, threshold=0.75, max_lights=1,
+                               region_sigma=0.02)
+        assert self._travel(lights) < 0.005
+
+    def test_region_selection_lands_on_the_blob(self):
+        lights = detect_lights(self._clip(), threshold=0.75, max_lights=1,
+                               region_sigma=0.02)
+        u, v = lights[0][0]["u"], lights[0][0]["v"]
+        assert abs(u - 0.7) < 0.05 and abs(v - 0.25) < 0.05, (u, v)
+
+    def test_brightness_is_still_the_pixel_value(self):
+        """Ranking by region must not change what brightness reports."""
+        lights = detect_lights(self._clip(), threshold=0.75, max_lights=1,
+                               region_sigma=0.02)
+        assert lights[0][0]["brightness"] > 0.9
+
+    def test_default_is_unchanged(self):
+        clip = self._clip()
+        assert detect_lights(clip, threshold=0.75, max_lights=1) ==                detect_lights(clip, threshold=0.75, max_lights=1, region_sigma=0.0)

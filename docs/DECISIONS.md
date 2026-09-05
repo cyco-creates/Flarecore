@@ -795,6 +795,33 @@ otherwise every saved look would change the day this shipped. Lens plates
 default to 0, which is what dirt on a front element actually does: it
 lights up with the source, not with whatever drives past.
 
+## Per-frame detection picks a region, not a pixel
+
+On the owner's driving shot the detected light hopped a mean of 0.26 of
+frame height EVERY frame -- "jumps around like crazy". The sky is clipped:
+frame 0 has 7783 pixels at exactly 1.0. Ranking candidates by peak value
+therefore decides nothing, and the sort falls through to its positional
+tie-break, so the light lands wherever the plateau's shape put the
+topmost-leftmost saturated pixel that frame.
+
+Ranking by energy does not help either -- inside a big saturated region the
+energy is just as flat. Neither does blurring alone: a uniform plateau
+convolved with a smaller kernel is still uniform in the middle. The window
+has to REACH THE REGION'S EDGES to find its middle, so detection now takes
+a gaussian-weighted centroid of the above-floor mass with sigma 0.25 of
+frame height. Measured on a synthetic disk: 0.08H lands 0.05 off centre,
+0.25H within 0.008. Gaussian rather than a hard disk so a rival source
+just outside barely tugs it -- a small rival 0.28H away moved the answer
+by 0.004.
+
+Measured on the owner's footage, on the rendered pixels: mean travel
+0.2597 -> 0.0434, jumps over 5% of frame height 25 -> 6.
+
+Tracking deliberately does NOT use this. It is fed a POOL of fine-grained
+candidates and associates them itself, and it tracks measurably worse when
+that pool is smoothed into regions first (max jump 0.048 -> 0.065, and it
+started dropping frames). Region selection is for the per-frame mode only.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning
