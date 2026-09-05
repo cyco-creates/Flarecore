@@ -54,11 +54,36 @@ def _compute_device(home):
         return home
 
 
+def _engine_version() -> str:
+    """Newest mtime across the rendering code, as a cache key.
+
+    ComfyUI caches a node's result against its INPUTS. Change the engine and
+    leave the graph alone -- exactly what happens while a look is being
+    developed -- and the inputs are identical, so pressing Run replays the
+    old render in 0.00s and the fix appears not to have worked. Folding the
+    code's own timestamp into IS_CHANGED makes an edit invalidate the cache
+    the same way turning a knob does, and costs a handful of stat calls.
+    """
+    root = _Path(__file__).resolve().parents[1]
+    newest = 0.0
+    for sub in ("flare", "nodes"):
+        for f in (root / sub).glob("*.py"):
+            try:
+                newest = max(newest, f.stat().st_mtime)
+            except OSError:
+                pass
+    return f"{newest:.3f}"
+
+
 class FlareRender:
     CATEGORY = "flare"
     FUNCTION = "render"
     RETURN_TYPES = ("IMAGE", "IMAGE", "MASK")
     RETURN_NAMES = ("image", "flare_pass", "flare_alpha")
+
+    @classmethod
+    def IS_CHANGED(cls, **kwargs):
+        return _engine_version()
 
     @classmethod
     def INPUT_TYPES(cls):

@@ -327,3 +327,26 @@ class TestChunkedRendering:
         assert r._chunk_size(0, 500, 1080, 1920, torch.device("cpu")) >= 1
         assert r._chunk_size(5, 500, 1080, 1920, torch.device("cpu")) == 5
         assert r._chunk_size(0, 3, 64, 64, torch.device("cpu")) == 3
+
+
+class TestCacheInvalidation:
+    """ComfyUI caches a node's result against its INPUTS. Editing the engine
+    and leaving the graph alone -- what happens all through developing a look
+    -- left the inputs identical, so Run replayed the previous render in
+    0.00s and every fix looked like it had not worked."""
+
+    def test_editing_the_engine_changes_the_cache_key(self):
+        import pathlib
+        cls = PKG.NODE_CLASS_MAPPINGS["FlareRender"]
+        before = cls.IS_CHANGED(image=None, preset_json="{}")
+        pathlib.Path(PKG.__file__).parent.joinpath("flare", "engine.py").touch()
+        assert cls.IS_CHANGED(image=None, preset_json="{}") != before
+
+    def test_it_is_stable_when_nothing_is_edited(self):
+        """Otherwise every Run re-renders and caching stops working at all."""
+        cls = PKG.NODE_CLASS_MAPPINGS["FlareRender"]
+        assert cls.IS_CHANGED(image=None, preset_json="{}") ==                cls.IS_CHANGED(image=None, preset_json="{}")
+
+    def test_it_accepts_whatever_inputs_comfy_passes(self):
+        cls = PKG.NODE_CLASS_MAPPINGS["FlareRender"]
+        assert isinstance(cls.IS_CHANGED(), str)

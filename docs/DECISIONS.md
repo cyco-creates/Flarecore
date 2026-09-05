@@ -822,6 +822,23 @@ candidates and associates them itself, and it tracks measurably worse when
 that pool is smoothed into regions first (max jump 0.048 -> 0.065, and it
 started dropping frames). Region selection is for the per-frame mode only.
 
+## Editing the engine must invalidate the render cache
+
+"Every time you do something I can't render -- I press Run and nothing
+happens." The logs settled it: the prompt was accepted, ran, and reported
+success in 0.00 seconds, re-emitting the outputs of the previous render.
+
+ComfyUI caches a node's result against its INPUTS. Change the engine and
+leave the graph alone -- exactly what happens while a look is being
+developed -- and the inputs are byte-identical, so Run correctly replays the
+cached frames and every fix appears not to have landed. Nothing was broken;
+the cache was doing its job against a dependency it could not see.
+
+FlareRender.IS_CHANGED now returns the newest mtime across flare/ and
+nodes/, so an edit invalidates exactly the way turning a knob does. It costs
+a handful of stat calls per prompt, and it stays stable when nothing is
+edited, so ordinary caching still works.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning
