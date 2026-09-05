@@ -14,7 +14,8 @@ from ..flare.detect import detect_lights, linear_luminance
 # a light, as a fraction of frame height. Big enough to turn a clipped sky
 # into one hill, small enough to keep two genuinely separate sources apart.
 DETECT_REGION_SIGMA = 0.02
-from ..flare.track import track_lights, parse_path, sample_path
+from ..flare.track import (track_lights, parse_path, sample_path,
+                           solve_light_path)
 from ..flare.engine import render_batch, composite
 from ..flare.grid import uv_to_grid
 from ..flare.occlude import occlusion_factor
@@ -93,13 +94,15 @@ class FlareRender:
                 "preset_json": ("STRING", {"multiline": True, "default": DEFAULT_PRESET}),
                 "position_mode": ([
                     "manual", "detect", "detect_with_manual_offset",
-                    "track", "track_dots", "path",
+                    "track", "track_dots", "path", "lock",
                 ], {
                     "tooltip": "manual: the picker's light point. detect: the "
                                "brightest spot, per frame. track: the same but "
                                "followed through the clip. track_dots: every "
                                "bright dot on a dark matte gets its own flare. "
-                               "path: follow the path drawn on the picker.",
+                               "path: follow the path drawn on the picker. "
+                               "lock: solve the whole clip at once so the "
+                               "light cannot teleport between rival sources.",
                 }),
                 "light_x": ("FLOAT", {"default": 0.25, "min": 0.0, "max": 1.0, "step": 0.001}),
                 "light_y": ("FLOAT", {"default": 0.3, "min": 0.0, "max": 1.0, "step": 0.001}),
@@ -504,6 +507,20 @@ class FlareRender:
                                       threshold=threshold, max_lights=pool,
                                       region_sigma=region_sigma)
             return dets
+
+        if position_mode == "lock":
+            # Solve the clip as one problem: the trajectory that explains
+            # every frame with the least total travel. A single bad frame
+            # cannot hand the light to a rival across the frame, which is
+            # what per-frame detection does on a shot with two bright
+            # regions. max_jump keeps its meaning -- how far the light may
+            # travel between frames -- and sets how dearly travel is paid
+            # for, so there is no new dial to learn.
+            pool = max(detect_max_lights * 8, 12)
+            raw = detect_chunked(detect_threshold, pool)
+            cost = 4.0 / max(max_jump, 1e-3) ** 2
+            return solve_light_path(raw, max_tracks=detect_max_lights,
+                                    motion_cost=cost, smoothing=smoothing)
 
         if position_mode in ("track", "track_dots"):
             threshold = detect_threshold

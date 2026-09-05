@@ -967,3 +967,65 @@ class TestDotMatte:
             (lambda _t: (lambda a, b: _t[a:b]))(srgb_to_linear(clip)),
             clip.shape[0], 16, "track_dots", 0.5, 0.5, 0.5, 2)
         assert max(len(f) for f in lights) == 2
+
+
+class TestWholeClipSolve:
+    """`lock` reads the whole clip before deciding. Per-frame detection can
+    hand the light to a rival on the far side of frame for a few frames and
+    take it back; a path that does that costs far more travel than one that
+    stays put, so the solve rejects it however bright those frames were."""
+
+    def _two_rivals(self, b=20, h=180, w=320):
+        """A steady source on the right; a rival on the left that briefly
+        wins the brightness contest, exactly like sun vs a gap in trees."""
+        clip = torch.zeros(b, h, w, 3)
+        ys, xs = torch.meshgrid(torch.arange(h).float(),
+                                torch.arange(w).float(), indexing="ij")
+        def blob(cx, cy, r=6.0):
+            return torch.exp(-(((xs - cx) ** 2 + (ys - cy) ** 2)) / (2 * r * r))
+        for i in range(b):
+            clip[i] = (blob(0.85 * w, 0.3 * h) * 0.9).unsqueeze(-1)
+            if 8 <= i <= 11:                      # the rival takes over
+                clip[i] = torch.maximum(clip[i],
+                                        (blob(0.12 * w, 0.3 * h) * 1.0).unsqueeze(-1))
+        return clip.clamp(0, 1)
+
+    def _pool(self, clip):
+        from flare.colorspace import srgb_to_linear
+        from flare.detect import detect_lights
+        lin = srgb_to_linear(clip)
+        return detect_lights(lin, 0.5 * float(lin.amax()), 12)
+
+    def test_per_frame_detection_defects_to_the_rival(self):
+        from flare.colorspace import srgb_to_linear
+        from flare.detect import detect_lights
+        clip = self._two_rivals()
+        lin = srgb_to_linear(clip)
+        det = detect_lights(lin, 0.5 * float(lin.amax()), 1)
+        left = sum(1 for f in det if f and f[0]["u"] < 0.5)
+        assert left > 0, "the rival was supposed to win some frames"
+
+    def test_the_solve_stays_on_the_real_source(self):
+        from flare.track import solve_light_path
+        solved = solve_light_path(self._pool(self._two_rivals()), max_tracks=1,
+                                  motion_cost=1000.0)
+        assert all(f and f[0]["u"] > 0.5 for f in solved),             f"the light crossed frame: {[round(f[0]['u'], 2) for f in solved]}"
+
+    def test_it_carries_through_frames_with_no_detection(self):
+        """A dot matte goes black for a stretch; the light should hold its
+        place instead of dropping out and popping back."""
+        from flare.track import solve_light_path
+        clip = self._two_rivals()
+        clip[5:9] = 0.0
+        solved = solve_light_path(self._pool(clip), max_tracks=1,
+                                  motion_cost=1000.0)
+        assert all(len(f) == 1 for f in solved), "the light dropped out"
+
+    def test_an_empty_clip_is_handled(self):
+        from flare.track import solve_light_path
+        assert solve_light_path([], max_tracks=1) == []
+        assert solve_light_path([[], []], max_tracks=1) == [[], []]
+
+    def test_the_node_exposes_it(self):
+        modes = PKG.NODE_CLASS_MAPPINGS["FlareRender"].INPUT_TYPES()
+        assert "lock" in modes["required"]["position_mode"][0]

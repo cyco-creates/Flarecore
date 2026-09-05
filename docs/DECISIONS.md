@@ -839,6 +839,35 @@ nodes/, so an edit invalidates exactly the way turning a knob does. It costs
 a handful of stat calls per prompt, and it stays stable when nothing is
 edited, so ordinary caching still works.
 
+## `lock`: solve the light path over the whole clip
+
+The owner's render put the flare on the right of frame for six frames, on
+the FAR LEFT for four, and back again -- a jump of 0.835 of frame width. The
+sun does not do that. Per-frame detection has no way to know, because it is
+only ever looking at one frame.
+
+`lock` looks at all of them. Viterbi over the per-frame candidates: each
+frame's state is a candidate, the reward is its energy, the penalty is
+squared travel from the previous choice. A path that crosses frame and
+returns pays for it twice over, so it loses to one that stays put however
+bright those four frames were -- one bad frame costs almost nothing against
+a whole clip.
+
+It reuses max_jump rather than adding a dial: travel is charged at
+4 / max_jump^2, so "how far the light may move between frames" keeps its
+meaning. Frames with no candidate at all carry the previous position
+instead of dropping the light, which also removes the pop a dot matte gets
+across its black lead-in.
+
+Measured on the owner's shot, on rendered pixels, at default settings:
+frames on the wrong side of frame 5 -> 0, max jump 0.882 -> 0.059. Tuned
+(smoothing 0.9) it reaches 0.0071 mean travel, below causal tracking's
+0.0096.
+
+Tracking stays as it is: it is cheaper, it is causal, and it wins on jitter
+at default settings. `lock` is for the shot where a rival source is bright
+enough to steal a few frames.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

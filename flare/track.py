@@ -30,6 +30,112 @@ def _smooth01(r: float) -> float:
     return r * r * (3.0 - 2.0 * r)
 
 
+def solve_light_path(detections: list[list[dict]], max_tracks: int = 1,
+                     motion_cost: float = 60.0,
+                     smoothing: float = 0.65) -> list[list[dict]]:
+    """Solve the whole clip at once: the trajectory a real source would take.
+
+    track_lights walks the clip forward, so a single bad frame can hand the
+    light to a rival and the gate is the only thing holding it. This looks at
+    every frame together and asks which sequence of candidates explains the
+    clip with the least total movement -- a sun does not teleport, so a path
+    that teleports is rejected however bright its candidates are. One frame
+    of nonsense costs almost nothing against the whole path, which is exactly
+    the failure that makes per-frame detection hop.
+
+    Viterbi over the candidates: each frame's state is one candidate, the
+    reward is its energy, and the penalty is squared travel from the previous
+    frame's choice. motion_cost is how many times more a frame of travel
+    costs than the energy it gains; raise it for a source that should barely
+    move, lower it for a whip pan.
+
+    Frames with no candidate at all carry the previous position rather than
+    dropping the light, and the solved path is smoothed zero-phase so it
+    keeps its timing.
+    """
+    frames = len(detections)
+    if frames == 0:
+        return []
+
+    out: list[list[dict]] = [[] for _ in range(frames)]
+    taken: list[set[int]] = [set() for _ in range(frames)]
+
+    for slot in range(max(max_tracks, 1)):
+        # ---- forward pass: best score to reach each candidate ------------
+        best: list[list[float]] = []
+        back: list[list[int]] = []
+        prev_scores: list[float] = []
+        prev_pts: list[tuple[float, float]] = []
+        for t, frame in enumerate(detections):
+            cands = [(i, d) for i, d in enumerate(frame) if i not in taken[t]]
+            if not cands:
+                best.append([]); back.append([]); continue
+            scores, ptrs = [], []
+            for _, det in cands:
+                gain = float(det.get("energy", 0.0) or det.get("brightness", 1.0))
+                if not prev_scores:
+                    scores.append(gain); ptrs.append(-1)
+                    continue
+                u, v = det["u"], det["v"]
+                bi, bs = -1, -math.inf
+                for k, (pu, pv) in enumerate(prev_pts):
+                    step = (u - pu) ** 2 + (v - pv) ** 2
+                    val = prev_scores[k] - motion_cost * step
+                    if val > bs:
+                        bs, bi = val, k
+                scores.append(bs + gain); ptrs.append(bi)
+            best.append(scores); back.append(ptrs)
+            prev_scores = scores
+            prev_pts = [(d["u"], d["v"]) for _, d in cands]
+
+        # ---- backtrack ---------------------------------------------------
+        last = next((t for t in range(frames - 1, -1, -1) if best[t]), None)
+        if last is None:
+            break
+        chain: dict[int, int] = {}
+        k = max(range(len(best[last])), key=lambda j: best[last][j])
+        for t in range(last, -1, -1):
+            if not best[t]:
+                continue
+            chain[t] = k
+            k = back[t][k]
+            if k < 0:
+                break
+
+        # ---- read the path back out, carrying through empty frames -------
+        path: list[tuple[float, float, float] | None] = [None] * frames
+        for t, ki in chain.items():
+            cands = [(i, d) for i, d in enumerate(detections[t]) if i not in taken[t]]
+            if ki >= len(cands):
+                continue
+            idx, det = cands[ki]
+            taken[t].add(idx)
+            path[t] = (det["u"], det["v"], float(det.get("brightness", 1.0)))
+        if all(p is None for p in path):
+            break
+        _fill_gaps(path)
+
+        us = smooth_series([p[0] for p in path], smoothing)
+        vs = smooth_series([p[1] for p in path], smoothing)
+        for t in range(frames):
+            out[t].append({"u": us[t], "v": vs[t],
+                           "brightness": path[t][2], "tid": slot})
+    return out
+
+
+def _fill_gaps(path: list) -> None:
+    """Hold the nearest solved position across frames that had no candidate."""
+    known = [t for t, p in enumerate(path) if p is not None]
+    if not known:
+        return
+    for t in range(len(path)):
+        if path[t] is not None:
+            continue
+        nearest = min(known, key=lambda k: abs(k - t))
+        u, v, b = path[nearest]
+        path[t] = (u, v, b)
+
+
 def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
                  max_jump: float = 0.06, hold: int = 3,
                  fade: int = 4, max_tracks: int | None = None) -> list[list[dict]]:

@@ -111,6 +111,7 @@ const POSITION_MODES = [
   ["track", "track — follow it through the clip"],
   ["track_dots", "track dots — one flare per white dot"],
   ["path", "path — draw the route"],
+  ["lock", "lock — solve the whole clip, no teleporting"],
 ];
 
 const MODE_HINT = {
@@ -126,6 +127,10 @@ const MODE_HINT = {
   track_dots: "white dots on a dark plate, one flare each, each keeping its "
     + "identity. The threshold is relative to the brightest dot in the clip. "
     + "Max lights is a cap, not a quota — a higher cap never invents flares.",
+  lock: "reads the whole clip before deciding, and picks the light path with "
+    + "the least total travel — a sun cannot jump to the far side of frame "
+    + "for a few frames and come back. Max jump is how far it may move "
+    + "between frames; smoothing irons out the rest.",
   path: "click the picker to drop a point, drag to move one, shift-click to "
     + "remove. The light travels the whole path across the clip.",
 };
@@ -1488,7 +1493,7 @@ class FlareEditor {
     if (mode === "detect" || mode === "detect_with_manual_offset") {
       nodeSlider("threshold", "detect_threshold", [0, 1, 0.01]);
       nodeSlider("max lights", "detect_max_lights", [1, 16, 1]);
-    } else if (mode === "track" || mode === "track_dots") {
+    } else if (mode === "track" || mode === "track_dots" || mode === "lock") {
       nodeSlider(mode === "track_dots" ? "dot threshold" : "threshold",
         "detect_threshold", [0, 1, 0.01]);
       nodeSlider(mode === "track_dots" ? "max dots" : "max lights",
