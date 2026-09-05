@@ -331,6 +331,46 @@ class PointPicker {
       ctx.fill();
     }
 
+    // What the last render did with the light: the solved path, drawn so a
+    // track can be judged before it is baked; and the search region when
+    // one is set, drawn around the light point it is centred on.
+    {
+      const modeNow = getStr(this.node, "position_mode") || "manual";
+      const trk = this.node._fcTrack;
+      if (Array.isArray(trk) && modeNow !== "manual" && modeNow !== "path") {
+        const P = (u, v) => [r.x + u * r.w, r.y + v * r.h];
+        const pts = trk.filter((q) => Array.isArray(q));
+        if (pts.length > 1) {
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = "rgba(255,180,84,0.8)";
+          ctx.beginPath();
+          pts.forEach((q, i) => {
+            const [sx, sy] = P(q[0], q[1]);
+            i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy);
+          });
+          ctx.stroke();
+          const aps = pts.filter((q) => q[2] != null);
+          if (aps.length > 1) {
+            ctx.strokeStyle = "rgba(102,217,255,0.65)";
+            ctx.beginPath();
+            aps.forEach((q, i) => {
+              const [sx, sy] = P(q[2], q[3]);
+              i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy);
+            });
+            ctx.stroke();
+          }
+        }
+      }
+      const sr = getVal(this.node, "search_radius", 0);
+      if (sr > 0 && ["track", "track_dots", "lock"].includes(modeNow)) {
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = "rgba(102,217,255,0.85)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.arc(lx, ly, sr * r.h, 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
     // The lights input (tracking, keyframes) overrides light_x/light_y
     // entirely. Say so instead of leaving a handle that moves nothing: the
     // last render reports what actually placed the light.
@@ -339,6 +379,8 @@ class PointPicker {
     const linked = !!(li && li.link != null);
     const driven = linked || posMode !== "manual";
     const lightSrc = linked ? "lights input" : posMode;
+    const searchOn = !linked && ["track", "track_dots", "lock"].includes(posMode)
+      && getVal(this.node, "search_radius", 0) > 0;
     if (driven) {
       ctx.fillStyle = "rgba(0,0,0,0.55)";
       ctx.fillRect(r.x, r.y + r.h - 17, r.w, 17);
@@ -349,7 +391,9 @@ class PointPicker {
           ? "light driven by the lights input — set the switch to manual to drag it"
           : (posMode === "path"
             ? "light follows the drawn path — the anchor still drags"
-            : `light placed by ${lightSrc} — the anchor still drags`),
+            : searchOn
+              ? "tracking inside the ring — drag the light point to move it"
+              : `light placed by ${lightSrc} — the anchor still drags`),
         r.x + 6, r.y + r.h - 5);
     }
 
@@ -727,13 +771,13 @@ const PARAM_SPECS = {
 
 const CSS = `
 .fcore { font: 12px/1.4 sans-serif; color: #ccc; background: #131317;
-  border: 1px solid #2b2b33; border-radius: 10px; padding: 8px;
+  border: 1px solid #2b2b33; border-radius: 4px; padding: 8px;
   display: flex; flex-direction: column; gap: 7px; box-sizing: border-box;
   height: 100%; overflow: hidden; }
 .fcore * { box-sizing: border-box; }
 .fcore-bar { display: flex; gap: 6px; align-items: center; }
 .fcore-btn { background: #1e1e25; color: #ddd; border: 1px solid #34343e;
-  border-radius: 7px; padding: 5px 12px; cursor: pointer; font-size: 12px; }
+  border-radius: 3px; padding: 5px 12px; cursor: pointer; font-size: 12px; }
 .fcore-btn:hover { background: #2a2a33; border-color: #e8a33d; }
 .fcore-btn.accent { color: #e8a33d; }
 .fcore-btn.on { border-color: #e8a33d; color: #e8a33d; }
@@ -741,14 +785,14 @@ const CSS = `
 .fcore-list { overflow-y: auto; display: flex; flex-direction: column;
   gap: 5px; flex: 1; min-height: 60px; }
 .fcore-row { background: #1a1a20; border: 1px solid #2b2b33;
-  border-radius: 9px; padding: 7px 9px; }
+  border-radius: 4px; padding: 7px 9px; }
 .fcore-row.off { opacity: 0.4; }
 .fcore-head { display: flex; align-items: center; gap: 8px; }
-.fcore-chip { width: 30px; height: 30px; border-radius: 7px; flex: 0 0 30px;
+.fcore-chip { width: 44px; height: 44px; border-radius: 3px; flex: 0 0 44px;
   background: #101014; border: 1px solid #2b2b33; overflow: hidden;
   display: flex; align-items: center; justify-content: center; }
 .fcore-chip img { width: 100%; height: 100%; object-fit: cover; }
-.fcore-chip .ico { width: 16px; height: 16px; display: block; }
+.fcore-chip .ico { width: 24px; height: 24px; display: block; }
 .ico-glow { border-radius: 50%; background: radial-gradient(circle,#ffe9b8 0%,#ffb648 45%,transparent 75%); }
 .ico-iris { background: #9db8d8aa; clip-path: polygon(50% 0,90% 25%,90% 75%,50% 100%,10% 75%,10% 25%); }
 .ico-streak { height: 3px !important; align-self: center; border-radius: 2px;
@@ -778,19 +822,19 @@ const CSS = `
   opacity: 0.75; user-select: none; }
 .fcore-info:hover { opacity: 1; border-color: #e8a33d; color: #e8a33d; }
 .fcore-tip { position: fixed; z-index: 10000; max-width: 250px; background: #1c1c22;
-  color: #e6e6ee; border: 1px solid #3a3a46; border-radius: 6px; padding: 6px 9px;
+  color: #e6e6ee; border: 1px solid #3a3a46; border-radius: 3px; padding: 6px 9px;
   font-size: 11px; line-height: 1.4; box-shadow: 0 4px 16px rgba(0,0,0,0.55);
   pointer-events: none; text-align: left; }
 .fcore-col input[type=range] { width: 100%; height: 12px; accent-color: #e8a33d; }
 .fcore-col input[type=number] { width: 100%; background: #101014; color: #ddd;
-  border: 1px solid #2b2b33; border-radius: 5px; font-size: 11px;
+  border: 1px solid #2b2b33; border-radius: 3px; font-size: 11px;
   padding: 2px 4px; text-align: center; -moz-appearance: textfield; }
 .fcore-col input[type=number]::-webkit-inner-spin-button { display: none; }
 .fcore-swatch { width: 24px; height: 24px; padding: 0; border: 1px solid #34343e;
-  border-radius: 6px; background: none; cursor: pointer; flex: 0 0 24px; }
+  border-radius: 3px; background: none; cursor: pointer; flex: 0 0 24px; }
 .fcore-acts { display: flex; gap: 3px; }
 .fcore-mini { background: #1e1e25; border: 1px solid #2b2b33; color: #999;
-  cursor: pointer; border-radius: 6px; width: 26px; height: 26px;
+  cursor: pointer; border-radius: 3px; width: 26px; height: 26px;
   font-size: 12px; display: flex; align-items: center; justify-content: center; }
 .fcore-mini:hover { color: #fff; border-color: #e8a33d; }
 .fcore-mini.on { background: #2f4a75; border-color: #4f7ac0; color: #fff; }
@@ -804,18 +848,18 @@ const CSS = `
 .fcore-global.lens { margin-top: 4px; }
 .fcore-global.src { flex-wrap: wrap; }
 .fcore-src-sel { background: #1e1e25; color: #ddd; border: 1px solid #34343e;
-  border-radius: 6px; font-size: 12px; height: 24px; padding: 0 6px; }
+  border-radius: 3px; font-size: 12px; height: 24px; padding: 0 6px; }
 .fcore-hint { color: #7f8496; font-size: 11px; flex-basis: 100%;
   line-height: 1.35; }
 .fcore-forge { display: flex; flex-direction: column; gap: 8px; height: 100%;
   box-sizing: border-box; }
 .fcore-forge textarea { background: #101014; color: #ddd; flex: 1 1 auto;
-  border: 1px solid #34343e; border-radius: 8px; font: 12px/1.45 sans-serif;
+  border: 1px solid #34343e; border-radius: 4px; font: 12px/1.45 sans-serif;
   padding: 8px; resize: vertical; min-height: 150px; }
 .fcore-forge textarea:focus { outline: none; border-color: #e8a33d; }
 .fcore-forge .rowline { display: flex; gap: 8px; align-items: center; }
 .fcore-forge .styletext { background: #101014; color: #ddd;
-  border: 1px solid #34343e; border-radius: 8px; font: 11px/1.4 sans-serif;
+  border: 1px solid #34343e; border-radius: 4px; font: 11px/1.4 sans-serif;
   padding: 6px 8px; resize: vertical; min-height: 52px; flex: 0 0 auto;
   width: 100%; box-sizing: border-box; }
 .fcore-forge .styletext:focus { outline: none; border-color: #e8a33d; }
@@ -827,28 +871,28 @@ const CSS = `
 .fcore-adv { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px 10px;
   padding: 8px 2px 2px 40px; border-top: 1px dashed #2b2b33; margin-top: 7px; }
 .fcore-adv select { background: #1e1e25; color: #ddd; border: 1px solid #34343e;
-  border-radius: 5px; font-size: 11px; width: 100%; height: 22px; }
+  border-radius: 3px; font-size: 11px; width: 100%; height: 22px; }
 .fcore-global { display: flex; gap: 10px; align-items: center;
-  background: #1a1a20; border: 1px solid #2b2b33; border-radius: 9px;
+  background: #1a1a20; border: 1px solid #2b2b33; border-radius: 4px;
   padding: 7px 10px; }
 .fcore-global label { color: #aaa; font-size: 12px; }
 .fcore-global input[type=range] { flex: 1; accent-color: #e8a33d; height: 12px; }
 .fcore-global input[type=number] { width: 56px; background: #101014;
-  color: #ddd; border: 1px solid #2b2b33; border-radius: 5px;
+  color: #ddd; border: 1px solid #2b2b33; border-radius: 3px;
   padding: 3px 4px; text-align: center; font-size: 11px; }
 .fcore-menu { position: fixed; z-index: 10000; background: #1a1a20;
-  border: 1px solid #34343e; border-radius: 8px; padding: 4px;
+  border: 1px solid #34343e; border-radius: 4px; padding: 4px;
   display: flex; flex-direction: column; min-width: 160px; max-height: 60vh;
   overflow-y: auto; box-shadow: 0 6px 24px rgba(0,0,0,0.55); }
 .fcore-menu button { background: none; border: none; color: #ccc;
   text-align: left; padding: 6px 10px; cursor: pointer; font-size: 12px;
-  border-radius: 5px; }
+  border-radius: 3px; }
 .fcore-menu button:hover { background: #2a2a33; color: #fff; }
 .fcore-shade { position: fixed; inset: 0; z-index: 10001;
   background: rgba(0,0,0,0.6); display: flex; align-items: center;
   justify-content: center; }
 .fcore-gal { background: #17171c; border: 1px solid #34343e;
-  border-radius: 12px; width: min(760px, 92vw); max-height: 82vh;
+  border-radius: 6px; width: min(760px, 92vw); max-height: 82vh;
   display: flex; flex-direction: column; overflow: hidden;
   box-shadow: 0 12px 48px rgba(0,0,0,0.7); font: 12px/1.4 sans-serif;
   color: #ccc; }
@@ -861,7 +905,7 @@ const CSS = `
   letter-spacing: 0.08em; margin: 12px 0 6px; }
 .fcore-gal-grid { display: grid;
   grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
-.fcore-thumb { background: #000; border: 1px solid #2b2b33; border-radius: 8px;
+.fcore-thumb { background: #000; border: 1px solid #2b2b33; border-radius: 4px;
   overflow: hidden; cursor: pointer; text-align: center; }
 .fcore-thumb:hover { border-color: #e8a33d; }
 .fcore-thumb.sel { border-color: #5fd7ff; box-shadow: 0 0 0 1px #5fd7ff; }
@@ -869,6 +913,21 @@ const CSS = `
 .fcore-thumb span { display: block; padding: 3px 4px; font-size: 10px;
   color: #999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fcore-gal-empty { color: #777; text-align: center; padding: 30px 10px; }
+
+/* --- tech pass: sharper corners, a rule down the left of every row, and a
+   large hover preview of any picked texture ------------------------------- */
+.fcore-row { border-left: 2px solid #3a3a48; }
+.fcore-row:hover { border-left-color: #e8a33d; }
+.fcore-col label { letter-spacing: 0.4px; }
+.fcore-global.src .fcore-col { min-width: 96px; }
+.fcore-chip { cursor: pointer; border: 1px solid #3a3a48; box-sizing: border-box; }
+.fcore-chip:hover { border-color: #e8a33d; }
+.fcore-peek { position: fixed; z-index: 10000; width: 220px; background: #0b0b0e;
+  border: 1px solid #e8a33d; border-radius: 3px; padding: 3px; pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.65); }
+.fcore-peek img { width: 100%; display: block; }
+.fcore-peek span { display: block; color: #cfcfd8; font-size: 10px; padding: 3px 2px 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 `;
 
 let cssInjected = false;
@@ -1020,6 +1079,9 @@ const TIPS = {
   "travel": "how much the flare is allowed to move. 1 follows the tracked path exactly, 0 pins it in one spot for the whole clip.",
   "feature px": "size of the patch being matched, in pixels. Big enough to hold something distinctive, small enough not to change shape as the shot moves.",
   "search px": "how far from the predicted spot the tracker looks each frame. This is its speed limit: raise it for fast motion.",
+  "hold": "frames a lost light keeps its flare at full strength before fading, so a thin occluder is a flicker-free pass instead of a cut.",
+  "fade": "frames a light takes to fade in when found and out when lost.",
+  "search radius": "only look for the light inside this circle around the picker's light point (fraction of frame height). 0 searches the whole frame. Set it when a rival source elsewhere keeps stealing the flare; drag the light point to move the ring.",
   // look
   "master": "overall brightness of the whole flare.",
   "aspect": "stretches every element horizontally: 1 is spherical, 1.3 to 2 reads as anamorphic.",
@@ -1102,7 +1164,7 @@ function infoIcon(text) {
   return i;
 }
 function hideAllTips() {
-  document.querySelectorAll(".fcore-tip").forEach((t) => t.remove());
+  document.querySelectorAll(".fcore-tip, .fcore-peek").forEach((t) => t.remove());
 }
 
 function sliderCol(label, value, [min, max, step], onChange, tip) {
@@ -1331,6 +1393,10 @@ class FlareEditor {
         const match = cat && this.libraryFiles.find((f) => f.startsWith(cat + "/"));
         elem.params.file = match || this.libraryFiles[0] || "";
       }
+      // "+ add -> library" hands a bare texture a lens_dirt file: the same
+      // plate treatment the gallery pick applies, or it renders as a
+      // full-frame wash. The lens-dirt recipe already carries these.
+      if (kind === "texture") applyLensPlateDefaults(elem, elem.params.file);
     }
     this.mutate((p) => p.elements.push(elem));
   }
@@ -1678,6 +1744,9 @@ class FlareEditor {
       nodeSlider("smoothing", "track_smoothing", [0, 0.98, 0.01]);
       nodeSlider("max jump", "track_max_jump", [0.01, 0.5, 0.01]);
       nodeSlider("travel", "light_travel", [0, 1, 0.01]);
+      nodeSlider("hold", "track_hold", [0, 60, 1]);
+      nodeSlider("fade", "track_fade", [1, 60, 1]);
+      nodeSlider("search radius", "search_radius", [0, 1, 0.01]);
     } else if (mode === "point_track") {
       const marks = parsePath(getStr(this.node, "track_points"));
       const count = document.createElement("label");
@@ -1717,6 +1786,32 @@ class FlareEditor {
       row.append(count, clear);
     }
 
+    // After a render in any tracked mode the light's path is known. Baking
+    // it turns the track into a drawn path the picker can edit point by
+    // point -- fix the one frame the tracker got wrong instead of retuning.
+    const solved = Array.isArray(this.node._fcTrack)
+      ? this.node._fcTrack.filter((q) => Array.isArray(q)) : [];
+    if (solved.length > 1 && !["manual", "path"].includes(mode)) {
+      const bake = document.createElement("button");
+      bake.className = "fcore-btn accent fcore-bake";
+      bake.textContent = "bake to path";
+      bake.title = "turn the light path from the last render into an editable motion path (switches to path mode; drag or shift-click points to fix it)";
+      bake.onclick = () => {
+        const n = Math.min(solved.length, 24);
+        const pts = [];
+        for (let k = 0; k < n; k++) {
+          const q = solved[Math.round(k * (solved.length - 1) / Math.max(n - 1, 1))];
+          pts.push([q[0], q[1]]);
+        }
+        setStr(this.node, "light_path", formatPath(pts));
+        setStr(this.node, "position_mode", "path");
+        this.node.setDirtyCanvas(true, false);
+        this.node._fcPicker?.draw();
+        this.build();
+      };
+      row.appendChild(bake);
+    }
+
     const hint = document.createElement("div");
     hint.className = "fcore-hint";
     hint.textContent = MODE_HINT[mode] || "";
@@ -1731,6 +1826,24 @@ class FlareEditor {
       const img = document.createElement("img");
       img.src = elementThumbUrl(elem.params.file);
       chip.appendChild(img);
+      // a 44px chip says which family; the hover preview says which file
+      let peek = null;
+      const hide = () => { peek?.remove(); peek = null; };
+      chip.addEventListener("pointerenter", () => {
+        hide();
+        peek = document.createElement("div");
+        peek.className = "fcore-peek";
+        const big = document.createElement("img");
+        big.src = img.src;
+        const cap = document.createElement("span");
+        cap.textContent = elem.params.file;
+        peek.append(big, cap);
+        document.body.appendChild(peek);
+        const rr = chip.getBoundingClientRect();
+        peek.style.left = `${Math.min(rr.right + 8, window.innerWidth - 236)}px`;
+        peek.style.top = `${Math.max(6, Math.min(rr.top - 24, window.innerHeight - 260))}px`;
+      });
+      chip.addEventListener("pointerleave", hide);
     } else {
       const ico = document.createElement("span");
       ico.className = `ico ico-${elem.type}`;
@@ -2449,6 +2562,16 @@ app.registerExtension({
       if (src) {
         this._fcLightSrc = src;
         this._fcPicker?.draw();
+      }
+      // the path the light took this render: drawn on the picker, and the
+      // source of "bake to path"
+      const trk = message?.fc_track?.[0];
+      if (Array.isArray(trk)) {
+        this._fcTrack = trk;
+        this._fcPicker?.draw();
+        if (this._fcEditor && !this._fcEditor.root.querySelector(".fcore-bake")) {
+          this._fcEditor.build();
+        }
       }
       const imgs = message?.fc_preview ?? message?.images;
       if (imgs?.length && this._fcPicker) {

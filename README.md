@@ -157,33 +157,21 @@ path when path mode is selected.
 
 Wire a raw depth model straight into `depth` and set `depth_normalize` to
 `per_batch`; `depth_blur` and `depth_temporal_smooth` replace the adapter for
-ordinary use. FlareTrack and FlareDepthAdapter still exist for graphs that
-want the pieces separately -- Flare Track in particular still owns the search
-region and hold/fade controls that Flare Render does not expose.
+ordinary use. FlareDepthAdapter still exists for graphs that want the depth
+conditioning separately. Tracking lives entirely in Flare Render now: hold,
+fade and a search region (centred on the picker's light point) sit beside
+smoothing and max jump, and after a render the picker draws the path the
+light actually took, with a **bake to path** button that turns it into an
+editable motion path.
 
 The parts that make flares hold together across frames:
 
-- **FlareTrack** turns per-frame detections into stable tracks: one identity
-  per light across the clip (crossing lights don't swap), smoothed zero-phase
-  positions (no lag, no jitter), fade in/out instead of strobing at the
-  detection threshold, and velocity coasting — a light that vanishes behind
-  an occluder keeps travelling, so depth occlusion completes its fade and the
-  track re-acquires the light on the far side. Outputs `FLARE_LIGHTS` plus a
-  colour-coded overlay for checking the track.
-  `detect_max_lights` caps how many **flares** exist, not how many candidates
-  are examined: many more are detected than kept, because having a spare
-  candidate near the light you are following is what stops a busy frame
-  (dappled light through trees, a row of lamps) from handing the flare to
-  whichever blob happens to win that frame's brightness contest.
-  If it locks onto the wrong light, set `search_radius` above 0 and put
-  `search_u`/`search_v` on the one you want — only that region is searched,
-  and the overlay draws a dashed ring showing where.
-  **If the flare wanders between nearby sources, lower `max_jump`.** It is
-  the gate deciding what may continue a track, so size it to how far the
-  light actually travels between frames (usually well under 0.03 of frame
-  height) rather than to how far apart the lights are. Association measures
-  from where the track is predicted to be, so a small gate still follows fast
-  motion.
+- **Tracking** (inside Flare Render) turns per-frame detections into stable
+  tracks: one identity per light across the clip (crossing lights don't swap),
+  smoothed zero-phase so it never lags, held for `track_hold` frames and faded
+  over `track_fade` when lost. `search_radius` confines the search to a circle
+  around the picker's light point, so a rival source across frame cannot steal
+  the flare however bright it is.
 - **FlareKeyframes** hand-animates instead: `frame: u,v` paths for the light
   and optionally the flare anchor, linear or eased.
 - **FlareRender**'s `position_mode` decides what drives the flare -- manual,
@@ -202,6 +190,13 @@ The studio's video bench wires the whole chain from Load Video to two
 rendered videos (composite and flare pass).
 
 ## Custom elements (element forge)
+
+The prompt bank (`prompts/element_prompts.json`, 75 prompts across eight
+families) is written for Krea 2: natural-language prose, subject first, the
+optics named (veiling glare, halation, coating tints, blade counts, thin-film
+interference), and one deliberate physical imperfection per element so nothing
+comes out computer-perfect. Every prompt is editable in the forge panel.
+
 
 Shipped workflows (ComfyUI → Workflow → Browse Templates → flarecore):
 

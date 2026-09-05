@@ -973,6 +973,50 @@ The bubble is appended to the document body at a fixed position, not inside
 the panel: the panel scrolls and clips, and a tooltip that half-disappears
 is worse than none.
 
+## Round two: prompts, presets, tracking inside the render node, a tech pass
+
+**Prompt bank.** Rewritten from research rather than taste. Krea 2 is a
+single-stream DiT behind a Qwen3-VL language encoder: it wants natural-language
+prose of 30-80 words with the subject first (word order is emphasis), it has no
+negative channel at the CFG it runs at, and it responds to named optical looks
+and raw-photographic cues (grain, low dynamic range) rather than quality tags.
+Every prompt now leads with the subject as a macro photograph of an optical
+phenomenon, names the physics (veiling glare, halation, coating tints, blade
+counts that give the right spike counts, thin-film interference, cylindrical
+elements), states what IS in frame instead of what is not, and carries one
+specific physically-motivated anomaly so no element is perfect. 40 prompts
+rewritten, 35 added; every original key preserved; no brand names.
+
+**Presets.** Ten new looks, each modelling a lens behaviour and saying so in
+its labels: 2x anamorphic teal, uncoated vintage veiling, a restrained modern
+prime, a long telephoto's compressed ghost chain, sodium street light, neon,
+film halation, headlight bloom with an even-blade starburst, underwater
+caustics, and a cheap zoom's milky haze. Five use trigger rules. 22 presets
+in all, every one validated and render-checked.
+
+**Tracking lives in Flare Render.** Hold, fade and a search region joined
+smoothing and max jump; the region is centred on the picker's light point,
+the one control that already means "the light is about here", so it needs
+no widgets of its own and the ring is drawn where the point is. The
+standalone Flare Track node had nothing left to add and is retired; its
+pipeline stays as a plain function for the tests that exercise it.
+
+After every render the node reports the path the light actually took. The
+picker draws it, so a track can be judged before it is trusted, and a
+**bake to path** button turns it into a drawn motion path -- fix the one
+frame the tracker got wrong by dragging a point, instead of retuning the
+tracker and hoping.
+
+**Studio.** The flare lab now has its own Depth Anything, wired into the
+still-image render node; the owner had been adding one by hand.
+
+**Look.** Corners sharpened (12 to 6, 8 to 4, 5-7 to 3), a rule down the
+left of every element row, chips 30 to 44 px, and a 220 px hover preview of
+any picked texture so the chip says which family and the hover says which
+file. The gallery pick and the "+ add" path both apply the lens-plate
+treatment to a lens_dirt texture -- the add path had been missing it, which
+was found by driving the DOM, not by reading the code.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "name": "Long Telephoto",
+  "author": "flarecore",
+  "global": {
+    "intensity": 1.0,
+    "scale": 1.0,
+    "aspect": 1.0,
+    "tint": [1.0, 0.98, 0.95],
+    "seed": 29,
+    "fringe": 0.08,
+    "edge_fade_start": 0.1,
+    "edge_fade_range": 0.4
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "label": "compressed core (long focal length, narrow field)",
+      "id": "lt_core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.09,
+      "intensity": 3.6,
+      "color": [1.0, 0.99, 0.96],
+      "params": { "softness": 0.3, "falloff": 2.2 }
+    },
+    {
+      "type": "glow",
+      "label": "warm bloom",
+      "id": "lt_bloom",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.35,
+      "intensity": 0.7,
+      "irregular": 0.15,
+      "color": [1.0, 0.92, 0.8],
+      "params": { "softness": 0.5, "falloff": 1.6 }
+    },
+    {
+      "type": "iris",
+      "label": "compressed ghost chain (many close surfaces in a long barrel)",
+      "id": "lt_chain",
+      "slot": "ghosts",
+      "offset": 0.3,
+      "count": 16,
+      "spread": 0.08,
+      "scale": 0.035,
+      "count_scale_step": 1.09,
+      "count_falloff": 0.9,
+      "intensity": 0.16,
+      "irregular": 0.2,
+      "dispersion": 0.4,
+      "blur": 0.04,
+      "color": [0.85, 0.93, 1.0],
+      "params": { "blades": 9, "edge_softness": 0.35 }
+    },
+    {
+      "type": "iris",
+      "label": "far hollow ghost pair",
+      "id": "lt_far",
+      "slot": "ghosts",
+      "offset": 1.9,
+      "count": 2,
+      "spread": 0.18,
+      "scale": 0.12,
+      "count_scale_step": 1.25,
+      "count_falloff": 0.7,
+      "intensity": 0.08,
+      "irregular": 0.25,
+      "dispersion": 0.7,
+      "blur": 0.08,
+      "color": [1.0, 0.88, 0.75],
+      "params": { "blades": 9, "edge_softness": 0.5, "hollow": 0.6 }
+    },
+    {
+      "type": "glint",
+      "label": "narrow 9-blade rays (18 spikes)",
+      "id": "lt_rays",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.9,
+      "intensity": 0.4,
+      "irregular": 0.3,
+      "blur": 0.02,
+      "color": [1.0, 0.97, 0.9],
+      "params": { "points": 18, "length": 0.9, "thickness": 0.0025, "length_jitter": 0.35 }
+    },
+    {
+      "type": "ring",
+      "label": "tight coating ring",
+      "id": "lt_ring",
+      "slot": "rings",
+      "offset": 0.9,
+      "scale": 0.22,
+      "intensity": 0.05,
+      "irregular": 0.2,
+      "dispersion": 0.8,
+      "blur": 0.03,
+      "color": [0.9, 0.94, 1.0],
+      "params": { "radius": 1.0, "thickness": 0.03 }
+    }
+  ]
+}

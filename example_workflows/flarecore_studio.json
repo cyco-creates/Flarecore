@@ -1,8 +1,8 @@
 {
   "id": "flarecore_studio",
   "revision": 0,
-  "last_node_id": 33,
-  "last_link_id": 31,
+  "last_node_id": 34,
+  "last_link_id": 33,
   "nodes": [
     {
       "id": 29,
@@ -1336,7 +1336,7 @@
           "name": "depth",
           "shape": 7,
           "type": "IMAGE",
-          "link": null
+          "link": 33
         },
         {
           "localized_name": "lights",
@@ -1711,7 +1711,8 @@
           "type": "IMAGE",
           "slot_index": 0,
           "links": [
-            15
+            15,
+            32
           ]
         },
         {
@@ -2267,6 +2268,79 @@
         "name": "my_element",
         "overwrite": false
       }
+    },
+    {
+      "id": 34,
+      "type": "DepthAnythingV2Preprocessor",
+      "pos": [
+        -1095.0,
+        -360.0
+      ],
+      "size": [
+        230.8345703125,
+        82
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 32
+        },
+        {
+          "localized_name": "ckpt_name",
+          "name": "ckpt_name",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "ckpt_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "resolution",
+          "name": "resolution",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "resolution"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            33
+          ]
+        }
+      ],
+      "properties": {
+        "ver": "0.1.2",
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "Node name for S&R": "DepthAnythingV2Preprocessor"
+      },
+      "widgets_values": [
+        "depth_anything_v2_vitl.pth",
+        512
+      ],
+      "widgets_values_named": {
+        "ckpt_name": "depth_anything_v2_vitl.pth",
+        "resolution": 512
+      }
     }
   ],
   "links": [
@@ -2429,6 +2503,22 @@
       30,
       3,
       "INT"
+    ],
+    [
+      32,
+      14,
+      0,
+      34,
+      0,
+      "IMAGE"
+    ],
+    [
+      33,
+      34,
+      0,
+      15,
+      1,
+      "IMAGE"
     ]
   ],
   "groups": [

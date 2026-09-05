@@ -516,8 +516,7 @@ class TestVideoNodes:
             img[30:34, cx:cx + 4] = 1.0
             frames.append(img)
         batch = torch.stack(frames)
-        node = PKG.NODE_CLASS_MAPPINGS["FlareTrack"]()
-        lights, overlay, report = node.track(
+        lights, overlay, report = PKG.nodes.video.track_clip(
             batch, detect_threshold=0.5, detect_max_lights=1,
             smoothing=0.5, max_jump=0.2, hold_frames=2, fade_frames=2)
         assert len(lights) == 8
@@ -636,7 +635,7 @@ class TestLightSourcePrecedence:
 
     def test_connected_lights_still_override_the_picker(self):
         clip = self._clip()
-        tracked = PKG.NODE_CLASS_MAPPINGS["FlareTrack"]().track(
+        tracked = PKG.nodes.video.track_clip(
             clip, detect_threshold=0.75, detect_max_lights=1, smoothing=0.5,
             max_jump=0.4, hold_frames=3, fade_frames=1)[0]
         a = run_node(clip, lights=tracked, light_x=0.2, light_y=0.3)[1]
@@ -732,7 +731,7 @@ class TestBusySceneTracking:
         args = dict(detect_threshold=0.75, detect_max_lights=1, smoothing=0.6,
                     max_jump=0.15, hold_frames=3, fade_frames=4)
         args.update(kw)
-        return PKG.NODE_CLASS_MAPPINGS["FlareTrack"]().track(clip, **args)
+        return PKG.nodes.video.track_clip(clip, **args)
 
     def test_one_light_means_one_flare(self):
         lights, _, report = self._track(self._dappled())
@@ -805,7 +804,7 @@ class TestTrackerLocksOn:
                    for a, b in zip(pts, pts[1:]))
 
     def test_locks_onto_one_source_in_a_cluster(self):
-        lights, _, _ = PKG.NODE_CLASS_MAPPINGS["FlareTrack"]().track(
+        lights, _, _ = PKG.nodes.video.track_clip(
             self._cluster(), detect_threshold=0.75, detect_max_lights=1,
             smoothing=0.6, max_jump=0.06, hold_frames=3, fade_frames=4)
         assert all(len(f) == 1 for f in lights)
@@ -816,7 +815,7 @@ class TestTrackerLocksOn:
     def test_a_loose_gate_is_what_lets_it_roam(self):
         # the same clip with the old permissive gate: this is the behaviour
         # the default change fixes, pinned so the reason stays visible
-        lights, _, _ = PKG.NODE_CLASS_MAPPINGS["FlareTrack"]().track(
+        lights, _, _ = PKG.nodes.video.track_clip(
             self._cluster(), detect_threshold=0.75, detect_max_lights=1,
             smoothing=0.6, max_jump=0.15, hold_frames=3, fade_frames=4)
         us = [f[0]["u"] for f in lights]
@@ -835,7 +834,7 @@ class TestTrackerLocksOn:
             d = torch.sqrt((xx - cx) ** 2 + (yy - 0.4 * h) ** 2)
             clip[i] = (torch.clamp(1.5 - d / 16.0, 0, 1).unsqueeze(-1)
                        * torch.tensor([1.0, 0.98, 0.94])) + 0.05
-        lights, _, report = PKG.NODE_CLASS_MAPPINGS["FlareTrack"]().track(
+        lights, _, report = PKG.nodes.video.track_clip(
             clip.clamp(0, 1), detect_threshold=0.75, detect_max_lights=1,
             smoothing=0.6, max_jump=0.06, hold_frames=3, fade_frames=4)
         tids = {lg["tid"] for f in lights for lg in f}
@@ -1112,3 +1111,66 @@ class TestLightTravel:
         damped = _damp_travel(frames, 0.0)
         assert all(abs(f[0]["u"] - damped[0][0]["u"]) < 1e-9 for f in damped)
         assert damped[0][0]["u"] < 0.35 and damped[0][1]["u"] > 0.65,             "the two lights were pulled together"
+
+
+class TestTrackingInsideRender:
+    """Tracking lives in Flare Render now: hold, fade and a search region
+    centred on the picker's light point, and the solved path reported back
+    to the editor so it can be drawn and baked into a motion path."""
+
+    def _two_lights(self, b=10, h=90, w=160):
+        """A steady light on the left; a BRIGHTER rival on the right."""
+        clip = torch.zeros(b, h, w, 3)
+        clip[:, 40:48, 20:28] = 0.8
+        clip[:, 40:48, 130:138] = 1.0
+        return clip
+
+    def test_search_region_keeps_the_flare_off_a_brighter_rival(self):
+        clip = self._two_lights()
+        free = run_node(clip, position_mode="track", detect_threshold=0.5,
+                        detect_max_lights=1, search_radius=0.0)[1]
+        fenced = run_node(clip, position_mode="track", detect_threshold=0.5,
+                          detect_max_lights=1, search_radius=0.25,
+                          light_x=0.15, light_y=0.49)[1]
+        W = clip.shape[2]
+        cx_free = int(free[0].mean(-1).argmax()) % W / W
+        cx_fenced = int(fenced[0].mean(-1).argmax()) % W / W
+        assert cx_free > 0.5, "unfenced, the brighter rival should win"
+        assert cx_fenced < 0.5, "the fence should hold the flare on the left"
+
+    def test_restrict_to_region_measures_in_frame_height(self):
+        restrict = PKG.nodes.render.restrict_to_region
+        dets = [[{"u": 0.5, "v": 0.5}, {"u": 0.7, "v": 0.5}, {"u": 0.5, "v": 0.7}]]
+        # aspect 2: a 0.2 horizontal offset is 0.4 in height units
+        kept = restrict(dets, 0.5, 0.5, 0.25, 2.0)[0]
+        assert [d["u"] for d in kept] == [0.5, 0.5]
+
+    def test_hold_and_fade_reach_the_tracker(self):
+        """A light that vanishes mid-clip survives `hold` frames, then fades."""
+        clip = torch.zeros(12, 60, 100, 3)
+        clip[:4, 25:31, 40:46] = 1.0                    # gone from frame 4 on
+        long_hold = run_node(clip, position_mode="track", detect_threshold=0.5,
+                             track_hold=6, track_fade=1)[1]
+        short_hold = run_node(clip, position_mode="track", detect_threshold=0.5,
+                              track_hold=0, track_fade=1)[1]
+        assert float(long_hold[6].sum()) > 0.0, "held light should still shine"
+        assert float(short_hold[6].sum()) == 0.0, "unheld light should be gone"
+
+    def test_the_solved_path_is_reported_to_the_editor(self):
+        from test_nodes import FlareRender, PRESET
+        clip = torch.zeros(5, 60, 100, 3)
+        for i in range(5):                 # 3 px/frame: inside the jump gate
+            clip[i, 25:31, 10 + i * 3:16 + i * 3] = 1.0
+        res = FlareRender().render(
+            image=clip, preset_json=PRESET, position_mode="track", light_x=0.5,
+            light_y=0.5, flare_x=0.5, flare_y=0.5, detect_threshold=0.5,
+            detect_max_lights=1, occlusion_radius=0.02, light_depth=0.1,
+            invert_depth=False, intensity=1.0, scale=1.0, blend_mode="add",
+            clamp_output=True, seed=0, track_smoothing=0.0, track_max_jump=0.2)
+        if not isinstance(res, dict):
+            pytest.skip("ui payload only exists inside ComfyUI")
+        track = res["ui"]["fc_track"][0]
+        assert len(track) == 5
+        us = [t[0] for t in track if t]
+        assert us == sorted(us) and us[-1] - us[0] > 0.08, us
+        assert all(t[2] is None for t in track), "no anchor in plain track"

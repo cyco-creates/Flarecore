@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "name": "Clean Modern Prime",
+  "author": "flarecore",
+  "global": {
+    "intensity": 1.0,
+    "scale": 1.0,
+    "aspect": 1.0,
+    "tint": [1.0, 1.0, 1.0],
+    "seed": 8,
+    "fringe": 0.04
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "label": "tight core (multicoated glass, minimal scatter)",
+      "id": "cp_core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.06,
+      "intensity": 4.5,
+      "color": [1.0, 1.0, 1.0],
+      "params": { "softness": 0.28, "falloff": 2.6 }
+    },
+    {
+      "type": "glow",
+      "label": "small neutral bloom",
+      "id": "cp_bloom",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.22,
+      "intensity": 0.5,
+      "color": [0.97, 0.98, 1.0],
+      "params": { "softness": 0.45, "falloff": 1.9 }
+    },
+    {
+      "type": "iris",
+      "label": "faint hexagonal ghost (9-blade iris reflection)",
+      "id": "cp_hex1",
+      "slot": "ghosts",
+      "offset": 0.85,
+      "scale": 0.07,
+      "intensity": 0.09,
+      "irregular": 0.05,
+      "dispersion": 0.35,
+      "blur": 0.03,
+      "color": [0.85, 0.92, 1.0],
+      "params": { "blades": 9, "edge_softness": 0.25 }
+    },
+    {
+      "type": "iris",
+      "label": "second hexagonal ghost past centre",
+      "id": "cp_hex2",
+      "slot": "ghosts",
+      "offset": 1.55,
+      "scale": 0.11,
+      "intensity": 0.06,
+      "irregular": 0.05,
+      "dispersion": 0.5,
+      "blur": 0.04,
+      "color": [0.8, 0.9, 1.0],
+      "params": { "blades": 9, "edge_softness": 0.3 }
+    },
+    {
+      "type": "ring",
+      "label": "thin coating ring",
+      "id": "cp_ring",
+      "slot": "rings",
+      "offset": 1.2,
+      "scale": 0.3,
+      "intensity": 0.05,
+      "dispersion": 0.6,
+      "blur": 0.02,
+      "color": [0.9, 0.95, 1.0],
+      "params": { "radius": 1.0, "thickness": 0.02 }
+    },
+    {
+      "type": "glint",
+      "label": "faint 9-blade star",
+      "id": "cp_star",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.4,
+      "intensity": 0.18,
+      "blur": 0.02,
+      "color": [1.0, 1.0, 1.0],
+      "params": { "points": 18, "length": 0.5, "thickness": 0.003, "length_jitter": 0.15 }
+    }
+  ]
+}

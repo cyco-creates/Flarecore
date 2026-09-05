@@ -78,6 +78,21 @@ def _engine_version() -> str:
     return f"{newest:.3f}"
 
 
+def restrict_to_region(detections, cu, cv, radius, aspect):
+    """Drop candidates outside a circle around (cu, cv).
+
+    u spans the width and v the height, so the distance is measured in
+    units of frame height (the same convention as max_jump) by scaling the
+    horizontal offset by the aspect.
+    """
+    out = []
+    for frame in detections:
+        out.append([d for d in frame
+                    if ((d["u"] - cu) * aspect) ** 2 + (d["v"] - cv) ** 2
+                    <= radius ** 2])
+    return out
+
+
 def _damp_travel(lights_per_frame, amount):
     """Scale each light's excursion about its own average position.
 
@@ -281,6 +296,25 @@ class FlareRender:
                                "limit: raise it for fast motion, lower it to "
                                "stop it finding lookalikes further away.",
                 }),
+                "track_hold": ("INT", {
+                    "default": 3, "min": 0, "max": 60,
+                    "tooltip": "frames a lost light keeps its flare at full "
+                               "strength before fading -- a thin occluder "
+                               "becomes a flicker-free pass instead of a cut.",
+                }),
+                "track_fade": ("INT", {
+                    "default": 4, "min": 1, "max": 60,
+                    "tooltip": "frames a light takes to fade in when found "
+                               "and out when lost.",
+                }),
+                "search_radius": ("FLOAT", {
+                    "default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "tooltip": "track/lock: only look for the light within "
+                               "this distance of the picker's light point "
+                               "(fraction of frame height). 0 searches the "
+                               "whole frame. Set it when a rival source "
+                               "elsewhere keeps stealing the flare.",
+                }),
             },
             "optional": {
                 "depth": ("IMAGE",),
@@ -299,7 +333,8 @@ class FlareRender:
                depth_normalize="as_is", depth_blur=0.0,
                depth_temporal_smooth=0.0, light_path="", mask_falloff=0.35,
                colorspace="srgb", chunk_frames=0, light_travel=1.0, track_points="", track_feature=32,
-               track_search=48, depth=None, lights=None):
+               track_search=48, track_hold=3, track_fade=4,
+               search_radius=0.0, depth=None, lights=None):
         preset = load_preset(preset_json)
 
         # ComfyUI passes IMAGE tensors on the CPU regardless of where they
@@ -341,6 +376,7 @@ class FlareRender:
                 smoothing=track_smoothing, max_jump=track_max_jump,
                 light_path=light_path, track_points=track_points,
                 track_feature=track_feature, track_search=track_search,
+                hold=track_hold, fade=track_fade, search_radius=search_radius,
             )
 
         lights_per_frame = _damp_travel(lights_per_frame, light_travel)
@@ -503,8 +539,21 @@ class FlareRender:
         # fc_light_src tells the editor which control actually placed the
         # light this run: a connected lights input silently overrides
         # light_x/light_y, and without this the picker looks broken.
+        # The path the light actually took, so the picker can show it and
+        # the owner can bake it into an editable motion path. Primary light
+        # only; the anchor comes along when a mode produced one.
+        fc_track = []
+        for frame in lights_per_frame:
+            if frame:
+                l = frame[0]
+                fc_track.append([round(float(l["u"]), 4), round(float(l["v"]), 4),
+                                 round(float(l["au"]), 4) if "au" in l else None,
+                                 round(float(l["av"]), 4) if "av" in l else None])
+            else:
+                fc_track.append(None)
         return {"ui": {"fc_preview": _save_preview(out[0])["images"],
-                       "fc_light_src": [light_source]},
+                       "fc_light_src": [light_source],
+                       "fc_track": [fc_track]},
                 "result": result}
 
     def _chunk_size(self, requested, batch, height, width, device):
@@ -569,7 +618,8 @@ class FlareRender:
     def _resolve_lights(self, linear_chunk, batch, chunk, position_mode,
                         light_x, light_y, detect_threshold, detect_max_lights,
                         smoothing=0.6, max_jump=0.06, light_path="",
-                        track_points="", track_feature=32, track_search=48):
+                        track_points="", track_feature=32, track_search=48,
+                        hold=3, fade=4, search_radius=0.0):
         """linear_chunk(start, stop) hands back that slice of the clip in
         linear light on the compute device — pixels are only touched a slice
         at a time, matching the streamed render pass."""
@@ -587,12 +637,23 @@ class FlareRender:
             return [[{"u": u, "v": v, "brightness": 1.0}]
                     for u, v in sample_path(points, batch)]
 
+        probe = linear_chunk(0, 1)
+        frame_aspect = probe.shape[2] / max(probe.shape[1], 1)
+        del probe
+
         def detect_chunked(threshold, pool, region_sigma=0.0):
             dets = []
             for s in range(0, batch, chunk):
                 dets += detect_lights(linear_chunk(s, min(s + chunk, batch)),
                                       threshold=threshold, max_lights=pool,
                                       region_sigma=region_sigma)
+            # A search region, centred on the picker's light point: the one
+            # place in the UI that already means "the light is about here".
+            # Candidates outside it never reach the tracker, so a rival
+            # source across frame cannot steal the flare however bright.
+            if search_radius > 0.0:
+                dets = restrict_to_region(dets, light_x, light_y,
+                                          search_radius, frame_aspect)
             return dets
 
         if position_mode == "point_track":
@@ -649,7 +710,8 @@ class FlareRender:
             pool = max(detect_max_lights * 8, 12)
             raw = detect_chunked(threshold, pool)
             return track_lights(raw, smoothing=smoothing, max_jump=max_jump,
-                                hold=3, fade=4, max_tracks=detect_max_lights)
+                                hold=hold, fade=fade,
+                                max_tracks=detect_max_lights)
 
         # Per-frame detection picks by REGION, not by brightest pixel: a
         # blown-out sky is a plateau where the brightest pixel is an

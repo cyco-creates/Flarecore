@@ -14,7 +14,6 @@ if __package__:
         FlareRender,
         FlarePresetLoader,
         FlareDepthAdapter,
-        FlareTrack,
         FlareKeyframes,
         FlareElementPrompts,
         FlareTexturePrepare,
@@ -49,7 +48,6 @@ else:
     FlareRender = _pkg.FlareRender
     FlarePresetLoader = _pkg.FlarePresetLoader
     FlareDepthAdapter = _pkg.FlareDepthAdapter
-    FlareTrack = _pkg.FlareTrack
     FlareKeyframes = _pkg.FlareKeyframes
     FlareElementPrompts = _pkg.FlareElementPrompts
     FlareTexturePrepare = _pkg.FlareTexturePrepare
@@ -67,7 +65,6 @@ NODE_CLASS_MAPPINGS = {
     "FlareRender": FlareRender,
     "FlarePresetLoader": FlarePresetLoader,
     "FlareDepthAdapter": FlareDepthAdapter,
-    "FlareTrack": FlareTrack,
     "FlareKeyframes": FlareKeyframes,
     "FlareElementPrompts": FlareElementPrompts,
     "FlareTexturePrepare": FlareTexturePrepare,
@@ -78,7 +75,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "FlareRender": "Flare Render",
     "FlarePresetLoader": "Flare Preset Loader",
     "FlareDepthAdapter": "Flare Depth Adapter",
-    "FlareTrack": "Flare Track",
     "FlareKeyframes": "Flare Keyframes",
     "FlareElementPrompts": "Flare Element Prompts",
     "FlareTexturePrepare": "Flare Texture Prepare",
