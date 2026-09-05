@@ -467,6 +467,40 @@ which does catch a duplicate declaration. Console errors alone were
 misleading here — the browser had cached the previous module, so old stack
 traces kept surfacing after the source was already fixed.
 
+## 3w. The studio: one workflow, three benches, one switch (2026-09-05)
+
+Owner wanted the element forge, flare lab and video lab in one workflow with
+a toggle where activating one disables the other two, plus a one-node forge
+UI: category -> element dropdowns, the bank prompt exposed for editing, and
+an extra-style suggestion behind a toggle.
+
+- **Forge panel** on FlareElementPrompts: a DOM panel that writes the node's
+  real (hidden) widgets. Picking an element fills the prompt textarea from
+  the bank and mirrors it into custom_prompt, so what is on screen is
+  byte-for-byte what queues; edits flow straight through. The extra-style
+  toggle writes extra_style or clears it. The bank arrives over a new
+  /flarecore/prompt_bank route. No schema change: the panel drives the
+  widget contract that already existed.
+- **Flarecore Studio switch**: a frontend-only LGraphNode (isVirtualNode, so
+  it never reaches the API) with three radio buttons. It finds the three
+  groups by title, mutes every node inside the inactive two (mode 2) and
+  dims their colour, and re-applies its serialized choice on load. The
+  FLARE LAB group was enlarged to envelope the depth sub-bench — nodes are
+  muted by group membership, and an un-enveloped depth chain would have kept
+  running against a muted image loader.
+- **flarecore_studio.json** replaces the three individual workflows (the
+  trigger lab demo stays). The Builder gained an origin offset (`b.at`) so
+  each bench keeps its own coordinates and is placed as a unit; the three
+  bands share a top edge and a 1320-unit height, 200-unit gutters, with the
+  switch and a title note as a column on the left.
+
+Two frontend lessons paid for here: the current ComfyUI frontend requires a
+REAL `LiteGraph.LGraphNode` subclass for registerNodeType — a plain class no
+longer gets the prototype grafted on, and the symptom is a half-built node
+plus unrelated-looking errors from other packs that touch every node type.
+And the builder writes virtual nodes by hand (like Note), since they are
+absent from /object_info.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

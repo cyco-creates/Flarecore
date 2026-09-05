@@ -700,6 +700,24 @@ const CSS = `
   border-radius: 6px; font-size: 12px; height: 24px; padding: 0 6px; }
 .fcore-hint { color: #7f8496; font-size: 11px; flex-basis: 100%;
   line-height: 1.35; }
+.fcore-forge { display: flex; flex-direction: column; gap: 8px; height: 100%;
+  box-sizing: border-box; }
+.fcore-forge textarea { background: #101014; color: #ddd; flex: 1;
+  border: 1px solid #34343e; border-radius: 8px; font: 12px/1.45 sans-serif;
+  padding: 8px; resize: none; min-height: 70px; }
+.fcore-forge textarea:focus { outline: none; border-color: #e8a33d; }
+.fcore-forge .rowline { display: flex; gap: 8px; align-items: center; }
+.fcore-forge input[type=text] { background: #101014; color: #ddd; flex: 1;
+  border: 1px solid #34343e; border-radius: 6px; font-size: 11px;
+  height: 24px; padding: 0 8px; }
+.fcore-studio { display: flex; flex-direction: column; gap: 6px;
+  padding: 4px; box-sizing: border-box; }
+.fcore-studio button { text-align: left; background: #1a1a20; color: #9a9aa6;
+  border: 1px solid #2b2b33; border-radius: 8px; padding: 8px 12px;
+  font-size: 13px; cursor: pointer; }
+.fcore-studio button.on { background: #2f4a3a; border-color: #7ce38b;
+  color: #eafff0; }
+.fcore-studio button:hover { border-color: #e8a33d; }
 .fcore-adv { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px 10px;
   padding: 8px 2px 2px 40px; border-top: 1px dashed #2b2b33; margin-top: 7px; }
 .fcore-adv select { background: #1e1e25; color: #ddd; border: 1px solid #34343e;
@@ -1763,11 +1781,232 @@ class FlareEditor {
   }
 }
 
+/* ------------------------------------------------------------ forge panel */
+
+// A default worth suggesting; the toggle decides whether it is appended.
+const EXTRA_STYLE_SUGGESTION =
+  "photographed on vintage anamorphic glass, subtle blue-green tint, " +
+  "gentle halation, organic imperfection";
+
+// One panel = the whole prompt side of the forge: category -> element
+// dropdowns, the bank prompt exposed for editing, and the extra-style
+// suggestion behind a toggle. It writes the node's real widgets
+// (element / custom_prompt / extra_style), which stay hidden underneath.
+function setupForgePanel(nodeType) {
+  const onNodeCreated = nodeType.prototype.onNodeCreated;
+  nodeType.prototype.onNodeCreated = function () {
+    onNodeCreated?.apply(this, arguments);
+    const node = this;
+    injectCSS();
+    for (const w of node.widgets || []) hideWidget(w);
+
+    const root = document.createElement("div");
+    root.className = "fcore fcore-forge";
+
+    const selRow = document.createElement("div");
+    selRow.className = "rowline";
+    const catSel = document.createElement("select");
+    catSel.className = "fcore-src-sel";
+    catSel.style.flex = "1";
+    const elemSel = document.createElement("select");
+    elemSel.className = "fcore-src-sel";
+    elemSel.style.flex = "1.4";
+    selRow.append(catSel, elemSel);
+
+    const prompt = document.createElement("textarea");
+    prompt.placeholder = "pick an element above — its prompt appears here, ready to edit";
+    prompt.spellcheck = false;
+
+    const styleRow = document.createElement("div");
+    styleRow.className = "rowline";
+    const styleToggle = document.createElement("input");
+    styleToggle.type = "checkbox";
+    const styleLab = document.createElement("label");
+    styleLab.textContent = "extra style";
+    styleLab.style.cssText = "color:#aaa;font-size:11px;";
+    const styleText = document.createElement("input");
+    styleText.type = "text";
+    styleText.value = EXTRA_STYLE_SUGGESTION;
+    styleRow.append(styleToggle, styleLab, styleText);
+
+    const hint = document.createElement("div");
+    hint.className = "fcore-hint";
+    root.append(selRow, prompt, styleRow, hint);
+
+    for (const el of [catSel, elemSel, prompt, styleToggle, styleText]) {
+      el.addEventListener("pointerdown", (e) => e.stopPropagation());
+    }
+
+    let bank = {};
+    const syncStyle = () => {
+      styleText.disabled = !styleToggle.checked;
+      styleText.style.opacity = styleToggle.checked ? "1" : "0.45";
+      setStr(node, "extra_style", styleToggle.checked ? styleText.value : "");
+      hint.textContent = styleToggle.checked
+        ? "style is appended to the prompt when you queue"
+        : "queue renders the prompt exactly as written above";
+    };
+    const fillElems = (cat, keep) => {
+      elemSel.textContent = "";
+      for (const name of Object.keys(bank[cat] || {})) {
+        const o = document.createElement("option");
+        o.value = name;
+        o.textContent = name.replace(/_/g, " ");
+        elemSel.appendChild(o);
+      }
+      if (keep && bank[cat] && keep in bank[cat]) elemSel.value = keep;
+    };
+    const applySelection = (loadPrompt) => {
+      const cat = catSel.value, name = elemSel.value;
+      if (!cat || !name) return;
+      setStr(node, "element", `${cat}/${name}`);
+      if (loadPrompt) {
+        prompt.value = bank[cat]?.[name] || "";
+        setStr(node, "custom_prompt", prompt.value);
+      }
+      node.setDirtyCanvas(true, false);
+    };
+
+    catSel.onchange = () => { fillElems(catSel.value); applySelection(true); };
+    elemSel.onchange = () => applySelection(true);
+    prompt.addEventListener("input", () => setStr(node, "custom_prompt", prompt.value));
+    styleToggle.onchange = syncStyle;
+    styleText.addEventListener("input", syncStyle);
+
+    api.fetchApi("/flarecore/prompt_bank").then((r) => r.json()).then((d) => {
+      bank = d.bank || {};
+      catSel.textContent = "";
+      for (const cat of Object.keys(bank)) {
+        const o = document.createElement("option");
+        o.value = cat;
+        o.textContent = cat.replace(/_/g, " ");
+        catSel.appendChild(o);
+      }
+      // restore what the workflow saved: the element combo names the pick,
+      // custom_prompt holds the (possibly edited) text, extra_style the tail
+      const saved = getStr(node, "element");
+      const [cat, name] = saved.includes("/") ? saved.split("/") : [null, null];
+      if (cat && bank[cat]) {
+        catSel.value = cat;
+        fillElems(cat, name);
+      } else {
+        fillElems(catSel.value);
+      }
+      const savedPrompt = getStr(node, "custom_prompt");
+      const savedStyle = getStr(node, "extra_style");
+      if (savedStyle) { styleToggle.checked = true; styleText.value = savedStyle; }
+      if (savedPrompt) prompt.value = savedPrompt;
+      else applySelection(true);
+      applySelection(false);
+      syncStyle();
+    }).catch(() => { hint.textContent = "could not load the prompt bank"; });
+
+    const widget = node.addDOMWidget("forge_panel", "flarecore.forge", root,
+      { serialize: false, hideOnZoom: true, getMinHeight: () => 200 });
+    widget.serialize = false;
+    widget.serializeValue = () => undefined;
+    widget.computeSize = (w) => [Number(w) || node.size?.[0] || 380, 208];
+    node.setSize([Math.max(node.size[0], 400), Math.max(node.size[1], 300)]);
+  };
+
+  // reloads carry one null slot for the DOM panel; nothing else to repair,
+  // but re-hide the raw widgets the frontend just rebuilt
+  const onConfigure = nodeType.prototype.onConfigure;
+  nodeType.prototype.onConfigure = function () {
+    onConfigure?.apply(this, arguments);
+    for (const w of this.widgets || []) {
+      if (w.name !== "forge_panel") hideWidget(w);
+    }
+  };
+}
+
+/* ---------------------------------------------------------- studio switch */
+
+// The studio workflow carries all three benches; this virtual node is the
+// switch between them. It mutes every node inside the two inactive groups
+// (mode 2 = NEVER) so exactly one bench queues, and dims their group colour
+// so the graph reads at a glance. Frontend-only: it never reaches the API.
+const STUDIO_SECTIONS = [
+  ["element forge", "ELEMENT FORGE"],
+  ["flare lab", "FLARE LAB"],
+  ["video lab", "VIDEO LAB"],
+];
+const GROUP_ACTIVE = { "ELEMENT FORGE": "#59453f", "FLARE LAB": "#3f5159",
+                       "VIDEO LAB": "#3f4459" };
+const GROUP_DIM = "#26262b";
+
+function applyStudioSection(graph, active) {
+  for (const g of graph._groups || []) {
+    const entry = STUDIO_SECTIONS.find(([, t]) =>
+      (g.title || "").toUpperCase().startsWith(t));
+    if (!entry) continue;
+    const on = entry[0] === active;
+    g.recomputeInsideNodes();
+    for (const n of g._nodes || []) {
+      if (n.constructor?.title === "Flarecore Studio") continue;
+      n.mode = on ? 0 : 2;                 // 2 = NEVER (muted)
+    }
+    g.color = on ? (GROUP_ACTIVE[entry[1]] || g.color) : GROUP_DIM;
+  }
+  graph.setDirtyCanvas?.(true, true);
+}
+
+function registerStudioSwitch(app) {
+  // The current frontend expects a real LGraphNode subclass; a plain class
+  // no longer gets the prototype grafted on and half the node API is missing.
+  class FlarecoreStudio extends LiteGraph.LGraphNode {
+    constructor() {
+      super("Flarecore Studio");
+      this.isVirtualNode = true;           // stays out of the API prompt
+      this.serialize_widgets = true;
+      this.size = [230, 150];
+      this.properties = { active: "flare lab" };
+      injectCSS();
+      const root = document.createElement("div");
+      root.className = "fcore fcore-studio";
+      this._buttons = {};
+      for (const [key] of STUDIO_SECTIONS) {
+        const b = document.createElement("button");
+        b.textContent = key.replace(/^./, (c) => c.toUpperCase());
+        b.onclick = () => this.setActive(key);
+        root.appendChild(b);
+        this._buttons[key] = b;
+      }
+      const w = this.addDOMWidget("studio_panel", "flarecore.studio", root,
+        { serialize: false, hideOnZoom: true, getMinHeight: () => 120 });
+      w.serialize = false;
+      w.serializeValue = () => undefined;
+      w.computeSize = (width) => [Number(width) || 230, 126];
+    }
+
+    setActive(key) {
+      this.properties.active = key;
+      for (const [k, b] of Object.entries(this._buttons)) {
+        b.classList.toggle("on", k === key);
+      }
+      if (this.graph) applyStudioSection(this.graph, key);
+    }
+
+    onAdded() { setTimeout(() => this.setActive(this.properties.active), 30); }
+    onConfigure() { setTimeout(() => this.setActive(this.properties.active), 60); }
+  }
+  FlarecoreStudio.title = "Flarecore Studio";
+  FlarecoreStudio.category = "flare";
+  LiteGraph.registerNodeType("FlarecoreStudioSwitch", FlarecoreStudio);
+}
+
 /* -------------------------------------------------------------- extension */
 
 app.registerExtension({
   name: "flarecore.ui",
+  registerCustomNodes(app) {
+    registerStudioSwitch(app);
+  },
   async beforeRegisterNodeDef(nodeType, nodeData) {
+    if (nodeData.name === "FlareElementPrompts") {
+      setupForgePanel(nodeType);
+      return;
+    }
     if (nodeData.name !== "FlareRender") return;
     injectCSS();
 

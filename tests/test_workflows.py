@@ -116,6 +116,8 @@ def test_workflow_presets_are_valid(path):
 
 def test_workflows_exist_and_are_registered():
     found = {p.stem for p in workflows()}
-    assert {"flarecore_flare_lab", "flarecore_element_forge"} <= found
+    # the studio hosts all three benches behind its switch; the trigger lab
+    # stays separate as the no-assets rule-animation demo
+    assert {"flarecore_studio", "flarecore_trigger_lab"} <= found
     # the directory name ComfyUI scans for custom-node templates
     assert WORKFLOW_DIR.name == "example_workflows"

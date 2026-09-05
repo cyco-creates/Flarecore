@@ -55,6 +55,12 @@ def register_routes() -> bool:
     async def flarecore_elements(request):
         return web.json_response({"elements": list_elements()})
 
+    @routes.get("/flarecore/prompt_bank")
+    async def flarecore_prompt_bank(request):
+        # the forge panel's category/element dropdowns and editable prompt
+        from .elements_lab import _load_prompt_bank
+        return web.json_response({"bank": _load_prompt_bank()})
+
     @routes.get("/flarecore/element/{ref:.*}")
     async def flarecore_element(request):
         """Serve one library texture so the editor gallery can show thumbnails."""

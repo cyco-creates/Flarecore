@@ -176,24 +176,29 @@ The parts that make flares hold together across frames:
 - **FlareDepthAdapter**'s `temporal_smooth` stills per-frame depth-model
   shimmer (zero-phase along the batch); keep `normalize` on `per_batch`.
 
-The `flarecore_video_lab` workflow wires the whole chain from Load Video to
-two rendered videos (composite and flare pass).
+The studio's video bench wires the whole chain from Load Video to two
+rendered videos (composite and flare pass).
 
 ## Custom elements (element forge)
 
 Shipped workflows (ComfyUI → Workflow → Browse Templates → flarecore):
 
-- **flarecore_flare_lab** — the full playground: scene, depth occlusion,
-  editor, and all outputs.
-- **flarecore_video_lab** — video in, tracked/occluded flare video out, with
-  the flare reacting to the light's travel (triggers, flicker, edge fade).
-  Tracking, keyframes and manual placement are all wired; the Lights Switch
-  picks one.
+- **flarecore_studio** — the whole pack in one graph: three benches (element
+  forge, flare lab, video lab) side by side, and a **Flarecore Studio**
+  switch on the left. Click a bench and the other two grey out and mute, so
+  Queue only ever runs the one you are working in.
 - **flarecore_trigger_lab** — rule-based animation with nothing to load:
   a keyframed light sweeps across a dark plate and the Trigger Showcase
   preset lights up on the border, at the centre, and near the light. Queue it
   and watch; then twirl a red-edged row open and preview its region.
-- **flarecore_element_forge** — generate custom element textures with your
+
+The forge bench's prompt node carries its own panel: pick a **category**,
+then an **element**, and its bank prompt appears in an editable box — what
+you see is exactly what queues. The **extra style** suggestion is appended
+only while its toggle is on. The old raw widgets still exist underneath and
+still drive everything, so saved workflows and API use are unchanged.
+
+- The forge itself — generate custom element textures with your
   local image model (wired for Krea2), condition them, and file them in the
   library at 2K with a black margin so nothing ever crops. Pick a prompt from
   the bank, queue, then click any element's name in the editor to swap in
