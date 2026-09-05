@@ -115,7 +115,9 @@ const POSITION_MODES = [
 
 const MODE_HINT = {
   manual: "drag the light and the anchor on the picker above.",
-  detect: "the brightest spot in each frame, judged on its own.",
+  detect: "the brightest REGION in each frame, judged on its own. Every "
+    + "frame is decided independently, so on video the light can still hop "
+    + "between two rival sources — use track for a clip.",
   detect_with_manual_offset:
     "detection, shifted by how far the picker's light sits from centre.",
   track: "detected once, then followed. Max jump is how far the light may "
