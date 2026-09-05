@@ -290,3 +290,11 @@ class TestTriggerLightModeAndRotation:
                     "outer": outer}
             got = trigger_factor(trig, x, y, A, lx, ly)
             assert got == pytest.approx(expected, abs=1e-6), (mode, falloff, x, y)
+
+    def test_solo_on_a_disabled_element_renders_nothing(self):
+        # solo means "only the soloed ones" even when the soloed one is off —
+        # the alternative quietly hands the frame back to everything else
+        p = {"schema_version": 1, "elements": [
+            glow(offset=0.0, enabled=False, solo=True),
+            glow(offset=1.5)]}
+        assert render(p, [{"x": -0.5, "y": 0.0}]).sum() == 0.0

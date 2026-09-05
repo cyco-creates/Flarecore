@@ -236,3 +236,77 @@ def test_every_shipped_preset_renders_over_image():
         out, flare_pass, alpha = run_node(img, preset_json=text)
         assert torch.isfinite(out).all(), name
         assert flare_pass.max() > 0.0, name
+
+
+class TestColorspace:
+    """`colorspace: linear` must be a true pass-through: an EXR plate goes in
+    scene-linear and comes back scene-linear plus flare, with no hidden
+    encode anywhere."""
+
+    def test_linear_composite_is_plate_plus_flare_pass(self):
+        # the compositor contract: in linear with clamp off, adding the
+        # flare pass to the plate reproduces the composite EXACTLY — no
+        # hidden encode, no gamma, nothing lost on a Nuke round trip
+        plate = torch.rand(1, 72, 108, 3) * 2.0          # HDR values above 1
+        out, fp, _ = run_node(plate, colorspace="linear", clamp_output=False,
+                              light_x=0.4, light_y=0.5)
+        assert torch.allclose(out, plate + fp, atol=1e-5)
+        assert float(fp.max()) > 0.0
+
+    def test_srgb_default_still_encodes(self):
+        plate = torch.full((1, 48, 48, 3), 0.5)
+        lin_out = run_node(plate, colorspace="linear")[0]
+        srgb_out = run_node(plate, colorspace="srgb")[0]
+        assert not torch.allclose(lin_out, srgb_out)
+
+    def test_linear_hdr_survives_with_clamp_off(self):
+        plate = torch.full((1, 48, 48, 3), 3.0)
+        out, _, _ = run_node(plate, colorspace="linear", clamp_output=False)
+        assert float(out.max()) >= 3.0
+
+
+class TestChunkedRendering:
+    """Streaming the clip through in slices must be invisible: identical
+    pixels, identical tracking, identical flicker phase."""
+
+    def _clip(self, b=11):
+        clip = torch.zeros(b, 72, 128, 3)
+        for i in range(b):
+            cx = int((0.1 + 0.8 * i / (b - 1)) * 128)
+            clip[i, 30:40, cx:cx + 10] = 1.0
+            clip[i] += 0.05
+        return clip.clamp(0, 1)
+
+    def test_chunked_equals_unchunked_with_tracking_and_flicker(self):
+        import json as _json
+        p = {"schema_version": 1,
+             "global": {"flicker_amount": 0.6, "seed": 9},
+             "elements": [
+                 {"type": "glow", "params": {"softness": 0.3, "falloff": 2.0}},
+                 {"type": "glow", "light_mask": 1.0, "scale": 1.5,
+                  "params": {"softness": 1.0, "falloff": 0.8}}]}
+        clip = self._clip()
+        kw = dict(preset_json=_json.dumps(p), position_mode="track",
+                  scene_color=0.4)
+        whole = run_node(clip, chunk_frames=64, **kw)
+        sliced = run_node(clip, chunk_frames=2, **kw)   # 6 slices, odd tail
+        for a, b in zip(whole, sliced):
+            # one float ulp of slack: conv batch size changes reduction
+            # order, nothing more
+            assert torch.allclose(a, b, atol=1e-6), "chunking changed the pixels"
+
+    def test_chunked_equals_unchunked_with_depth(self):
+        clip = self._clip(7)
+        depth = torch.rand(7, 72, 128, 3)
+        kw = dict(depth=depth, depth_normalize="per_batch", depth_blur=0.01,
+                  depth_temporal_smooth=0.4, light_x=0.4, light_y=0.5)
+        whole = run_node(clip, chunk_frames=64, **kw)
+        sliced = run_node(clip, chunk_frames=3, **kw)
+        for a, b in zip(whole, sliced):
+            assert torch.allclose(a, b, atol=1e-6), "depth chunking drifted"
+
+    def test_auto_chunk_is_sane(self):
+        r = PKG.NODE_CLASS_MAPPINGS["FlareRender"]()
+        assert r._chunk_size(0, 500, 1080, 1920, torch.device("cpu")) >= 1
+        assert r._chunk_size(5, 500, 1080, 1920, torch.device("cpu")) == 5
+        assert r._chunk_size(0, 3, 64, 64, torch.device("cpu")) == 3

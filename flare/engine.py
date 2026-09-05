@@ -374,8 +374,11 @@ def render_stack(preset, lights, height, width, device, dtype,
     enabled = [(idx, elem) for idx, elem in enumerate(preset["elements"])
                if elem["enabled"]]
     # solo: while any element is soloed only the soloed ones render (a
-    # non-destructive way to isolate a layer while tuning it)
-    if any(e.get("solo") for _, e in enabled):
+    # non-destructive way to isolate a layer while tuning it). The scan runs
+    # over ALL elements, not just enabled ones: a soloed element that is
+    # also disabled must yield an empty render, not quietly hand the frame
+    # back to everything else.
+    if any(e.get("solo") for e in preset["elements"]):
         enabled = [(i, e) for i, e in enabled if e.get("solo")]
     axis_elems = [(i, e) for i, e in enabled if not e.get("screen_space")]
     screen_elems = [(i, e) for i, e in enabled if e.get("screen_space")]
@@ -461,7 +464,8 @@ def chromatic_fringe(rgb: torch.Tensor, amount: float) -> torch.Tensor:
 
 
 def render_batch(preset, lights_per_frame, height, width, device, dtype,
-                 extra_seed=0, intensity=1.0, scale=1.0, scene_masks=None):
+                 extra_seed=0, intensity=1.0, scale=1.0, scene_masks=None,
+                 frame_offset=0):
     """Render a batch: lights_per_frame is a list (length B) of light lists.
 
     Preallocates the (B, height, width, 3) result and renders every frame
@@ -477,7 +481,7 @@ def render_batch(preset, lights_per_frame, height, width, device, dtype,
                      extra_seed=extra_seed, intensity=intensity, scale=scale,
                      grid=grid, out=out[i],
                      scene_mask=None if scene_masks is None else scene_masks[i],
-                     frame=i)
+                     frame=frame_offset + i)
     return out
 
 

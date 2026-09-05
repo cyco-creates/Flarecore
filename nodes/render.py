@@ -140,6 +140,21 @@ class FlareRender:
                                "means the dirt only shows in a tight pool "
                                "around the source.",
                 }),
+                "colorspace": (["srgb", "linear"], {
+                    "tooltip": "what the incoming pixels are. srgb: ordinary "
+                               "images and video (decoded to linear inside, "
+                               "re-encoded on output). linear: footage that "
+                               "is already scene-linear — EXR plates, render "
+                               "passes — passed through untouched, so a "
+                               "Nuke/Resolve round trip stays correct.",
+                }),
+                "chunk_frames": ("INT", {
+                    "default": 0, "min": 0, "max": 512,
+                    "tooltip": "frames rendered per GPU slice. 0 sizes the "
+                               "slice from free VRAM, so a long clip streams "
+                               "through instead of loading whole onto the "
+                               "card — results are identical either way.",
+                }),
             },
             "optional": {
                 "depth": ("IMAGE",),
@@ -157,7 +172,7 @@ class FlareRender:
                scene_color=0.0, track_smoothing=0.6, track_max_jump=0.06,
                depth_normalize="as_is", depth_blur=0.0,
                depth_temporal_smooth=0.0, light_path="", mask_falloff=0.35,
-               depth=None, lights=None):
+               colorspace="srgb", chunk_frames=0, depth=None, lights=None):
         preset = load_preset(preset_json)
 
         # ComfyUI passes IMAGE tensors on the CPU regardless of where they
@@ -169,10 +184,24 @@ class FlareRender:
         dtype = image.dtype if image.dtype.is_floating_point else torch.float32
         resolve_preset_textures(preset, device=device, dtype=dtype)
 
-        rgb = image[..., :3].to(device=device, dtype=dtype)
-        batch, height, width, _ = rgb.shape
+        batch, height, width = image.shape[0], image.shape[1], image.shape[2]
 
-        image_linear = srgb_to_linear(rgb)
+        # The engine always works in linear light; `colorspace` says whether
+        # the pixels arrive encoded. Linear plates (EXR, render passes) skip
+        # both the decode here and the encode at the end.
+        is_linear = colorspace == "linear"
+
+        # A whole clip does not fit on the card: the working set peaked at
+        # 24.5 GB for 96 frames of 1080p when the batch flowed through in
+        # one piece, which kills 300-frame clips on ANY card. Frames stream
+        # through in slices instead; everything that needs full-clip context
+        # (tracking, occlusion smoothing, temporal depth) works on small
+        # per-frame values that live on the CPU.
+        chunk = self._chunk_size(chunk_frames, batch, height, width, device)
+
+        def linear_chunk(start, stop):
+            rgb = image[start:stop, ..., :3].to(device=device, dtype=dtype)
+            return rgb if is_linear else srgb_to_linear(rgb)
 
         if lights is not None:
             light_source = "lights input"
@@ -180,36 +209,50 @@ class FlareRender:
         else:
             light_source = position_mode
             lights_per_frame = self._resolve_lights(
-                image_linear, position_mode, light_x, light_y,
+                linear_chunk, batch, chunk, position_mode, light_x, light_y,
                 detect_threshold, detect_max_lights,
                 smoothing=track_smoothing, max_jump=track_max_jump,
                 light_path=light_path,
             )
 
         if depth is not None:
-            depth_maps = depth[..., :3].to(device=device, dtype=dtype).mean(dim=-1)  # (Bd, H, W)
-            # Condition the map here so a raw depth-model output can be wired
-            # straight in: normalise over the batch (per-frame normalisation
-            # makes a static object breathe as other content enters shot),
-            # apply the stated near/far convention, soften edges, and still
-            # per-frame shimmer. Flare Depth Adapter still exists for finer
-            # control (level remap, per-frame modes).
-            depth_maps = condition_depth(
-                depth_maps,
-                normalize="none" if depth_normalize == "as_is" else depth_normalize,
-                invert=invert_depth, blur=depth_blur)
-            if depth_temporal_smooth > 0.0 and depth_maps.shape[0] > 1:
-                depth_maps = temporal_smooth_depth(depth_maps,
-                                                   depth_temporal_smooth)
-            bd = depth_maps.shape[0]
+            bd = depth.shape[0]
             if 1 < bd < batch:
                 raise ValueError(
                     f"depth batch ({bd}) is shorter than the image batch "
                     f"({batch}); pass one depth map to reuse it for every "
                     f"frame, or one per frame"
                 )
+            # Conditioned per slice on the device, then parked on the CPU:
+            # occlusion only samples a handful of points per light, and the
+            # temporal smooth is a cheap EMA, so neither needs the GPU. The
+            # per-batch range is gathered first so slicing cannot change
+            # what "the batch's min and max" means.
+            norm = "none" if depth_normalize == "as_is" else depth_normalize
+            lo = hi = None
+            if norm == "per_batch":
+                lo = torch.tensor(float("inf"))
+                hi = torch.tensor(float("-inf"))
+                for s in range(0, bd, chunk):
+                    dm = depth[s:s + chunk, ..., :3].to(device=device,
+                                                        dtype=dtype).mean(dim=-1)
+                    lo = torch.minimum(lo, dm.amin().cpu())
+                    hi = torch.maximum(hi, dm.amax().cpu())
+            depth_cpu = torch.empty(bd, height, width, dtype=dtype)
+            for s in range(0, bd, chunk):
+                dm = depth[s:s + chunk, ..., :3].to(device=device,
+                                                    dtype=dtype).mean(dim=-1)
+                if norm == "per_batch":
+                    span = (hi - lo).clamp(min=1e-6).to(dm.device, dm.dtype)
+                    dm = ((dm - lo.to(dm.device, dm.dtype)) / span).clamp(0.0, 1.0)
+                dm = condition_depth(
+                    dm, normalize="per_frame" if norm == "per_frame" else "none",
+                    invert=invert_depth, blur=depth_blur)
+                depth_cpu[s:s + chunk] = dm.to("cpu")
+            if depth_temporal_smooth > 0.0 and bd > 1:
+                depth_cpu = temporal_smooth_depth(depth_cpu, depth_temporal_smooth)
             for i, frame_lights in enumerate(lights_per_frame):
-                dmap = depth_maps[0 if bd == 1 else i]
+                dmap = depth_cpu[0 if bd == 1 else i]
                 for light in frame_lights:
                     light["occlusion"] = occlusion_factor(
                         dmap, light["u"], light["v"],
@@ -234,59 +277,79 @@ class FlareRender:
                     ax, ay = default_anchor
                 entry = {
                     "x": x, "y": y, "ax": ax, "ay": ay,
+                    "u": light["u"], "v": light["v"],
                     "brightness": light.get("brightness", 1.0),
                     "occlusion": light.get("occlusion", 0.0),
                     # tracked lights keep their id so flicker stays per-lamp
                     "index": int(light.get("tid", k)),
                 }
-                if scene_color > 0.0:
-                    entry["color"] = _scene_light_color(
-                        image_linear[fi], light["u"], light["v"], scene_color)
                 frame.append(entry)
             engine_lights.append(frame)
 
-        # Elements with light_mask appear where the light is: the mask is the
-        # scene's linear luminance combined with a radial falloff around each
-        # light (dirt on a lens is lit by the source itself, even over a
-        # black plate). Only built when the preset uses it.
-        scene_masks = None
-        if any(e.get("light_mask", 0.0) > 0.0 for e in preset["elements"]):
-            mask = linear_luminance(image_linear).clamp(0.0, 1.0)  # (B, H, W)
-            yy = torch.linspace(0.0, 1.0, height, device=device, dtype=dtype)
-            xx = torch.linspace(0.0, 1.0, width, device=device, dtype=dtype)
-            gy, gx = torch.meshgrid(yy, xx, indexing="ij")
-            aspect_px = width / height
-            falloff_r = max(mask_falloff, 1e-3)  # of frame height
-            for i, frame_lights in enumerate(lights_per_frame):
-                for light in frame_lights:
-                    w = light.get("brightness", 1.0) * \
-                        (1.0 - light.get("occlusion", 0.0))
-                    if w <= 0.0:
-                        continue
-                    d2 = ((gx - light["u"]) * aspect_px) ** 2 + \
-                         (gy - light["v"]) ** 2
-                    glowm = torch.exp(-d2 / (2.0 * falloff_r ** 2)) * min(w, 1.0)
-                    mask[i] = torch.maximum(mask[i], glowm)
-            scene_masks = blur_depth(mask, 0.02)
+        needs_mask = any(e.get("light_mask", 0.0) > 0.0
+                         for e in preset["elements"])
 
-        flare_linear = render_batch(
-            preset, engine_lights, height, width, device, dtype,
-            extra_seed=seed, intensity=intensity, scale=scale,
-            scene_masks=scene_masks,
-        )
+        # Results accumulate where the input lives (CPU for ComfyUI), so the
+        # card only ever holds one slice of the clip.
+        out_full = torch.empty(batch, height, width, 3, dtype=dtype, device=home)
+        pass_full = torch.empty_like(out_full)
+        alpha_full = torch.empty(batch, height, width, dtype=dtype, device=home)
 
-        out_linear = composite(image_linear, flare_linear, blend_mode)
-        out = linear_to_srgb(out_linear)
-        flare_pass = linear_to_srgb(flare_linear)
-        if clamp_output:
-            out = out.clamp_(0.0, 1.0)
-            flare_pass = flare_pass.clamp_(0.0, 1.0)
+        for s in range(0, batch, chunk):
+            e = min(s + chunk, batch)
+            chunk_linear = linear_chunk(s, e)
+            chunk_lights = engine_lights[s:e]
 
-        flare_alpha = linear_luminance(flare_pass).clamp(0.0, 1.0)
+            if scene_color > 0.0:
+                for fi, frame_lights in enumerate(chunk_lights):
+                    for light in frame_lights:
+                        light["color"] = _scene_light_color(
+                            chunk_linear[fi], light["u"], light["v"],
+                            scene_color)
 
-        # back to where the input lives (CPU for ComfyUI) so downstream nodes
-        # see the device they expect
-        result = (out.to(home), flare_pass.to(home), flare_alpha.to(home))
+            # Elements with light_mask appear where the light is: scene
+            # luminance combined with a radial falloff around each light
+            # (dirt on a lens is lit by the source itself, even over a
+            # black plate). Only built when the preset uses it.
+            scene_masks = None
+            if needs_mask:
+                mask = linear_luminance(chunk_linear).clamp(0.0, 1.0)
+                yy = torch.linspace(0.0, 1.0, height, device=device, dtype=dtype)
+                xx = torch.linspace(0.0, 1.0, width, device=device, dtype=dtype)
+                gy, gx = torch.meshgrid(yy, xx, indexing="ij")
+                aspect_px = width / height
+                falloff_r = max(mask_falloff, 1e-3)  # of frame height
+                for i, frame_lights in enumerate(chunk_lights):
+                    for light in frame_lights:
+                        w = light.get("brightness", 1.0) * \
+                            (1.0 - light.get("occlusion", 0.0))
+                        if w <= 0.0:
+                            continue
+                        d2 = ((gx - light["u"]) * aspect_px) ** 2 + \
+                             (gy - light["v"]) ** 2
+                        glowm = torch.exp(-d2 / (2.0 * falloff_r ** 2)) * min(w, 1.0)
+                        mask[i] = torch.maximum(mask[i], glowm)
+                scene_masks = blur_depth(mask, 0.02)
+
+            flare_linear = render_batch(
+                preset, chunk_lights, height, width, device, dtype,
+                extra_seed=seed, intensity=intensity, scale=scale,
+                scene_masks=scene_masks, frame_offset=s,
+            )
+
+            out_linear = composite(chunk_linear, flare_linear, blend_mode)
+            out_c = out_linear if is_linear else linear_to_srgb(out_linear)
+            pass_c = flare_linear if is_linear else linear_to_srgb(flare_linear)
+            if clamp_output:
+                out_c = out_c.clamp_(0.0, 1.0)
+                pass_c = pass_c.clamp_(0.0, 1.0)
+            out_full[s:e] = out_c.to(home)
+            pass_full[s:e] = pass_c.to(home)
+            alpha_full[s:e] = linear_luminance(pass_c).clamp(0.0, 1.0).to(home)
+            del chunk_linear, flare_linear, out_linear, out_c, pass_c, scene_masks
+
+        result = (out_full, pass_full, alpha_full)
+        out = out_full
         if _folder_paths is None:
             return result
         # The picker backdrop is the COMPOSITE — the point of the panel is
@@ -298,6 +361,23 @@ class FlareRender:
         return {"ui": {"fc_preview": _save_preview(out[0])["images"],
                        "fc_light_src": [light_source]},
                 "result": result}
+
+    def _chunk_size(self, requested, batch, height, width, device):
+        """Frames per GPU slice. Explicit request wins; 0 sizes the slice so
+        the working set (measured near 10x the frames in flight, blur
+        temporaries included) stays a modest share of free VRAM."""
+        if requested and int(requested) > 0:
+            return max(1, min(int(requested), batch))
+        frame_bytes = height * width * 3 * 4
+        if getattr(device, "type", str(device)) == "cuda":
+            try:
+                free, _ = torch.cuda.mem_get_info(device)
+                budget = min(free * 0.5, 6e9)
+            except Exception:
+                budget = 4e9
+        else:
+            budget = 8e9
+        return max(1, min(batch, int(budget // (frame_bytes * 10)) or 1))
 
     def _smooth_occlusion(self, lights_per_frame, amount):
         """Low-pass each tracked light's occlusion series along the batch.
@@ -341,10 +421,12 @@ class FlareRender:
         return [[dict(light) for light in lights[0 if n == 1 else i]]
                 for i in range(batch)]
 
-    def _resolve_lights(self, image_linear, position_mode, light_x, light_y,
-                        detect_threshold, detect_max_lights,
+    def _resolve_lights(self, linear_chunk, batch, chunk, position_mode,
+                        light_x, light_y, detect_threshold, detect_max_lights,
                         smoothing=0.6, max_jump=0.06, light_path=""):
-        batch = image_linear.shape[0]
+        """linear_chunk(start, stop) hands back that slice of the clip in
+        linear light on the compute device — pixels are only touched a slice
+        at a time, matching the streamed render pass."""
         if position_mode == "manual":
             return [[{"u": light_x, "v": light_y, "brightness": 1.0}]
                     for _ in range(batch)]
@@ -359,26 +441,34 @@ class FlareRender:
             return [[{"u": u, "v": v, "brightness": 1.0}]
                     for u, v in sample_path(points, batch)]
 
+        def detect_chunked(threshold, pool):
+            dets = []
+            for s in range(0, batch, chunk):
+                dets += detect_lights(linear_chunk(s, min(s + chunk, batch)),
+                                      threshold=threshold, max_lights=pool)
+            return dets
+
         if position_mode in ("track", "track_dots"):
             threshold = detect_threshold
             if position_mode == "track_dots":
                 # A matte's dots are whatever white the render happened to
                 # produce (this one peaks at 0.92 sRGB, not 1.0) over a
                 # not-quite-black ground, so an absolute threshold is the
-                # wrong tool: take it relative to the brightest thing present.
-                peak = float(image_linear.amax())
+                # wrong tool: take it relative to the brightest thing in the
+                # CLIP — gathered across slices first, so slicing cannot
+                # change what "the brightest" means.
+                peak = 0.0
+                for s in range(0, batch, chunk):
+                    peak = max(peak, float(linear_chunk(s, min(s + chunk, batch)).amax()))
                 threshold = max(peak * max(detect_threshold, 0.05), 1e-4)
             # more candidates than flares: association picks the nearest, so
             # spares keep a followed light fed through a busy frame
             pool = max(detect_max_lights * 8, 12)
-            raw = detect_lights(image_linear, threshold=threshold,
-                                max_lights=pool)
+            raw = detect_chunked(threshold, pool)
             return track_lights(raw, smoothing=smoothing, max_jump=max_jump,
                                 hold=3, fade=4, max_tracks=detect_max_lights)
 
-        detected = detect_lights(
-            image_linear, threshold=detect_threshold, max_lights=detect_max_lights,
-        )
+        detected = detect_chunked(detect_threshold, detect_max_lights)
         if position_mode == "detect":
             return detected
         if position_mode == "detect_with_manual_offset":

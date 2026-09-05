@@ -908,7 +908,8 @@ class TestDotMatte:
             lambda t: (0.50, 0.20 + 0.6 * t),
         ])
         lights = PKG.NODE_CLASS_MAPPINGS["FlareRender"]()._resolve_lights(
-            srgb_to_linear(clip), "track_dots", 0.5, 0.5, 0.5, 6)
+            (lambda _t: (lambda a, b: _t[a:b]))(srgb_to_linear(clip)),
+            clip.shape[0], 16, "track_dots", 0.5, 0.5, 0.5, 6)
         assert all(len(f) == 3 for f in lights)
         assert {l["tid"] for f in lights for l in f} == {0, 1, 2}
 
@@ -918,7 +919,8 @@ class TestDotMatte:
         clip = self._dots([lambda t: (0.3 + 0.4 * t, 0.5)], level=0.92)
         clip = clip + 0.07
         lights = PKG.NODE_CLASS_MAPPINGS["FlareRender"]()._resolve_lights(
-            srgb_to_linear(clip.clamp(0, 1)), "track_dots", 0.5, 0.5, 0.5, 4)
+            (lambda _t: (lambda a, b: _t[a:b]))(srgb_to_linear(clip.clamp(0, 1))),
+            clip.shape[0], 16, "track_dots", 0.5, 0.5, 0.5, 4)
         assert all(len(f) == 1 for f in lights)
         us = [f[0]["u"] for f in lights]
         assert us[0] < 0.4 and us[-1] > 0.6
@@ -928,5 +930,6 @@ class TestDotMatte:
             lambda t: (0.2, 0.3), lambda t: (0.5, 0.3), lambda t: (0.8, 0.3),
         ])
         lights = PKG.NODE_CLASS_MAPPINGS["FlareRender"]()._resolve_lights(
-            srgb_to_linear(clip), "track_dots", 0.5, 0.5, 0.5, 2)
+            (lambda _t: (lambda a, b: _t[a:b]))(srgb_to_linear(clip)),
+            clip.shape[0], 16, "track_dots", 0.5, 0.5, 0.5, 2)
         assert max(len(f) for f in lights) == 2

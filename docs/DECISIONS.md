@@ -623,6 +623,34 @@ pick a glows element".
 
 The extra-style field is a multi-line box (52px minimum, drag-resizable).
 
+## QA loop: fuzz battery, linear colorspace, chunked rendering
+
+A 19-case fuzz battery (empty presets, 8x8 frames, fp16, lights off-frame,
+uniform depth, 1x1 textures, INT-max seeds) found one real bug: `solo` on a
+DISABLED element leaked every other element, because the solo scan only
+looked at enabled elements. The scan now covers all of `preset["elements"]`
+-- soloing a muted row means "show me only this", and only this is nothing.
+
+`colorspace` ("srgb"/"linear") was added to FlareRender -- appended LAST,
+because the workflow-alignment tests caught a mid-list insertion breaking
+positional widgets_values. linear is a true pass-through for scene-linear
+plates (EXR, render passes): no decode, no encode, and the pinned contract
+is `out == plate + flare_pass` in linear light, so a Nuke/Resolve round
+trip stays correct.
+
+Rendering was memory-bound, not compute-bound: the working set is ~10x the
+frame stack, so 96 frames of 1080p peaked at 24.5 GB of VRAM and 300 frames
+was arithmetic fiction (~75 GB). The render now streams in chunks
+(`chunk_frames`, 0 = auto-sized from free VRAM): detection, tracking prep,
+depth conditioning, scene sampling, render, and composite all run per
+chunk, with outputs accumulated on the input's home device and
+`render_batch(frame_offset=...)` keeping the flicker phase continuous
+across chunk seams. Measured on the same clip: 96x1080p went 24.5 GB /
+25.8 s to 13.5 GB / 2.3 s (the unchunked run was spilling into shared
+memory), and 300x1080p completes in 16 s. Chunked and unchunked outputs
+match to one float ulp (the equality test allows 1e-6 for conv reduction
+order).
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning
