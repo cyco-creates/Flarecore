@@ -228,6 +228,13 @@ class FlareRender:
                                "passes — passed through untouched, so a "
                                "Nuke/Resolve round trip stays correct.",
                 }),
+                "chunk_frames": ("INT", {
+                    "default": 0, "min": 0, "max": 512,
+                    "tooltip": "frames rendered per GPU slice. 0 sizes the "
+                               "slice from free VRAM, so a long clip streams "
+                               "through instead of loading whole onto the "
+                               "card — results are identical either way.",
+                }),
                 "light_travel": ("FLOAT", {
                     "default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01,
                     "tooltip": "how much the light is allowed to move. 1 "
@@ -237,13 +244,6 @@ class FlareRender:
                                "it keeps the same path with the excursion "
                                "scaled down, so a source that should barely "
                                "drift can be calmed without losing its shape.",
-                }),
-                "chunk_frames": ("INT", {
-                    "default": 0, "min": 0, "max": 512,
-                    "tooltip": "frames rendered per GPU slice. 0 sizes the "
-                               "slice from free VRAM, so a long clip streams "
-                               "through instead of loading whole onto the "
-                               "card — results are identical either way.",
                 }),
             },
             "optional": {
