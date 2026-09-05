@@ -772,6 +772,15 @@ const CSS = `
 .fcore-col { display: flex; flex-direction: column; gap: 2px; flex: 1;
   min-width: 62px; }
 .fcore-col label { color: #7a7a86; font-size: 10px; text-align: center; }
+.fcore-info { display: inline-block; width: 11px; height: 11px; line-height: 10px;
+  margin-left: 4px; border-radius: 50%; border: 1px solid #5c5c68; color: #8d8d9b;
+  font: italic 8px/10px serif; text-align: center; cursor: help; vertical-align: middle;
+  opacity: 0.75; user-select: none; }
+.fcore-info:hover { opacity: 1; border-color: #e8a33d; color: #e8a33d; }
+.fcore-tip { position: fixed; z-index: 10000; max-width: 250px; background: #1c1c22;
+  color: #e6e6ee; border: 1px solid #3a3a46; border-radius: 6px; padding: 6px 9px;
+  font-size: 11px; line-height: 1.4; box-shadow: 0 4px 16px rgba(0,0,0,0.55);
+  pointer-events: none; text-align: left; }
 .fcore-col input[type=range] { width: 100%; height: 12px; accent-color: #e8a33d; }
 .fcore-col input[type=number] { width: 100%; background: #101014; color: #ddd;
   border: 1px solid #2b2b33; border-radius: 5px; font-size: 11px;
@@ -993,11 +1002,116 @@ function openGallery(files, { title = "Element library", selected = null,
 // slider + numeric box column, labelled above — the mockup's control unit.
 // The number box shows the TRUE value even when it exceeds the slider range
 // (e.g. an HDR intensity of 1.4 on a 0..1 slider).
-function sliderCol(label, value, [min, max, step], onChange) {
+// What a control does, in one breath, for the ones that are not obvious
+// from their name. Size and opacity need no explanation; where along the
+// flare axis "pos" puts an element does. Looked up by the control's label,
+// so every slider, checkbox and dropdown with a matching name gets an (i).
+const TIPS = {
+  // element row
+  "pos": "where along the flare axis this element sits: 0 is on the light, 1 is on the anchor, negative is behind the light. Ghosts usually spread between 0.2 and 1.5.",
+  "blur": "softens this element only.",
+  // light source
+  "threshold": "how bright a spot must be to count as a light, relative to the brightest pixel. Raise it when the flare latches onto bright sky or reflections.",
+  "dot threshold": "how bright a dot must be to count, relative to the brightest dot in the clip. Lower it if dots drop out.",
+  "max lights": "a CAP on how many flares may exist at once, not a target: a single sun with this at 3 still gives one flare.",
+  "max dots": "a cap on how many dots become flares.",
+  "smoothing": "irons out frame-to-frame jitter in the light's position. In lock mode it also trusts the smooth fitted path over the wobble; 1 follows the fit exactly.",
+  "max jump": "how far the light may travel between frames, as a fraction of frame height. Lower it if the flare wanders to nearby lights; raise it if the flare duplicates or drops out on fast moves.",
+  "travel": "how much the flare is allowed to move. 1 follows the tracked path exactly, 0 pins it in one spot for the whole clip.",
+  "feature px": "size of the patch being matched, in pixels. Big enough to hold something distinctive, small enough not to change shape as the shot moves.",
+  "search px": "how far from the predicted spot the tracker looks each frame. This is its speed limit: raise it for fast motion.",
+  // look
+  "master": "overall brightness of the whole flare.",
+  "aspect": "stretches every element horizontally: 1 is spherical, 1.3 to 2 reads as anamorphic.",
+  // element settings
+  "irregular": "seeded organic unevenness in the shape, so it stops looking computer-perfect.",
+  "light mask": "reveal this element only where the light is. Set it to 1 for lens dirt and bloom.",
+  "mask scene": "how much the scene's own bright areas reveal it, as opposed to the light's pool. 0 pins the reveal to the light and keeps a lens plate perfectly still; 1 lets a bright sky light it too.",
+  "mask floor": "hide the element wherever the light's pool is dimmer than this. Raise it until dirt disappears from the dark parts of frame.",
+  "dispersion": "chromatic spread: splits the element into a rainbow along the axis.",
+  "dispersion samples": "how many colour steps make up the rainbow; more is smoother and slower.",
+  "rotation": "turns the element. With auto-rotate on, this is added to the axis angle.",
+  "count": "repeats the element along the axis: a ghost chain.",
+  "spread": "how far apart the repeats sit along the axis.",
+  "count falloff": "how much dimmer each repeat is than the one before.",
+  "count scale step": "how much bigger (above 1) or smaller (below 1) each repeat is than the one before.",
+  "completion": "how much of the ring is drawn, in degrees. 360 is closed.",
+  "completion feather": "softens the two ends of an open ring.",
+  "stretch x": "squashes or stretches this element on its own horizontal axis.",
+  "stretch y": "squashes or stretches this element on its own vertical axis.",
+  "move x": "a lock: at 0 the element stops following the light horizontally and stays put while the flare travels.",
+  "move y": "a lock: at 0 the element stops following the light vertically and stays put while the flare travels.",
+  // shape parameters
+  "softness": "how gradually the glow fades from its centre.",
+  "falloff": "how quickly it dies away with distance.",
+  "blades": "number of iris blades, the polygon's sides.",
+  "edge softness": "softens the polygon's edge.",
+  "hollow": "carves out the middle, leaving a ring.",
+  "length": "how far it reaches, as a fraction of the frame.",
+  "thickness": "how wide it is.",
+  "radius": "how far from its centre the ring sits.",
+  "angular falloff": "fades the hoop around its circumference, away from the axis.",
+  "points": "number of rays.",
+  "length jitter": "random variation in ray length, so no two rays match.",
+  "size jitter": "random variation in orb size.",
+  "illumination": "how strongly the orbs light up as the light approaches them.",
+  // trigger rules
+  "inner": "inner edge of the trigger region, as a fraction of the frame. The effect ramps between inner and outer.",
+  "outer": "outer edge of the trigger region, as a fraction of the frame.",
+};
+const TRIGGER_TIPS = {
+  "brightness": "extra brightness added while triggered.",
+  "scale": "extra size added while triggered.",
+  "rotation": "extra rotation, in degrees, added while triggered.",
+};
+const DROPDOWN_TIPS = {
+  "mode": "what makes this element react: nothing, the light nearing the frame border, the light nearing frame centre, or the element's own distance to the light.",
+  "driven by": "whether the rule measures the light's position or this element's.",
+  "falloff": "the shape of the ramp between the region's inner and outer edge.",
+  "shape": "the outline used for each spot.",
+};
+const CHECK_TIPS = {
+  "auto-rotate": "add the flare axis angle to the element's rotation so it stays aligned as the light moves.",
+  "screen space (lens)": "lock the element to the lens instead of the flare axis: rendered once at frame centre, lit by the strongest light. For dirt and orbs.",
+  "fill frame (lens plate)": "map the texture across the whole frame at the frame's aspect: for dirt and droplet plates, not shapes on black.",
+};
+
+// A small (i) that shows its text on hover. The bubble is appended to the
+// body at a fixed position rather than inside the panel, because the panel
+// scrolls and clips: a tooltip that half-disappears is worse than none.
+function infoIcon(text) {
+  const i = document.createElement("span");
+  i.className = "fcore-info";
+  i.textContent = "i";
+  let tip = null;
+  const hide = () => { tip?.remove(); tip = null; };
+  const show = () => {
+    hide();
+    tip = document.createElement("div");
+    tip.className = "fcore-tip";
+    tip.textContent = text;
+    document.body.appendChild(tip);
+    const r = i.getBoundingClientRect();
+    const w = tip.offsetWidth || 250;
+    tip.style.left = `${Math.max(6, Math.min(r.left - 8, window.innerWidth - w - 8))}px`;
+    tip.style.top = `${r.bottom + 6}px`;
+  };
+  i.addEventListener("pointerenter", show);
+  i.addEventListener("pointerleave", hide);
+  i.addEventListener("pointerdown", (e) => { e.stopPropagation(); e.preventDefault(); });
+  return i;
+}
+function hideAllTips() {
+  document.querySelectorAll(".fcore-tip").forEach((t) => t.remove());
+}
+
+function sliderCol(label, value, [min, max, step], onChange, tip) {
   const wrap = document.createElement("div");
   wrap.className = "fcore-col";
   const lab = document.createElement("label");
   lab.textContent = label;
+  const text = tip === undefined ? TIPS[label] : tip;
+  if (text) lab.appendChild(infoIcon(text));
   const range = document.createElement("input");
   range.type = "range"; range.min = min; range.max = max; range.step = step;
   const real = Number.isFinite(Number(value)) ? Number(value) : min;
@@ -1289,6 +1403,7 @@ class FlareEditor {
   }
 
   build() {
+    hideAllTips();
     // Every edit rebuilds the list, which would otherwise throw the view back
     // to the top — press solo on the tenth element and you lose your place.
     // The scroller is .fcore-list; carry its offset across the rebuild.
@@ -1423,6 +1538,7 @@ class FlareEditor {
     gRow.className = "fcore-global";
     const gLab = document.createElement("label");
     gLab.textContent = "master";
+    gLab.appendChild(infoIcon(TIPS["master"]));
     const gRange = document.createElement("input");
     gRange.type = "range"; gRange.min = 0; gRange.max = 3; gRange.step = 0.01;
     gRange.value = g.intensity ?? 1;
@@ -1440,6 +1556,7 @@ class FlareEditor {
     });
     const aLab = document.createElement("label");
     aLab.textContent = "aspect";
+    aLab.appendChild(infoIcon(TIPS["aspect"]));
     const aRange = document.createElement("input");
     aRange.type = "range"; aRange.min = 0.25; aRange.max = 3; aRange.step = 0.01;
     aRange.value = g.aspect ?? 1;
@@ -1520,6 +1637,7 @@ class FlareEditor {
 
     const lab = document.createElement("label");
     lab.textContent = "light source";
+    lab.appendChild(infoIcon("what places the light. Each mode shows only its own controls, and the line beneath explains the one selected. For a clip, track or lock; for a still, manual or detect."));
     const sel = document.createElement("select");
     sel.className = "fcore-src-sel";
     for (const [value, text] of POSITION_MODES) {
@@ -1767,6 +1885,7 @@ class FlareEditor {
       wrap.className = "fcore-col";
       const l = document.createElement("label");
       l.textContent = label;
+      if (DROPDOWN_TIPS[label]) l.appendChild(infoIcon(DROPDOWN_TIPS[label]));
       const sel = document.createElement("select");
       for (const o of options) {
         const opt = document.createElement("option");
@@ -1791,6 +1910,7 @@ class FlareEditor {
       wrap.className = "fcore-col";
       const l = document.createElement("label");
       l.textContent = label;
+      if (CHECK_TIPS[label]) l.appendChild(infoIcon(CHECK_TIPS[label]));
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.checked = checked;
@@ -1880,7 +2000,8 @@ class FlareEditor {
       adv.appendChild(dropdown("falloff", trig.falloff, ["smooth", "linear", "exponential"],
         (v) => setTrig("falloff", v)));
       for (const [key, spec] of Object.entries(TRIGGER_SPECS)) {
-        adv.appendChild(sliderCol(key, trig[key], spec, (v) => setTrig(key, v)));
+        adv.appendChild(sliderCol(key, trig[key], spec, (v) => setTrig(key, v),
+          TRIGGER_TIPS[key] ?? TIPS[key] ?? null));
       }
       // preview: paint the trigger region on the picker. Only one element
       // previews at a time — arming another (or collapsing this row) clears it.

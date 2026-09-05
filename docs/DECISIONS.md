@@ -930,6 +930,49 @@ frame.
 A blown highlight still cannot be tracked, and should not be: there is no
 detail in it. The mode hint says to track a nearby edge instead.
 
+## Overnight QA round: what the stress battery found
+
+A 180-case battery -- every position mode against single frames, black and
+white clips, fp16, 8x8 frames, portrait, uneven chunking, linear colour,
+mismatched depth, travel, sixteen lights, threshold extremes and the lights
+input; plus determinism, tracker corners, lock corners, every element type
+at parameter extremes, every shipped preset in three modes, and every other
+node -- found no product defect. Every "failure" was validation rejecting
+bad input with a clear message. Performance: 5 to 8 ms per 720p frame in
+every mode on the default preset.
+
+Profiling the owner's ten-element preset (61 ms/frame at 720p) says the cost
+is elementwise field math per element INSTANCE -- a count-4 iris alone is
+19 ms -- not convolutions. The lever is evaluating each element only inside
+its bounding box rather than full-frame, a 2-3x win, and an engine change
+not made overnight without eyes on the output. It is the top item for next
+time.
+
+One real bug surfaced from a composition test the battery did not have:
+`travel` damped a keyframed ANCHOR toward the light's centre, so at 0 both
+points landed in one place and the flare axis collapsed. The anchor is now
+damped about its own mean, pinned by a test.
+
+light_depth's default moved from 0.0 to 0.1 for new nodes. At 0.0 a sun
+occludes itself against any normalised depth map; measured 7 fully dark
+frames of 60 against 1. Saved workflows keep their stored value; the
+shipped studio template carries the new one.
+
+## Tooltips, where a name is not enough
+
+The editor grew a lot of controls today, and "what is what" was the owner's
+first complaint. Controls whose name says it all -- size, opacity -- got
+nothing. Everything else got an (i) that explains the control in one breath
+on hover: where `pos` puts an element on the axis, why `max lights` is a
+cap and not a target, what `mask scene` at 0 buys you. Looked up by label,
+so it covers sliders, checkboxes and dropdowns in one place; the trigger
+rules share names with element sliders (rotation, brightness, scale) and
+carry their own text.
+
+The bubble is appended to the document body at a fixed position, not inside
+the panel: the panel scrolls and clips, and a tooltip that half-disappears
+is worse than none.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

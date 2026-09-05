@@ -91,24 +91,33 @@ def _damp_travel(lights_per_frame, amount):
     k = min(max(amount, 0.0), 1.0)
     # A light keeps its identity through "tid" when tracking assigned one,
     # and otherwise by its slot in the frame's list.
+    # The anchor is damped about ITS OWN mean, not the light's: pulled
+    # toward the light's centre, travel 0 would put both points in one
+    # place and collapse the flare axis to nothing.
     sums: dict = {}
     for frame in lights_per_frame:
         for slot, light in enumerate(frame):
             key = light.get("tid", slot)
-            u, v, n = sums.get(key, (0.0, 0.0, 0))
-            sums[key] = (u + light["u"], v + light["v"], n + 1)
-    centre = {key: (u / n, v / n) for key, (u, v, n) in sums.items() if n}
+            u, v, au, av, n, na = sums.get(key, (0.0, 0.0, 0.0, 0.0, 0, 0))
+            u += light["u"]; v += light["v"]; n += 1
+            if "au" in light and "av" in light:
+                au += light["au"]; av += light["av"]; na += 1
+            sums[key] = (u, v, au, av, n, na)
+    centre = {key: ((u / n, v / n), ((au / na, av / na) if na else None))
+              for key, (u, v, au, av, n, na) in sums.items() if n}
     out = []
     for frame in lights_per_frame:
         damped = []
         for slot, light in enumerate(frame):
-            cu, cv = centre.get(light.get("tid", slot), (light["u"], light["v"]))
+            (cu, cv), anchor_c = centre.get(
+                light.get("tid", slot), ((light["u"], light["v"]), None))
             moved = dict(light)
             moved["u"] = cu + (light["u"] - cu) * k
             moved["v"] = cv + (light["v"] - cv) * k
-            if "au" in light and "av" in light:
-                moved["au"] = cu + (light["au"] - cu) * k
-                moved["av"] = cv + (light["av"] - cv) * k
+            if "au" in light and "av" in light and anchor_c is not None:
+                acu, acv = anchor_c
+                moved["au"] = acu + (light["au"] - acu) * k
+                moved["av"] = acv + (light["av"] - acv) * k
             damped.append(moved)
         out.append(damped)
     return out
@@ -154,7 +163,7 @@ class FlareRender:
                 "detect_max_lights": ("INT", {"default": 1, "min": 1, "max": 16}),
                 "occlusion_radius": ("FLOAT", {"default": 0.02, "min": 0.001, "max": 0.5, "step": 0.001}),
                 "light_depth": ("FLOAT", {
-                    "default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "default": 0.1, "min": 0.0, "max": 1.0, "step": 0.01,
                     "tooltip": "the light's own depth on the map's scale; 0 "
                                "means at infinity. An occluder counts only if "
                                "it reads at least 0.1 nearer than this, so on "

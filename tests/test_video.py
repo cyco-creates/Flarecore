@@ -1093,6 +1093,17 @@ class TestLightTravel:
         span = lambda p: max(x for x, _ in p) - min(x for x, _ in p)
         assert 0.3 < span(half) / span(full) < 0.7,             f"{span(half):.3f} of {span(full):.3f}"
 
+    def test_the_anchor_keeps_its_own_centre(self):
+        """Damping the anchor toward the LIGHT's centre put both points in one
+        place at travel 0 and collapsed the flare axis to nothing."""
+        _damp_travel = PKG.nodes.render._damp_travel
+        frames = [[{"u": 0.2 + 0.1 * i, "v": 0.5,
+                    "au": 0.6 + 0.1 * i, "av": 0.2, "tid": 0}] for i in range(5)]
+        d = _damp_travel(frames, 0.0)
+        light = (d[0][0]["u"], d[0][0]["v"]); anchor = (d[0][0]["au"], d[0][0]["av"])
+        assert abs(light[0] - 0.4) < 1e-9 and abs(anchor[0] - 0.8) < 1e-9
+        assert light != anchor, "the axis collapsed"
+
     def test_each_dot_is_damped_about_its_own_centre(self):
         """Several dots must not collapse onto one shared point at travel 0."""
         _damp_travel = PKG.nodes.render._damp_travel

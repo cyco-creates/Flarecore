@@ -93,7 +93,14 @@ Elements can react to where the light is without keyframes:
   with `frame = wide_16_9` (no crop, no centring, no feather) and give the
   element `fill_frame`, which spans the footage's own aspect whatever that is.
   They are revealed only where the light reaches — `light_mask` on the element
-  decides how much, `mask_falloff` on the node decides how far.
+  decides how much, `mask_falloff` on the node decides how far. Two more
+  per-element controls finish the job: `mask_floor` hides the element wherever
+  the light's pool is dimmer than it, so dirt actually disappears in the dark
+  parts of frame (the mask is max(scene, glow) and neither term ever reaches
+  zero on its own), and `mask_scene` decides how much the scene's own bright
+  areas reveal it as opposed to the light — at 0 a lens plate is revealed by
+  the source alone and holds perfectly still instead of crawling with whatever
+  drives past. Picking a lens_dirt texture from the library sets all of this.
 - `scene_color` on FlareRender tints each light's flare by the plate colour
   at the source, so a sunset sun flares warm and a sodium lamp flares orange.
 - Thin rays and rings are anti-aliased at sub-pixel widths with their energy
@@ -121,6 +128,25 @@ Combine. `position_mode` chooses:
   click to drop a point, drag to move one, shift-click to remove. The light
   travels the whole path across the clip, so put points closer together where
   you want it to slow down. The anchor still drags as usual.
+- `lock` — **solve the whole clip at once**. Reads every frame before deciding
+  and picks the light path with the least total travel, so a sun cannot hop to
+  a rival bright region for a few frames and come back — the failure per-frame
+  detection cannot see, because it only ever looks at one frame. `smoothing`
+  then trusts a smooth fitted path over the remaining wobble; at 1 the light
+  follows the fit exactly. Measured on a driving shot with a clipped sky:
+  frames on the wrong side of frame 5 → 0, mean travel 0.26 → 0.007.
+- `point_track` — **follow picture, not brightness**, the way a compositor's
+  point tracker does. Click a feature with contrast on the picker and the
+  light rides it; click a second and it becomes the anchor, so the flare axis
+  takes the pair's rotation and scale too. Matching is normalized
+  cross-correlation, so an exposure ramp or a light blowing out does not
+  move it. A blown highlight has no detail to match — track a nearby edge
+  instead. `feature px` is the patch size, `search px` the speed limit.
+
+Every tracked mode has a **`travel`** slider: 1 follows the tracked path,
+0 pins the flare in one spot for the whole clip, and anything between keeps
+the path with its excursion scaled down. Each light is damped about its own
+centre, so several dots on a matte do not collapse together.
 
 The mode lives in a **light source** dropdown at the top of the editor
 panel, and each mode shows only its own controls — thresholds and tracking
@@ -226,9 +252,15 @@ adapter is optional but makes any source behave predictably.
 Two controls decide the result:
 
 - `light_depth` (on FlareRender) is where the light sits on the depth scale:
-  `0.0` = infinitely far, which is right for a sun or sky light and is the
-  default. Raise it for a light that sits mid-scene, so only things in front
-  of it block the flare.
+  `0.0` = infinitely far. An occluder counts if it reads 0.1 nearer than
+  this, and on a normalised map the sky is never exactly 0 — so at `0.0` **the
+  sun starts occluding itself** and the flare blinks out in clear sky. On a
+  sun-through-trees shot the flare went fully dark in 7 frames of 60 at 0.0
+  and in 1 at 0.1, which is why the default is now `0.1`. Raise it further
+  for a light that sits mid-scene, so only things in front of it block the
+  flare. Counter-intuitively, do not shrink `occlusion_radius` to fix
+  blinking: a small disk lands entirely on one branch and reads 100%
+  blocked, a wider one averages sky and branch and reads partial.
 - `invert_depth` states the source's convention. Depth Anything, MiDaS and Zoe
   emit near-as-white, so leave it off; turn it on for near-as-black sources.
   It is never guessed.
