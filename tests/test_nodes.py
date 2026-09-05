@@ -294,6 +294,27 @@ class TestChunkedRendering:
             assert out.shape == clip.shape
             assert torch.isfinite(fp).all()
 
+    @pytest.mark.parametrize("mode,extra", [
+        ("detect", {}), ("track", {}), ("lock", {}), ("track_dots", {}),
+        ("follow", {"light_x": 0.6, "light_y": -0.1}),
+        ("point_track", {"track_points": "0.5,0.5"}),
+        ("path", {"light_path": "0.2,0.3; 0.8,0.6"}),
+    ])
+    def test_every_mode_is_chunk_invariant(self, mode, extra):
+        """Modes that read the whole clip (scene motion, the point tracker,
+        the whole-clip solve) gather it from slices; the slice size must
+        never show in the pixels."""
+        clip = self._clip(9)
+        # give the scene some texture so motion estimation has features
+        g = torch.Generator().manual_seed(1)
+        clip = (clip + torch.rand(clip.shape, generator=g) * 0.25).clamp(0, 1)
+        args = dict(position_mode=mode, detect_threshold=0.6, scene_lock=1.0,
+                    track_smoothing=0.85, **extra)
+        whole = run_node(clip, chunk_frames=64, **args)
+        sliced = run_node(clip, chunk_frames=2, **args)
+        for a, b in zip(whole, sliced):
+            assert torch.allclose(a, b, atol=2e-5),                 f"{mode}: slicing changed the pixels by {(a - b).abs().max():.2e}"
+
     def test_chunked_equals_unchunked_with_tracking_and_flicker(self):
         import json as _json
         p = {"schema_version": 1,
