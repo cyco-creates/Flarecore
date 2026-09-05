@@ -540,6 +540,47 @@ section. The flare bench also lost its depth chain — depth occlusion needs a
 depth model and belongs with footage, so it lives in the video bench, and
 FlareRender's `depth` input is still there for anyone who wants it.
 
+## 3y. The owner's arrangement is the shipped default (2026-09-05)
+
+The studio template now ships the layout the owner arranged and saved, taken
+verbatim from their `user/default/workflows/flarecore_studio.json`: their
+positions, their group bounds, their resized Flare Render (1075x1145) and
+prompt node. Measured first that loading a template reproduces its saved
+geometry exactly (zero drift across 22 nodes), so nothing in the extension
+was fighting the layout — the file simply had not been updated.
+
+One substitution: they had driven the benches with three third-party
+`PixaromaGroupSwitch` nodes, reached for while the built-in switch was
+broken. Those are replaced in place by three `FlarecoreStudioSwitch` nodes at
+the same coordinates and title. A shipped template must not require another
+pack to be installed, and the built-in one now works. The switch gained
+cross-instance sync for exactly this arrangement: a copy sits above each
+bench, whichever is clicked re-marks all of them, and only the clicked one
+mutes the graph. (If the owner prefers the third-party node's look, swapping
+it back is a per-user change, not a shipped dependency.)
+
+Third-party bookkeeping (`ue_properties`, `ue_links`, `anomalous_hashes`) is
+stripped from the file, and the benches ship muted except the flare lab.
+
+## 3z. The forge panel is fluid, and a flex trap (2026-09-05)
+
+The prompt panel now takes whatever node height is left below it and hands
+the slack to the prompt box: node 359 -> 208px of prompt, 500 -> 349, 800 ->
+649. Two details were needed.
+
+`fitForge` cannot rely on the widget's laid-out `y`: that is only filled in
+once the canvas has drawn, so on load and on a resize in an undrawn tab the
+panel kept a stale height. Every other widget on this node is hidden, so the
+offset is just the title bar and a constant fallback is correct.
+
+The subtler one: `.fcore-hint` carries `flex-basis: 100%` so it wraps onto
+its own line inside the horizontal light-source row. The forge panel is a
+COLUMN flex container, where that same declaration means 100% of the HEIGHT —
+the hint was silently claiming 694 of 854 pixels and the prompt box stayed at
+its 70px minimum. Scoped to `.fcore-forge .fcore-hint { flex: 0 0 auto; }`.
+Worth remembering: a shared utility class with a flex-basis is direction-
+dependent, and reads completely differently in a row and in a column.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

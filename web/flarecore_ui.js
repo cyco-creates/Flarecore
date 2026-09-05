@@ -718,6 +718,10 @@ const CSS = `
 .fcore-forge input[type=text] { background: #101014; color: #ddd; flex: 1;
   border: 1px solid #34343e; border-radius: 6px; font-size: 11px;
   height: 24px; padding: 0 8px; }
+/* the hint carries flex-basis:100% so it wraps onto its own line inside the
+   horizontal source row; in this COLUMN panel that reads as 100% of the
+   HEIGHT and it swallows every spare pixel meant for the prompt box. */
+.fcore-forge .fcore-hint { flex: 0 0 auto; }
 
 .fcore-adv { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px 10px;
   padding: 8px 2px 2px 40px; border-top: 1px dashed #2b2b33; margin-top: 7px; }
@@ -1793,6 +1797,20 @@ const EXTRA_STYLE_SUGGESTION =
 // dropdowns, the bank prompt exposed for editing, and the extra-style
 // suggestion behind a toggle. It writes the node's real widgets
 // (element / custom_prompt / extra_style), which stay hidden underneath.
+// Hand the panel the node height left under it, the way fitEditor does for
+// the stack editor.
+function fitForge(node) {
+  const w = findWidget(node, "forge_panel");
+  if (!w) return;
+  // w.y is only filled in once the canvas has laid the node out, and the
+  // panel has to be the right height before that (on load, and on a resize
+  // in a tab that has not drawn yet). Every other widget on this node is
+  // hidden, so the offset is just the title bar — fall back to that.
+  const laid = Number.isFinite(w.y) && w.y > 0 ? w.y
+    : (Number.isFinite(w.last_y) && w.last_y > 0 ? w.last_y : 34);
+  node._fcForgeH = Math.max(150, node.size[1] - laid - 12);
+}
+
 function setupForgePanel(nodeType) {
   const onNodeCreated = nodeType.prototype.onNodeCreated;
   nodeType.prototype.onNodeCreated = function () {
@@ -1902,12 +1920,26 @@ function setupForgePanel(nodeType) {
       syncStyle();
     }).catch(() => { hint.textContent = "could not load the prompt bank"; });
 
+    // Fluid like the flare editor: the panel takes whatever node height is
+    // left below it, and the prompt box (flex: 1 in the CSS) absorbs the
+    // slack — drag the node taller and you get more prompt, not dead space.
     const widget = node.addDOMWidget("forge_panel", "flarecore.forge", root,
-      { serialize: false, hideOnZoom: true, getMinHeight: () => 200 });
+      { serialize: false, hideOnZoom: true, getMinHeight: () => 150 });
     widget.serialize = false;
     widget.serializeValue = () => undefined;
-    widget.computeSize = (w) => [Number(w) || node.size?.[0] || 380, 208];
-    node.setSize([Math.max(node.size[0], 400), Math.max(node.size[1], 300)]);
+    widget.computeSize = (w) =>
+      [Number(w) || node.size?.[0] || 380, node._fcForgeH ?? 220];
+    // only grow a node that was never sized by the workflow
+    if (node.size[0] < 380 || node.size[1] < 260) {
+      node.setSize([Math.max(node.size[0], 400), Math.max(node.size[1], 300)]);
+    }
+    setTimeout(() => fitForge(node), 40);
+  };
+
+  const onResize = nodeType.prototype.onResize;
+  nodeType.prototype.onResize = function (size) {
+    onResize?.apply(this, arguments);
+    fitForge(this);
   };
 
   // reloads carry one null slot for the DOM panel; nothing else to repair,
@@ -1918,6 +1950,7 @@ function setupForgePanel(nodeType) {
     for (const w of this.widgets || []) {
       if (w.name !== "forge_panel") hideWidget(w);
     }
+    setTimeout(() => { fitForge(this); this.setDirtyCanvas(true, true); }, 60);
   };
 }
 
@@ -1986,7 +2019,10 @@ function registerStudioSwitch(app) {
       }
     }
 
-    setActive(key) {
+    // A copy of this node can sit above each bench, so they all have to
+    // agree: whichever one is clicked, every switch in the graph re-marks
+    // itself. Only the clicked one touches the graph.
+    relabel(key) {
       this.properties.active = key;
       STUDIO_SECTIONS.forEach(([k], i) => {
         const w = this.widgets?.[i];
@@ -1995,8 +2031,17 @@ function registerStudioSwitch(app) {
         w.name = (k === key ? "\u25cf  " : "\u25cb  ") + title;
         w.label = w.name;
       });
-      if (this.graph) applyStudioSection(this.graph, key);
       this.setDirtyCanvas?.(true, true);
+    }
+
+    setActive(key) {
+      this.relabel(key);
+      const graph = this.graph;
+      if (!graph) return;
+      for (const n of graph._nodes || []) {
+        if (n !== this && n.type === "FlarecoreStudioSwitch") n.relabel?.(key);
+      }
+      applyStudioSection(graph, key);
     }
 
     onAdded() { setTimeout(() => this.setActive(this.properties.active), 30); }
