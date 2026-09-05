@@ -67,6 +67,12 @@ ELEMENT_COMMON_DEFAULTS = {
     "blur": 0.0,            # 0..1 gaussian soften of the rendered element
     "irregular": 0.0,       # 0..1 seeded organic unevenness in the shape math
     "light_mask": 0.0,      # 0..1: modulate by scene brightness
+    "mask_scene": 1.0,      # 0..1: how much the SCENE's brightness reveals
+                            # this element, as opposed to the light's own
+                            # pool. Scene luminance changes every frame, so
+                            # a lens plate masked by it appears to crawl
+                            # while the plate itself never moves; 0 pins the
+                            # reveal to the light alone
     "mask_floor": 0.0,      # 0..0.95: hide the element wherever the light's
                             # pool is dimmer than this. The mask is
                             # max(scene luminance, the light's glow), and
@@ -270,6 +276,8 @@ def _validate_element(raw: dict, index: int) -> dict:
                                         lo=0.0, hi=1.0)
     elem["light_mask"] = _require_number(elem["light_mask"], f"{where}.light_mask",
                                          lo=0.0, hi=1.0)
+    elem["mask_scene"] = _require_number(elem["mask_scene"], f"{where}.mask_scene",
+                                        lo=0.0, hi=1.0)
     elem["mask_floor"] = _require_number(elem["mask_floor"], f"{where}.mask_floor",
                                         lo=0.0, hi=0.95)
     elem["fill_frame"] = bool(elem["fill_frame"])

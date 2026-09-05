@@ -775,6 +775,26 @@ discovered knob by knob. Picking one now sets fill_frame, screen_space,
 light_mask and mask_floor -- but only while those are untouched, so a
 deliberate look is never overwritten. Same rule as frame: auto, same reason.
 
+## A plate that never moves can still appear to crawl
+
+Lens dirt looked animated. The plate was not moving: screen-space elements
+already render at frame centre with no rotation, and a static scene with a
+static light produced a bit-identical pass every frame (measured).
+
+What moved was the STENCIL. The reveal mask is max(scene luminance, the
+light's glow), and scene luminance is the footage -- every bright thing
+driving through frame drags the dirt's visible patch with it. Measured on a
+fixed light with moving content: 0.75 of frame-to-frame change. The same
+clip with the content dimmed below mask_floor: 0.0.
+
+Elements gained mask_scene: how much of the reveal comes from the scene
+rather than from the light's own pool. The render node now keeps the glow
+term as its own stack so an element can be revealed by the source alone.
+At 1 the result IS the old mask, bit for bit -- pinned by a test, because
+otherwise every saved look would change the day this shipped. Lens plates
+default to 0, which is what dirt on a front element actually does: it
+lights up with the source, not with whatever drives past.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

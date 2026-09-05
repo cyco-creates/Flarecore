@@ -196,6 +196,23 @@ def _blur_rgb(rgb: torch.Tensor, amount: float) -> torch.Tensor:
     return blur_depth(rgb.permute(2, 0, 1), amount).permute(1, 2, 0)
 
 
+def _mask_for(scene_mask: torch.Tensor, glow_mask, scene_amount: float):
+    """How much of the reveal comes from the scene versus the light itself.
+
+    scene_mask is max(scene luminance, the light's glow); glow_mask is that
+    second term alone. At 1 the result IS scene_mask, bit for bit, so every
+    existing preset renders unchanged. At 0 only the light's pool reveals the
+    element, which is what a lens plate wants: scene luminance carries the
+    frame's moving detail, and an element stencilled through it appears to
+    crawl even though it never moves.
+    """
+    if scene_amount >= 1.0 or glow_mask is None:
+        return scene_mask
+    if scene_amount <= 0.0:
+        return glow_mask
+    return glow_mask + (scene_mask - glow_mask).clamp(min=0.0) * scene_amount
+
+
 def _floored(mask: torch.Tensor, floor: float) -> torch.Tensor:
     """Rescale a light mask so everything below `floor` reads as nothing.
 
@@ -214,6 +231,7 @@ def _floored(mask: torch.Tensor, floor: float) -> torch.Tensor:
 
 def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
                         base_seed, elem_index, light_weight, scene_mask=None,
+                        glow_mask=None,
                         global_aspect=1.0, frame_aspect=1.0, light_rgb=None):
     """Add every count-instance of one element for one light into `out`.
 
@@ -249,6 +267,7 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
     blur = elem.get("blur", 0.0)
     lmask = elem.get("light_mask", 0.0)
     mfloor = elem.get("mask_floor", 0.0)
+    mscene = elem.get("mask_scene", 1.0)
     heavy = blur > 0.0 or (lmask > 0.0 and scene_mask is not None)
 
     rot = math.radians(elem["rotation"])
@@ -342,7 +361,8 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
                 inst = _blur_rgb(inst, blur * BLUR_SIGMA_MAX)
             if lmask > 0.0 and scene_mask is not None:
                 # fade the element toward the scene's bright areas
-                factor = (1.0 - lmask) + lmask * _floored(scene_mask, mfloor)
+                m = _mask_for(scene_mask, glow_mask, mscene)
+                factor = (1.0 - lmask) + lmask * _floored(m, mfloor)
                 inst = inst * factor.unsqueeze(-1)
             out.add_(inst, alpha=intensity_i * light_weight)
         else:
@@ -353,7 +373,7 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
 
 def render_stack(preset, lights, height, width, device, dtype,
                  extra_seed=0, intensity=1.0, scale=1.0, grid=None, out=None,
-                 scene_mask=None, frame=0):
+                 scene_mask=None, glow_mask=None, frame=0):
     """Render one frame's flare stack in linear light.
 
     preset: a validated preset dict (see schema.validate_preset).
@@ -424,7 +444,8 @@ def render_stack(preset, lights, height, width, device, dtype,
         for idx, elem in axis_elems:
             _accumulate_element(out, x, y, elem, passes_by_idx[idx], light,
                                 theta, g_scale, base_seed, idx, weight,
-                                scene_mask=scene_mask, global_aspect=g_aspect,
+                                scene_mask=scene_mask, glow_mask=glow_mask,
+                                global_aspect=g_aspect,
                                 frame_aspect=frame_aspect, light_rgb=light_rgb)
 
     # Screen-space elements sit on the LENS, not the flare axis: rendered
@@ -445,6 +466,7 @@ def render_stack(preset, lights, height, width, device, dtype,
                 _accumulate_element(out, x, y, elem, passes_by_idx[idx],
                                     lens_light, 0.0, g_scale, base_seed, idx,
                                     strongest, scene_mask=scene_mask,
+                                    glow_mask=glow_mask,
                                     global_aspect=g_aspect,
                                     frame_aspect=frame_aspect,
                                     light_rgb=light_rgb)
@@ -482,6 +504,7 @@ def chromatic_fringe(rgb: torch.Tensor, amount: float) -> torch.Tensor:
 
 def render_batch(preset, lights_per_frame, height, width, device, dtype,
                  extra_seed=0, intensity=1.0, scale=1.0, scene_masks=None,
+                 glow_masks=None,
                  frame_offset=0):
     """Render a batch: lights_per_frame is a list (length B) of light lists.
 
@@ -498,6 +521,7 @@ def render_batch(preset, lights_per_frame, height, width, device, dtype,
                      extra_seed=extra_seed, intensity=intensity, scale=scale,
                      grid=grid, out=out[i],
                      scene_mask=None if scene_masks is None else scene_masks[i],
+                     glow_mask=None if glow_masks is None else glow_masks[i],
                      frame=frame_offset + i)
     return out
 

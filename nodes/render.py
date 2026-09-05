@@ -317,8 +317,15 @@ class FlareRender:
             # (dirt on a lens is lit by the source itself, even over a
             # black plate). Only built when the preset uses it.
             scene_masks = None
+            glow_masks = None
             if needs_mask:
                 mask = linear_luminance(chunk_linear).clamp(0.0, 1.0)
+                # The light's own pool, kept apart from the scene's
+                # luminance: an element may want to be revealed by the
+                # source alone. Scene luminance changes every frame, so a
+                # plate masked by it appears to crawl even though the plate
+                # itself never moves.
+                glow_only = torch.zeros_like(mask)
                 yy = torch.linspace(0.0, 1.0, height, device=device, dtype=dtype)
                 xx = torch.linspace(0.0, 1.0, width, device=device, dtype=dtype)
                 gy, gx = torch.meshgrid(yy, xx, indexing="ij")
@@ -334,12 +341,14 @@ class FlareRender:
                              (gy - light["v"]) ** 2
                         glowm = torch.exp(-d2 / (2.0 * falloff_r ** 2)) * min(w, 1.0)
                         mask[i] = torch.maximum(mask[i], glowm)
+                        glow_only[i] = torch.maximum(glow_only[i], glowm)
                 scene_masks = blur_depth(mask, 0.02)
+                glow_masks = blur_depth(glow_only, 0.02)
 
             flare_linear = render_batch(
                 preset, chunk_lights, height, width, device, dtype,
                 extra_seed=seed, intensity=intensity, scale=scale,
-                scene_masks=scene_masks, frame_offset=s,
+                scene_masks=scene_masks, glow_masks=glow_masks, frame_offset=s,
             )
 
             out_linear = composite(chunk_linear, flare_linear, blend_mode)
@@ -352,6 +361,7 @@ class FlareRender:
             pass_full[s:e] = pass_c.to(home)
             alpha_full[s:e] = linear_luminance(pass_c).clamp(0.0, 1.0).to(home)
             del chunk_linear, flare_linear, out_linear, out_c, pass_c, scene_masks
+            del glow_masks
 
         result = (out_full, pass_full, alpha_full)
         out = out_full

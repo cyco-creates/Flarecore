@@ -540,7 +540,7 @@ const ADD_MENU = [
 const ADD_DEFAULTS = {
   glow: { type: "glow", label: "glow", offset: 0, scale: 0.4, intensity: 1, color: [1, 0.95, 0.85], params: { softness: 0.35, falloff: 1.3 } },
   bloom: { type: "glow", label: "bloom", offset: 0, scale: 2.2, intensity: 0.5, auto_rotate: false, light_mask: 1, color: [1, 0.97, 0.9], params: { softness: 1.1, falloff: 0.7 } },
-  lens_dirt: { type: "texture", label: "lens dirt", offset: 0, scale: 1.0, intensity: 0.7, auto_rotate: false, screen_space: true, fill_frame: true, light_mask: 1, mask_floor: 0.35, params: { file: "", channel: "auto" } },
+  lens_dirt: { type: "texture", label: "lens dirt", offset: 0, scale: 1.0, intensity: 0.7, auto_rotate: false, screen_space: true, fill_frame: true, light_mask: 1, mask_floor: 0.35, mask_scene: 0, params: { file: "", channel: "auto" } },
   fog: { type: "glow", label: "fog", offset: 0, scale: 1.6, intensity: 0.25, color: [1, 0.97, 0.9], params: { softness: 0.8, falloff: 0.8 } },
   disc: { type: "iris", label: "disc", offset: 0.5, scale: 0.16, intensity: 0.3, color: [0.8, 0.9, 1], params: { blades: 24, edge_softness: 0.55 } },
   iris: { type: "iris", label: "iris", offset: 0.7, scale: 0.12, intensity: 0.25, color: [0.85, 0.93, 1], dispersion: 0.4, params: { blades: 8, edge_softness: 0.3 } },
@@ -605,6 +605,7 @@ function applyLensPlateDefaults(elem, ref) {
   elem.screen_space = true;
   elem.light_mask = 1;
   elem.mask_floor = 0.35;
+  elem.mask_scene = 0;   // lit by the source, not by the moving frame
   elem.auto_rotate = false;
 }
 
@@ -614,6 +615,7 @@ let clipboardElem = null;
 const COMMON_SPECS = {
   irregular: [0, 1, 0.01],
   light_mask: [0, 1, 0.01],
+  mask_scene: [0, 1, 0.01],
   mask_floor: [0, 0.95, 0.01],
   dispersion: [0, 3, 0.05], dispersion_samples: [3, 15, 2],
   rotation: [-180, 180, 1], count: [1, 24, 1], spread: [0, 1, 0.01],
@@ -625,6 +627,7 @@ const COMMON_SPECS = {
 const COMMON_DEFAULTS = {
   irregular: 0,
   light_mask: 0,
+  mask_scene: 1,
   mask_floor: 0,
   dispersion: 0, dispersion_samples: 3, rotation: 0, count: 1, spread: 0,
   count_falloff: 1, count_scale_step: 1,

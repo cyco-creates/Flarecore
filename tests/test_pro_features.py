@@ -341,3 +341,58 @@ class TestMaskFloor:
         assert float(tight.sum()) < float(wide.sum())
         assert float(tight.max()) <= float(wide.max()) + 1e-6
 
+class TestMaskScene:
+    """A lens plate does not move, so it must not APPEAR to move. The reveal
+    mask is max(scene luminance, the light's glow), and scene luminance
+    carries the frame's moving detail: stencilled through it, a static plate
+    crawls. mask_scene picks how much of the reveal comes from the scene."""
+
+    def _clip(self, b=6, h=180, w=320):
+        clip = torch.full((b, h, w, 3), 0.08)
+        for i in range(b):                       # bright content driving past
+            x0 = 10 + i * 30
+            clip[i, 100:140, x0:x0 + 40] = 0.85
+        clip[:, 40:70, 230:260] = 1.0            # the light: fixed all clip
+        return clip
+
+    def _pass(self, mask_scene):
+        import json
+        from test_nodes import run_node
+        preset = {"schema_version": 1, "elements": [{
+            "type": "glow", "label": "dirt", "offset": 0.0, "scale": 2.0,
+            "intensity": 1.0, "screen_space": True, "fill_frame": True,
+            "auto_rotate": False, "light_mask": 1.0, "mask_floor": 0.35,
+            "mask_scene": mask_scene,
+            "params": {"softness": 1.0, "falloff": 0.2}}]}
+        return run_node(self._clip(), preset_json=json.dumps(preset),
+                        position_mode="manual", light_x=0.77, light_y=0.30)[1]
+
+    def _wobble(self, fp):
+        return max(float((fp[i] - fp[0]).abs().max()) for i in range(1, fp.shape[0]))
+
+    def test_scene_lit_plate_moves_with_the_scene(self):
+        assert self._wobble(self._pass(1.0)) > 0.1, "nothing to fix"
+
+    def test_light_lit_plate_is_perfectly_still(self):
+        assert self._wobble(self._pass(0.0)) == 0.0, "the plate still crawls"
+
+    def test_the_plate_is_still_there(self):
+        assert float(self._pass(0.0).sum()) > 0.0
+
+    def test_default_keeps_every_existing_preset_identical(self):
+        """mask_scene 1 must be the old behaviour bit for bit, or every saved
+        look changes the day this ships."""
+        import json
+        from test_nodes import run_node
+        elem = {"type": "glow", "offset": 0.0, "scale": 2.0, "intensity": 1.0,
+                "screen_space": True, "fill_frame": True, "auto_rotate": False,
+                "light_mask": 1.0, "params": {"softness": 1.0, "falloff": 0.2}}
+        without = dict(elem)                       # key absent entirely
+        with_one = dict(elem, mask_scene=1.0)
+        args = dict(position_mode="manual", light_x=0.77, light_y=0.30)
+        a = run_node(self._clip(), preset_json=json.dumps(
+            {"schema_version": 1, "elements": [without]}), **args)[1]
+        b = run_node(self._clip(), preset_json=json.dumps(
+            {"schema_version": 1, "elements": [with_one]}), **args)[1]
+        assert torch.equal(a, b)
+
