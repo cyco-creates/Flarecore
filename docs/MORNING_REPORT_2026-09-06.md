@@ -109,3 +109,66 @@ edge.
 
 311 tests. Server restarted, single instance, new code and new JS confirmed
 served.
+
+
+---
+
+# Round two (you were still up)
+
+Everything below is in commit `e16621a`, 315 tests, server restarted, one
+instance. Reload the browser once.
+
+## Prompts — rewritten from research, not taste
+
+Two agents worked in parallel while I did the engineering; I re-verified
+everything they produced (keys, brands, validation, renders) before shipping.
+
+What the research on Krea 2 actually says, with sources in DECISIONS.md:
+it is a single-stream DiT behind a Qwen3-VL encoder, so it wants
+**natural-language prose of 30–80 words**, **subject first** (word order is
+emphasis, weighting syntax does nothing), it has **no negative channel** at
+the CFG it runs at (say what *is* in frame), and it responds to **named
+optical looks** and raw-photographic cues rather than quality tags.
+
+Every prompt now: leads with a macro photograph of an optical phenomenon,
+names the physics (veiling glare, halation, coating tints, blade counts that
+give the right spike counts, thin-film interference, cylindrical elements),
+and carries **one specific physical imperfection** — a broken ring, a missing
+ghost in a chain, a smudge through a disc, uneven spikes, a run droplet — so
+no element is perfect. **40 rewritten, 35 new (75 total)**, every original
+key preserved, no brand names anywhere.
+
+## Presets — 22 now
+
+Ten new looks, each modelling a named lens behaviour: `anamorphic_teal_2x`,
+`vintage_uncoated`, `clean_modern_prime`, `long_telephoto`, `sodium_street`,
+`neon_night`, `film_halation`, `headlight_bloom`, `underwater_caustic`,
+`cheap_zoom_haze`. Five use trigger rules. All validated and render-checked.
+
+## Tracking lives in Flare Render now
+
+- `hold`, `fade` and `search radius` sit beside smoothing and max jump.
+- The search region is **centred on the picker's light point** — drag the
+  point to move the ring. Measured: with a brighter rival across frame, the
+  fence holds the flare on the intended light.
+- **Flare Track is retired** (7 nodes now). Nothing it did is gone.
+- After every render the picker **draws the path the light took** — orange
+  for the light, cyan for the anchor — so you can judge a track before
+  trusting it.
+- **`bake to path`** appears after a render in any tracked mode: one click
+  turns the track into a drawn motion path, switches to path mode, and you
+  fix the one frame the tracker got wrong by dragging a point.
+
+## Flare lab depth
+
+The studio's flare lab now has its own Depth Anything wired into the still
+render node. That's what you were adding by hand.
+
+## Look
+
+Sharper corners throughout (12→6, 8→4, 5–7→3), a rule down the left of each
+element row, **chips 30→44 px**, and a **220 px hover preview** of any
+picked texture with its filename. And one real bug found by driving the DOM:
+adding a lens_dirt texture via **+ add → library** skipped the lens-plate
+defaults (the gallery pick had them) — the full-frame wash again. Fixed on
+both paths.
