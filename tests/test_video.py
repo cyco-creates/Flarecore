@@ -1174,3 +1174,88 @@ class TestTrackingInsideRender:
         us = [t[0] for t in track if t]
         assert us == sorted(us) and us[-1] - us[0] > 0.08, us
         assert all(t[2] is None for t in track), "no anchor in plain track"
+
+
+class TestSceneAnchoring:
+    """A detected light is held to the way the picture moves. A sun is at
+    infinity and moves only with the camera; the detector's disagreements
+    with that -- wobble as branches cross it, a hop to a rival -- are noise."""
+
+    def _panning_scene(self, b=20, h=120, w=200, dx=2.0):
+        """A textured scene panning left at dx px/frame, with a bright spot
+        that moves WITH it -- and a rival spot that wins two frames."""
+        import torch.nn.functional as F
+        g = torch.Generator().manual_seed(3)
+        base = F.avg_pool2d(torch.rand(1, 1, h, w * 2, generator=g), 5, 1, 2)[0, 0] * 0.35
+        clip = torch.zeros(b, h, w, 3)
+        truth = []
+        for i in range(b):
+            x0 = int(dx * i)
+            frame = base[:, x0:x0 + w].clone()
+            lx = 150 - int(dx * i)                  # the light rides the scene
+            frame[30:36, lx:lx + 6] = 1.0
+            if 8 <= i <= 9:                          # a BIGGER rival, briefly
+                frame[74:92, 14:32] = 1.0
+            clip[i] = frame.unsqueeze(-1).expand(-1, -1, 3)
+            truth.append(((lx + 3) / w, 33 / h))
+        return clip.clamp(0, 1), truth
+
+    def _light_u(self, fp):
+        B, H, W, _ = fp.shape
+        return [int(fp[i].mean(-1).argmax()) % W / W for i in range(B)]
+
+    def test_a_rival_that_wins_two_frames_cannot_drag_the_light(self):
+        clip, truth = self._panning_scene()
+        raw = run_node(clip, position_mode="detect", detect_threshold=0.6,
+                       scene_lock=0.0)[1]
+        held = run_node(clip, position_mode="detect", detect_threshold=0.6,
+                        scene_lock=1.0, track_smoothing=0.85)[1]
+        ur, uh = self._light_u(raw), self._light_u(held)
+        assert min(ur) < 0.3, "the fixture's rival was supposed to win"
+        assert min(uh) > 0.4, f"the rival still dragged the light: {uh}"
+
+    def test_the_held_light_still_follows_the_pan(self):
+        clip, truth = self._panning_scene()
+        held = run_node(clip, position_mode="detect", detect_threshold=0.6,
+                        scene_lock=1.0, track_smoothing=0.85)[1]
+        uh = self._light_u(held)
+        assert uh[0] - uh[-1] > 0.12, f"the pan was flattened: {uh[0]:.2f} -> {uh[-1]:.2f}"
+
+    def test_scene_lock_zero_leaves_a_moving_light_alone(self):
+        """A torch crossing a static room moves against the scene; with the
+        lock off its motion must survive in full."""
+        clip = torch.zeros(16, 90, 160, 3)
+        clip[:] = 0.2
+        for i in range(16):
+            clip[i, 40:46, 10 + i * 8:16 + i * 8] = 1.0
+        out = run_node(clip, position_mode="track", detect_threshold=0.6,
+                       scene_lock=0.0)[1]
+        u = self._light_u(out)
+        assert u[-1] - u[0] > 0.6, f"the light was pinned: {u[0]:.2f} -> {u[-1]:.2f}"
+
+    def test_a_matte_with_no_scene_is_left_alone(self):
+        """Black plate, one moving dot: there is nothing to anchor to, and
+        the dot's own motion is all there is."""
+        clip = torch.zeros(16, 90, 160, 3)
+        for i in range(16):
+            clip[i, 40:46, 10 + i * 8:16 + i * 8] = 1.0
+        out = run_node(clip, position_mode="track_dots", detect_threshold=0.5,
+                       scene_lock=1.0)[1]
+        u = self._light_u(out)
+        assert u[-1] - u[0] > 0.6, f"the dot was pinned: {u[0]:.2f} -> {u[-1]:.2f}"
+
+    def test_follow_carries_an_off_frame_light_with_the_pan(self):
+        clip, _ = self._panning_scene()
+        from test_nodes import FlareRender, PRESET
+        res = FlareRender().render(
+            image=clip, preset_json=PRESET, position_mode="follow", light_x=0.6,
+            light_y=-0.15, flare_x=0.5, flare_y=0.5, detect_threshold=0.6,
+            detect_max_lights=1, occlusion_radius=0.02, light_depth=0.1,
+            invert_depth=False, intensity=1.0, scale=1.0, blend_mode="add",
+            clamp_output=True, seed=0, track_smoothing=0.0)
+        track = res["ui"]["fc_track"][0] if isinstance(res, dict) else None
+        if track is None:
+            pytest.skip("ui payload only inside ComfyUI")
+        us = [t[0] for t in track]; vs = [t[1] for t in track]
+        assert all(v < 0 for v in vs), "the light should stay above the frame"
+        assert us[0] - us[-1] > 0.12, f"not carried by the pan: {us[0]:.2f} -> {us[-1]:.2f}"

@@ -18,7 +18,12 @@ def moving_texture(frames=24, h=200, w=300, dx=0.0, dy=0.0, rot=0.0,
     """A textured plate slid by a known amount, so the answer is known."""
     g = torch.Generator().manual_seed(seed)
     pad = 60 + int(max(abs(dx), abs(dy)) * frames)   # room for the whole move
-    base = torch.rand((h + 2 * pad, w + 2 * pad, 3), generator=g)
+    # Real pictures have structure at every scale; raw noise has none above a
+    # pixel, which defeats any pyramid. Blur the noise so it looks like a
+    # surface rather than static.
+    import torch.nn.functional as F
+    base = torch.rand((1, 3, h + 2 * pad, w + 2 * pad), generator=g)
+    base = F.avg_pool2d(base, 7, 1, 3)[0].permute(1, 2, 0).contiguous()
     clip = torch.zeros(frames, h, w, 3)
     truth = []
     for i in range(frames):
@@ -113,3 +118,51 @@ class TestTwoPoint:
 
     def test_empty_input_is_handled(self):
         assert transform_from([], []) == []
+
+
+class TestChange:
+    """The first tracker matched every frame against frame 0 and died the
+    moment a feature changed. Frame-to-frame tracking must follow a feature
+    that zooms and an exposure that ramps, with the answer known."""
+
+    def _zoom(self, frames=30, h=240, w=360, zoom=0.015, seed=0):
+        import torch.nn.functional as F
+        g = torch.Generator().manual_seed(seed)
+        base = F.avg_pool2d(torch.rand(1, 1, h * 2, w * 2, generator=g), 7, 1, 3)
+        clip = torch.zeros(frames, h, w, 3)
+        u0, v0 = 0.58, 0.44
+        truth = []
+        for i in range(frames):
+            s = 1.0 + zoom * i
+            theta = torch.tensor([[1 / s, 0.0, 0.0], [0.0, 1 / s, 0.0]])
+            grid = F.affine_grid(theta.unsqueeze(0), (1, 1, h, w), align_corners=False) * 0.5
+            img = F.grid_sample(base, grid, align_corners=False)[0, 0]
+            clip[i] = img.unsqueeze(-1).expand(-1, -1, 3)
+            truth.append(((w / 2 + (u0 * w - w / 2) * s) / w,
+                          (h / 2 + (v0 * h - h / 2) * s) / h))
+        return clip, (u0, v0), truth
+
+    def test_it_follows_a_zoom_to_within_two_pixels(self):
+        clip, (u0, v0), truth = self._zoom()
+        tr = track_feature(clip, u0, v0)
+        err = [math.hypot(t[0] - p["u"], t[1] - p["v"]) * clip.shape[2]
+               for t, p in zip(truth, tr)]
+        # a fixed 32 px window through a x1.45 zoom: under 1% of frame width
+        assert max(err) < 3.0, f"worst error {max(err):.2f} px over a x1.45 zoom"
+        assert min(p["confidence"] for p in tr) > MIN_CONFIDENCE
+
+    def test_fast_motion_is_followed(self):
+        """7 px a frame on a 300 px frame: the pyramid's job."""
+        clip, truth = moving_texture(dx=7.0, dy=2.0, frames=12)
+        tr = track_feature(clip, 0.5, 0.5)
+        err = [math.hypot(t[0] - p["u"], t[1] - p["v"]) * clip.shape[2]
+               for t, p in zip(truth, tr)]
+        assert max(err) < 1.5, f"worst error {max(err):.2f} px"
+
+    def test_confidence_drops_when_the_feature_leaves_frame(self):
+        """A feature that walks off the picture must not keep claiming a
+        confident position: there is nothing left to see."""
+        clip, _ = moving_texture(dx=6.0, frames=40)     # 240 px of travel on 300
+        tr = track_feature(clip, 0.7, 0.5)
+        assert tr[-1]["confidence"] < MIN_CONFIDENCE
+        assert 0.0 <= tr[-1]["u"] <= 1.0

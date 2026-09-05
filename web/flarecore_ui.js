@@ -97,6 +97,28 @@ function setVal(node, name, value) {
   }
 }
 
+// Rendered solo previews, keyed by the element's content so hovering the
+// same row twice costs one render, not two.
+const previewCache = new Map();
+async function elementPreviewUrl(elem, global) {
+  const key = JSON.stringify([elem, global]);
+  if (previewCache.has(key)) return previewCache.get(key);
+  const res = await fetch(api.apiURL("/flarecore/element_preview"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ element: elem, global }),
+  });
+  if (!res.ok) throw new Error(`preview ${res.status}`);
+  const url = URL.createObjectURL(await res.blob());
+  if (previewCache.size > 200) {
+    const first = previewCache.keys().next().value;
+    URL.revokeObjectURL(previewCache.get(first));
+    previewCache.delete(first);
+  }
+  previewCache.set(key, url);
+  return url;
+}
+
 function elementThumbUrl(ref) {
   return api.apiURL(`/flarecore/element/${ref.split("/").map(encodeURIComponent).join("/")}`);
 }
@@ -113,13 +135,38 @@ const POSITION_MODES = [
   ["path", "path — draw the route"],
   ["lock", "lock — solve the whole clip, no teleporting"],
   ["point_track", "point track — follow features you place"],
+  ["follow", "follow — place the light, the camera carries it"],
 ];
+
+// The settings each light-source mode is best at, applied the moment the
+// mode is chosen. Found by measuring, on real footage, which values gave
+// the steadiest light: a clipped sky, a sun behind trees, a dot matte.
+// Choosing a mode is choosing a job; the job comes with its tools set.
+const MODE_DEFAULTS = {
+  manual: {},
+  detect: { detect_threshold: 0.6, detect_max_lights: 1, track_smoothing: 0.85,
+            light_travel: 1, scene_lock: 1 },
+  detect_with_manual_offset: { detect_threshold: 0.6, detect_max_lights: 1,
+            track_smoothing: 0.85, light_travel: 1, scene_lock: 1 },
+  track: { detect_threshold: 0.6, detect_max_lights: 1, track_smoothing: 0.85,
+           track_max_jump: 0.06, light_travel: 1, track_hold: 3, track_fade: 4,
+           search_radius: 0, scene_lock: 1 },
+  track_dots: { detect_threshold: 0.5, detect_max_lights: 4, track_smoothing: 0.7,
+                track_max_jump: 0.08, light_travel: 1, track_hold: 3, track_fade: 4,
+                search_radius: 0, scene_lock: 0 },
+  lock: { detect_threshold: 0.6, detect_max_lights: 1, track_smoothing: 0.9,
+          track_max_jump: 0.06, light_travel: 1, scene_lock: 1 },
+  point_track: { track_feature: 32, track_search: 64, track_smoothing: 0.6,
+                 light_travel: 1 },
+  follow: { track_smoothing: 0.6, light_travel: 1 },
+  path: { light_travel: 1 },
+};
 
 const MODE_HINT = {
   manual: "drag the light and the anchor on the picker above.",
-  detect: "the brightest REGION in each frame, judged on its own. Every "
-    + "frame is decided independently, so on video the light can still hop "
-    + "between two rival sources — use track for a clip.",
+  detect: "the brightest REGION in each frame, then held to the camera's "
+    + "motion by scene lock, so a frame that hops to a rival source cannot "
+    + "drag the light. For a still, or a clip with one clean source.",
   detect_with_manual_offset:
     "detection, shifted by how far the picker's light sits from centre.",
   track: "detected once, then followed. Max jump is how far the light may "
@@ -132,6 +179,12 @@ const MODE_HINT = {
     + "the least total travel — a sun cannot jump to the far side of frame "
     + "for a few frames and come back. Max jump is how far it may move "
     + "between frames; smoothing irons out the rest.",
+  follow: "put the light where the source really is — drag it OUTSIDE the "
+    + "frame if the sun is above the edge — and it is carried by the camera's "
+    + "motion, read from the whole picture. Nothing is detected, so an "
+    + "off-frame sun, a clipped sky and a canopy full of branches cannot "
+    + "touch it. The steadiest option for any shot where the light is not a "
+    + "clean dot.",
   point_track: "place one tracker on a feature and the light follows it; add "
     + "a second and it becomes the anchor, so the flare axis takes their "
     + "rotation and scale too. Pick something with contrast — a blown "
@@ -149,6 +202,11 @@ function pointTool(node) {
   if (mode === "point_track") return { widget: "track_points", max: 2 };
   return null;
 }
+
+// Fraction of the picker left free around the frame on each side, so a
+// light can be dragged out of the picture.
+const PICKER_MARGIN = 0.11;
+const UV_MIN = -1, UV_MAX = 2;   // matches the node's light/anchor ranges
 
 // Catmull-Rom, the same curve flare/track.py samples the light along.
 // test_path_reference_points pins values both must produce.
@@ -242,12 +300,16 @@ class PointPicker {
     return [this.el.clientWidth, this.el.clientHeight];
   }
 
+  // The frame sits inset in the picker so a light can be placed OUTSIDE
+  // it: on a great many shots the sun is above the top edge, and a picker
+  // that cannot say so forces the light to the wrong place.
   imageRect() {
     const [W, H] = this.cssSize;
     const aspect = this.backdrop
       ? this.backdrop.width / this.backdrop.height : 16 / 9;
-    let w = W, h = w / aspect;
-    if (h > H) { h = H; w = h * aspect; }
+    const M = PICKER_MARGIN;
+    let w = W * (1 - 2 * M), h = w / aspect;
+    if (h > H * (1 - 2 * M)) { h = H * (1 - 2 * M); w = h * aspect; }
     return { x: (W - w) / 2, y: (H - h) / 2, w, h };
   }
 
@@ -272,8 +334,13 @@ class PointPicker {
     ctx.fillRect(0, 0, W, H);
 
     const r = this.imageRect();
+    ctx.fillStyle = "#101014";
+    ctx.fillRect(0, 0, W, H);
     if (this.backdrop) {
       ctx.drawImage(this.backdrop, r.x, r.y, r.w, r.h);
+      ctx.strokeStyle = "rgba(255,255,255,0.28)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
     } else {
       ctx.fillStyle = "#5a5a66";
       ctx.font = "11px sans-serif";
@@ -381,6 +448,7 @@ class PointPicker {
     const lightSrc = linked ? "lights input" : posMode;
     const searchOn = !linked && ["track", "track_dots", "lock"].includes(posMode)
       && getVal(this.node, "search_radius", 0) > 0;
+    const followOn = !linked && posMode === "follow";
     if (driven) {
       ctx.fillStyle = "rgba(0,0,0,0.55)";
       ctx.fillRect(r.x, r.y + r.h - 17, r.w, 17);
@@ -391,9 +459,11 @@ class PointPicker {
           ? "light driven by the lights input — set the switch to manual to drag it"
           : (posMode === "path"
             ? "light follows the drawn path — the anchor still drags"
-            : searchOn
-              ? "tracking inside the ring — drag the light point to move it"
-              : `light placed by ${lightSrc} — the anchor still drags`),
+            : followOn
+              ? "drag the light to where the source really is, even outside the frame — the camera carries it"
+              : searchOn
+                ? "tracking inside the ring — drag the light point to move it"
+                : `light placed by ${lightSrc} — the anchor still drags`),
         r.x + 6, r.y + r.h - 5);
     }
 
@@ -521,8 +591,8 @@ class PointPicker {
     const [x, y] = this.eventPos(e);
     const r = this.imageRect();
 
-    const toUV = () => [Math.min(1, Math.max(0, (x - r.x) / r.w)),
-                        Math.min(1, Math.max(0, (y - r.y) / r.h))];
+    const toUV = () => [Math.min(UV_MAX, Math.max(UV_MIN, (x - r.x) / r.w)),
+                        Math.min(UV_MAX, Math.max(UV_MIN, (y - r.y) / r.h))];
     // read the mode rather than the flag draw() caches, so a click that
     // lands before the first repaint still does the right thing
     const tool = pointTool(this.node);
@@ -580,8 +650,8 @@ class PointPicker {
         this.draw();
       }
     } else if (e.type === "pointermove" && this.drag) {
-      const u = Math.min(1, Math.max(0, (x - r.x) / r.w));
-      const v = Math.min(1, Math.max(0, (y - r.y) / r.h));
+      const u = Math.min(UV_MAX, Math.max(UV_MIN, (x - r.x) / r.w));
+      const v = Math.min(UV_MAX, Math.max(UV_MIN, (y - r.y) / r.h));
       setVal(this.node, this.drag === "light" ? "light_x" : "flare_x", u);
       setVal(this.node, this.drag === "light" ? "light_y" : "flare_y", v);
       this.node.setDirtyCanvas(true, false);
@@ -922,10 +992,11 @@ const CSS = `
 .fcore-global.src .fcore-col { min-width: 96px; }
 .fcore-chip { cursor: pointer; border: 1px solid #3a3a48; box-sizing: border-box; }
 .fcore-chip:hover { border-color: #e8a33d; }
-.fcore-peek { position: fixed; z-index: 10000; width: 220px; background: #0b0b0e;
+.fcore-peek { position: fixed; z-index: 10000; width: 260px; background: #0b0b0e;
   border: 1px solid #e8a33d; border-radius: 3px; padding: 3px; pointer-events: none;
   box-shadow: 0 8px 24px rgba(0,0,0,0.65); }
-.fcore-peek img { width: 100%; display: block; }
+.fcore-peek img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block;
+  background: #000; }
 .fcore-peek span { display: block; color: #cfcfd8; font-size: 10px; padding: 3px 2px 1px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 `;
@@ -1081,6 +1152,7 @@ const TIPS = {
   "search px": "how far from the predicted spot the tracker looks each frame. This is its speed limit: raise it for fast motion.",
   "hold": "frames a lost light keeps its flare at full strength before fading, so a thin occluder is a flicker-free pass instead of a cut.",
   "fade": "frames a light takes to fade in when found and out when lost.",
+  "scene lock": "how much the light is held to the way the picture moves. A sun is at infinity and moves only with the camera, so at 1 the detector may only nudge it and a hop to a rival source cannot drag it. Set 0 for a light that moves on its own — headlights, a torch. A matte with no scene in it is left alone either way.",
   "search radius": "only look for the light inside this circle around the picker's light point (fraction of frame height). 0 searches the whole frame. Set it when a rival source elsewhere keeps stealing the flare; drag the light point to move the ring.",
   // look
   "master": "overall brightness of the whole flare.",
@@ -1716,6 +1788,9 @@ class FlareEditor {
     sel.addEventListener("pointerdown", (e) => e.stopPropagation());
     sel.onchange = () => {
       setStr(this.node, "position_mode", sel.value);
+      for (const [w, v] of Object.entries(MODE_DEFAULTS[sel.value] || {})) {
+        setVal(this.node, w, v);
+      }
       this.node.setDirtyCanvas(true, false);
       this.node._fcPicker?.draw();
       this.build();
@@ -1735,6 +1810,8 @@ class FlareEditor {
     if (mode === "detect" || mode === "detect_with_manual_offset") {
       nodeSlider("threshold", "detect_threshold", [0, 1, 0.01]);
       nodeSlider("max lights", "detect_max_lights", [1, 16, 1]);
+      nodeSlider("smoothing", "track_smoothing", [0, 0.98, 0.01]);
+      nodeSlider("scene lock", "scene_lock", [0, 1, 0.01]);
       nodeSlider("travel", "light_travel", [0, 1, 0.01]);
     } else if (mode === "track" || mode === "track_dots" || mode === "lock") {
       nodeSlider(mode === "track_dots" ? "dot threshold" : "threshold",
@@ -1744,9 +1821,13 @@ class FlareEditor {
       nodeSlider("smoothing", "track_smoothing", [0, 0.98, 0.01]);
       nodeSlider("max jump", "track_max_jump", [0.01, 0.5, 0.01]);
       nodeSlider("travel", "light_travel", [0, 1, 0.01]);
+      nodeSlider("scene lock", "scene_lock", [0, 1, 0.01]);
       nodeSlider("hold", "track_hold", [0, 60, 1]);
       nodeSlider("fade", "track_fade", [1, 60, 1]);
       nodeSlider("search radius", "search_radius", [0, 1, 0.01]);
+    } else if (mode === "follow") {
+      nodeSlider("smoothing", "track_smoothing", [0, 0.98, 0.01]);
+      nodeSlider("travel", "light_travel", [0, 1, 0.01]);
     } else if (mode === "point_track") {
       const marks = parsePath(getStr(this.node, "track_points"));
       const count = document.createElement("label");
@@ -1826,29 +1907,46 @@ class FlareEditor {
       const img = document.createElement("img");
       img.src = elementThumbUrl(elem.params.file);
       chip.appendChild(img);
-      // a 44px chip says which family; the hover preview says which file
-      let peek = null;
-      const hide = () => { peek?.remove(); peek = null; };
-      chip.addEventListener("pointerenter", () => {
-        hide();
-        peek = document.createElement("div");
-        peek.className = "fcore-peek";
-        const big = document.createElement("img");
-        big.src = img.src;
-        const cap = document.createElement("span");
-        cap.textContent = elem.params.file;
-        peek.append(big, cap);
-        document.body.appendChild(peek);
-        const rr = chip.getBoundingClientRect();
-        peek.style.left = `${Math.min(rr.right + 8, window.innerWidth - 236)}px`;
-        peek.style.top = `${Math.max(6, Math.min(rr.top - 24, window.innerHeight - 260))}px`;
-      });
-      chip.addEventListener("pointerleave", hide);
     } else {
       const ico = document.createElement("span");
       ico.className = `ico ico-${elem.type}`;
       chip.appendChild(ico);
     }
+    // Hover: the element rendered SOLO, as configured -- colour, scale,
+    // count, blur. A texture's file is not what it looks like once tinted
+    // and scaled, and a procedural element has no file at all, so the
+    // server renders it. Cached by content so a second hover is free.
+    let peek = null, timer = null, token = 0;
+    const hide = () => {
+      clearTimeout(timer); timer = null; token++;
+      peek?.remove(); peek = null;
+    };
+    chip.addEventListener("pointerenter", () => {
+      hide();
+      const mine = ++token;
+      timer = setTimeout(async () => {
+        peek = document.createElement("div");
+        peek.className = "fcore-peek";
+        const big = document.createElement("img");
+        const cap = document.createElement("span");
+        cap.textContent = "rendering…";
+        peek.append(big, cap);
+        document.body.appendChild(peek);
+        const rr = chip.getBoundingClientRect();
+        peek.style.left = `${Math.min(rr.right + 8, window.innerWidth - 276)}px`;
+        peek.style.top = `${Math.max(6, Math.min(rr.top - 40, window.innerHeight - 190))}px`;
+        try {
+          const url = await elementPreviewUrl(elem, this.read().global || {});
+          if (mine !== token || !peek) return;
+          big.src = url;
+          cap.textContent = (elem.label || elem.type)
+            + (elem.type === "texture" && elem.params?.file ? ` — ${elem.params.file}` : "");
+        } catch (e) {
+          if (mine === token && peek) cap.textContent = "no preview";
+        }
+      }, 120);
+    });
+    chip.addEventListener("pointerleave", hide);
     return chip;
   }
 

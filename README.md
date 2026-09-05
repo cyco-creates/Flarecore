@@ -143,6 +143,24 @@ Combine. `position_mode` chooses:
   move it. A blown highlight has no detail to match — track a nearby edge
   instead. `feature px` is the patch size, `search px` the speed limit.
 
+- `follow` — **track the camera, not the light.** Put the light where the
+  source really is — the picker has room around the frame, so drag it
+  *outside* if the sun is above the edge — and it is carried by the camera's
+  motion, read from the whole picture (Shi-Tomasi corners, pyramidal
+  Lucas–Kanade, a rigid fit weighted toward the far field). Nothing is
+  detected, so an off-frame sun, a clipped sky and a canopy full of branches
+  cannot touch it. The steadiest option for any shot where the light is not
+  a clean dot.
+
+Every detection mode is **anchored to the scene** the same way: the light is
+carried from its most confident frame by the camera's motion, and only the
+detector's disagreement with that is smoothed, so a frame that hops to a
+rival source cannot drag the light. **`scene lock`** sets how strongly — 1
+for a sun (it moves only with the camera), 0 for a light that moves on its
+own, such as headlights crossing frame. A matte with no scene in it is left
+alone automatically. Choosing a mode applies the settings measured best for
+it, so a mode arrives ready to use.
+
 Every tracked mode has a **`travel`** slider: 1 follows the tracked path,
 0 pins the flare in one spot for the whole clip, and anything between keeps
 the path with its excursion scaled down. Each light is damped about its own

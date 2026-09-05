@@ -15,9 +15,11 @@ from ..flare.detect import detect_lights, linear_luminance
 # into one hill, small enough to keep two genuinely separate sources apart.
 DETECT_REGION_SIGMA = 0.02
 from ..flare.track import (track_lights, parse_path, sample_path,
-                           solve_light_path)
+                           solve_light_path, smooth_series)
 from ..flare.feature_track import track_points as track_points_in
 from ..flare.feature_track import transform_from
+from ..flare.scene_motion import estimate_motion, carry_point, scene_luma
+from ..flare.track import _blend_toward_fit, _fill_gaps
 from ..flare.engine import render_batch, composite
 from ..flare.grid import uv_to_grid
 from ..flare.occlude import occlusion_factor
@@ -93,6 +95,92 @@ def restrict_to_region(detections, cu, cv, radius, aspect):
     return out
 
 
+# How far (fraction of frame height) a detection may pull the light away
+# from the camera-carried path at full scene lock; the limit opens up as
+# the lock is released, until at 0 the anchoring is not applied at all.
+ANCHOR_MAX_DEVIATION = 0.03
+
+
+def _median5(values):
+    """Five-tap running median; the ends use what is available."""
+    n = len(values)
+    out = []
+    for i in range(n):
+        win = sorted(values[max(0, i - 2):min(n, i + 3)])
+        out.append(win[len(win) // 2])
+    return out
+
+
+def _anchor_to_scene(lights_per_frame, luma, amount, lock=1.0):
+    """Hold every detected light to the way the picture moves.
+
+    A detector says where the light is in each frame on its own, and on
+    real footage that answer wobbles: the visible part of a sun changes as
+    branches cross it, a clipped sky has no centre, a rival source wins a
+    frame. The camera's motion, read from the whole picture, says where the
+    light MUST have gone between frames. So each light is carried from its
+    most confident frame by the scene's motion, and only the residual -- how
+    far the detector disagrees with that -- is smoothed. At `amount` 0 the
+    detections stand; at 1 the residual is a fitted curve and the light
+    rides the camera. Frames that had no light get none: hold and fade are
+    the tracker's business, this only moves lights that exist.
+    """
+    frames = len(lights_per_frame)
+    if frames < 3:
+        return lights_per_frame
+    by_key: dict = {}
+    for i, frame in enumerate(lights_per_frame):
+        for slot, light in enumerate(frame):
+            by_key.setdefault(light.get("tid", slot), []).append((i, slot, light))
+    height, width = int(luma.shape[1]), int(luma.shape[2])
+    out = [[dict(l) for l in frame] for frame in lights_per_frame]
+    for key, entries in by_key.items():
+        if len(entries) < 3:
+            continue
+        # the reference: the frame this light was seen most confidently
+        ref_i, _, ref = max(entries, key=lambda e: (e[2].get("brightness", 1.0)
+                                                    * (1.0 - e[2].get("occlusion", 0.0))))
+        stats: dict = {}
+        motions = estimate_motion(anchor_uv=(ref["u"], ref["v"]), model="rigid",
+                                  luma=luma, stats=stats)
+        # A matte, a black plate, a featureless sky: nothing to anchor to.
+        # The light's own motion is then all there is, and must stand.
+        if stats.get("solved_frames", 0) < 0.5 * max(frames - 1, 1):
+            continue
+        carried = carry_point(ref["u"], ref["v"], motions, height, width, start=ref_i)
+        res_u = [None] * frames
+        res_v = [None] * frames
+        for i, slot, l in entries:
+            res_u[i] = l["u"] - carried[i][0]
+            res_v[i] = l["v"] - carried[i][1]
+        # gaps take the nearest known residual, then the residual is
+        # smoothed and pulled toward a fitted curve by `amount`
+        path = [(res_u[i], res_v[i], 0.0) if res_u[i] is not None else None
+                for i in range(frames)]
+        _fill_gaps(path)
+        # A detector that hops to a rival for a frame or two leaves a spike
+        # in the residual; a low-pass spreads a spike, a median removes it.
+        ru = _median5([p[0] for p in path])
+        rv = _median5([p[1] for p in path])
+        # The camera says where the light went; the detector may only
+        # disagree by so much. A hop to a rival source is a disagreement of
+        # a third of the frame, so however long it lasts it is clipped to a
+        # few percent and cannot drag the light. Genuine slow drift -- the
+        # visible part of a sun changing as branches cross it -- is small
+        # and passes through.
+        limit = ANCHOR_MAX_DEVIATION + (1.0 - lock) * 0.6
+        mu = sorted(ru)[len(ru) // 2]; mv = sorted(rv)[len(rv) // 2]
+        ru = [mu + max(-limit, min(limit, r - mu)) for r in ru]
+        rv = [mv + max(-limit, min(limit, r - mv)) for r in rv]
+        ru = _blend_toward_fit(smooth_series(ru, min(amount, 0.6)), amount * lock)
+        rv = _blend_toward_fit(smooth_series(rv, min(amount, 0.6)), amount * lock)
+        for i, slot, l in entries:
+            moved = out[i][slot]
+            moved["u"] = carried[i][0] + ru[i]
+            moved["v"] = carried[i][1] + rv[i]
+    return out
+
+
 def _damp_travel(lights_per_frame, amount):
     """Scale each light's excursion about its own average position.
 
@@ -157,6 +245,7 @@ class FlareRender:
                 "position_mode": ([
                     "manual", "detect", "detect_with_manual_offset",
                     "track", "track_dots", "path", "lock", "point_track",
+                    "follow",
                 ], {
                     "tooltip": "manual: the picker's light point. detect: the "
                                "brightest spot, per frame. track: the same but "
@@ -168,12 +257,17 @@ class FlareRender:
                                "point_track: follow one or two features you "
                                "place on the picker, the way a compositor's "
                                "point tracker does -- with two, the flare "
-                               "axis takes their rotation and scale too.",
+                               "axis takes their rotation and scale too. "
+                               "follow: place the light where the source "
+                               "really is -- outside the frame if it is -- "
+                               "and it is carried by the camera's motion, "
+                               "read from the whole picture. Nothing is "
+                               "detected, so nothing can be lost.",
                 }),
-                "light_x": ("FLOAT", {"default": 0.25, "min": 0.0, "max": 1.0, "step": 0.001}),
-                "light_y": ("FLOAT", {"default": 0.3, "min": 0.0, "max": 1.0, "step": 0.001}),
-                "flare_x": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.001}),
-                "flare_y": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.001}),
+                "light_x": ("FLOAT", {"default": 0.25, "min": -1.0, "max": 2.0, "step": 0.001}),
+                "light_y": ("FLOAT", {"default": 0.3, "min": -1.0, "max": 2.0, "step": 0.001}),
+                "flare_x": ("FLOAT", {"default": 0.5, "min": -1.0, "max": 2.0, "step": 0.001}),
+                "flare_y": ("FLOAT", {"default": 0.5, "min": -1.0, "max": 2.0, "step": 0.001}),
                 "detect_threshold": ("FLOAT", {"default": 0.8, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "detect_max_lights": ("INT", {"default": 1, "min": 1, "max": 16}),
                 "occlusion_radius": ("FLOAT", {"default": 0.02, "min": 0.001, "max": 0.5, "step": 0.001}),
@@ -290,7 +384,7 @@ class FlareRender:
                                "does not change shape as the shot moves.",
                 }),
                 "track_search": ("INT", {
-                    "default": 48, "min": 8, "max": 256, "step": 2,
+                    "default": 64, "min": 8, "max": 256, "step": 2,
                     "tooltip": "how far from the predicted position to look, "
                                "in pixels. This is the tracker's speed "
                                "limit: raise it for fast motion, lower it to "
@@ -315,6 +409,18 @@ class FlareRender:
                                "whole frame. Set it when a rival source "
                                "elsewhere keeps stealing the flare.",
                 }),
+                "scene_lock": ("FLOAT", {
+                    "default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "tooltip": "detect/track/lock: how much the light is held "
+                               "to the way the picture moves. A sun is at "
+                               "infinity and moves only with the camera, so "
+                               "at 1 the detector may only nudge it a little "
+                               "and a hop to a rival source cannot drag it. "
+                               "Set 0 for a light that moves on its own -- "
+                               "headlights crossing frame, a torch -- so the "
+                               "detector's motion is kept in full. A matte "
+                               "with no scene in it is left alone either way.",
+                }),
             },
             "optional": {
                 "depth": ("IMAGE",),
@@ -334,7 +440,7 @@ class FlareRender:
                depth_temporal_smooth=0.0, light_path="", mask_falloff=0.35,
                colorspace="srgb", chunk_frames=0, light_travel=1.0, track_points="", track_feature=32,
                track_search=48, track_hold=3, track_fade=4,
-               search_radius=0.0, depth=None, lights=None):
+               search_radius=0.0, scene_lock=1.0, depth=None, lights=None):
         preset = load_preset(preset_json)
 
         # ComfyUI passes IMAGE tensors on the CPU regardless of where they
@@ -379,6 +485,14 @@ class FlareRender:
                 hold=track_hold, fade=track_fade, search_radius=search_radius,
             )
 
+        if (lights is None and batch > 2 and scene_lock > 0.0
+                and position_mode in ("detect", "detect_with_manual_offset",
+                                      "track", "track_dots", "lock")):
+            luma = torch.cat([scene_luma(linear_chunk(s, min(s + chunk, batch)))
+                              for s in range(0, batch, chunk)], dim=0)
+            lights_per_frame = _anchor_to_scene(lights_per_frame, luma,
+                                                track_smoothing, scene_lock)
+            del luma
         lights_per_frame = _damp_travel(lights_per_frame, light_travel)
 
         if depth is not None:
@@ -656,6 +770,23 @@ class FlareRender:
                                           search_radius, frame_aspect)
             return dets
 
+        if position_mode == "follow":
+            # The light is where the picker says, in frame 0, and it moves
+            # the way the picture moves. Detection never enters into it, so
+            # an off-frame sun, a clipped sky and a canopy full of branches
+            # cannot touch it; a rigid fit keeps forward travel from reading
+            # as a zoom that would push an off-frame light further out.
+            luma = torch.cat([scene_luma(linear_chunk(s, min(s + chunk, batch)))
+                              for s in range(0, batch, chunk)], dim=0)
+            motions = estimate_motion(anchor_uv=(light_x, light_y),
+                                      model="rigid", luma=luma)
+            path = carry_point(light_x, light_y, motions,
+                               luma.shape[1], luma.shape[2])
+            us = smooth_series([p[0] for p in path], min(smoothing, 0.6))
+            vs = smooth_series([p[1] for p in path], min(smoothing, 0.6))
+            return [[{"u": u, "v": v, "brightness": 1.0, "tid": 0}]
+                    for u, v in zip(us, vs)]
+
         if position_mode == "point_track":
             # Feature tracking needs whole frames, not the light's position,
             # so the clip is pulled in slices exactly like the detectors.
@@ -669,6 +800,13 @@ class FlareRender:
                               for s in range(0, batch, chunk)], dim=0)
             tracked = track_points_in(clip, pts[:2], feature=track_feature,
                                       search=track_search)
+            # sub-pixel tracks carry sub-pixel jitter, and a flare axis
+            # amplifies it: the same zero-phase smooth the light tracker uses
+            for tr in tracked:
+                us = smooth_series([q["u"] for q in tr], smoothing)
+                vs = smooth_series([q["v"] for q in tr], smoothing)
+                for q, uu, vv in zip(tr, us, vs):
+                    q["u"], q["v"] = uu, vv
             if len(tracked) == 1:
                 return [[{"u": p["u"], "v": p["v"], "brightness": 1.0,
                           "tid": 0}] for p in tracked[0]]

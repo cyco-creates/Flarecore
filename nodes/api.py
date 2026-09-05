@@ -36,6 +36,43 @@ def _find_preset(name: str):
     return None
 
 
+_PREVIEW_CACHE: dict = {}
+PREVIEW_W, PREVIEW_H = 256, 144
+
+
+def _render_element_png(elem: dict, glob: dict) -> bytes:
+    """Solo-render one element at preview size and encode it as PNG."""
+    import io as _io
+    import numpy as np
+    import torch
+    from PIL import Image
+    from ..flare.schema import load_preset
+    from ..flare.engine import render_stack
+    from ..flare.grid import uv_to_grid
+    from ..flare.colorspace import linear_to_srgb
+
+    e = dict(elem)
+    e["enabled"] = True
+    e["solo"] = False
+    preset = load_preset(json.dumps({"schema_version": 1, "global": glob,
+                                     "elements": [e]}))
+    h, w = PREVIEW_H, PREVIEW_W
+    # the light a third of the way in, the anchor past centre: enough axis
+    # for a ghost chain to read, without the flare leaving the picture
+    x, y = uv_to_grid(0.32, 0.42, h, w)
+    ax, ay = uv_to_grid(0.64, 0.56, h, w)
+    lights = [{"x": x, "y": y, "ax": ax, "ay": ay, "u": 0.32, "v": 0.42,
+               "brightness": 1.0, "occlusion": 0.0, "index": 0}]
+    with torch.no_grad():
+        out = render_stack(preset, lights, h, w, torch.device("cpu"),
+                           torch.float32)
+        rgb = linear_to_srgb(out.clamp(0.0, 1.0))
+    arr = (rgb.numpy() * 255.0 + 0.5).astype(np.uint8)
+    buf = _io.BytesIO()
+    Image.fromarray(arr).save(buf, format="PNG", compress_level=3)
+    return buf.getvalue()
+
+
 def register_routes() -> bool:
     global _registered
     if _registered:
@@ -50,6 +87,33 @@ def register_routes() -> bool:
 
     from .library import list_elements, ELEMENTS_DIR
     from ..flare.schema import normalize_texture_ref
+
+    # A rendered preview of ONE element as configured -- colour, scale,
+    # count, blur, the lot -- for the editor's hover. Procedural elements
+    # have no file to show, and a texture's file is not what it looks like
+    # once it is tinted and scaled; a solo render is the truth. Small, on the
+    # CPU so it never contends with a real render, and cached by content.
+    @routes.post("/flarecore/element_preview")
+    async def flarecore_element_preview(request):
+        import hashlib
+        try:
+            body = await request.json()
+            elem = body.get("element")
+            glob = body.get("global") or {}
+            if not isinstance(elem, dict):
+                raise ValueError("no element")
+            key = hashlib.sha1(json.dumps([elem, glob], sort_keys=True,
+                                          default=str).encode()).hexdigest()
+            png = _PREVIEW_CACHE.get(key)
+            if png is None:
+                png = _render_element_png(elem, glob)
+                if len(_PREVIEW_CACHE) >= 256:
+                    _PREVIEW_CACHE.pop(next(iter(_PREVIEW_CACHE)))
+                _PREVIEW_CACHE[key] = png
+            return web.Response(body=png, content_type="image/png",
+                                headers={"Cache-Control": "no-store"})
+        except Exception as e:  # a preview must never break the editor
+            return web.json_response({"error": str(e)}, status=400)
 
     @routes.get("/flarecore/elements")
     async def flarecore_elements(request):

@@ -1017,6 +1017,57 @@ file. The gallery pick and the "+ add" path both apply the lens-plate
 treatment to a lens_dirt texture -- the add path had been missing it, which
 was found by driving the DOM, not by reading the code.
 
+## Track the camera, not the sun
+
+"Not a single one of the automatic positioning modes is really good." The
+metrics had been saying track and lock were steady to a few thousandths;
+the owner was right and the metrics were measuring the wrong thing. Contact
+sheets of every mode over his footage showed it in one look: the sun is
+ABOVE the top edge of frame. Every detector put the light on the visible
+sky patch below it -- the wrong place -- and with the flare's anchor at
+frame centre, each wobble of that patch as branches crossed it swept the
+ghost chain across the picture. No brightness estimator can find a light
+that is not in the picture.
+
+What is in the picture is how everything moves. A sun is at infinity and
+moves only with camera rotation, and camera rotation is what the far
+features reveal. So: Shi-Tomasi corners, chosen per grid cell so sharp
+near-field texture cannot starve the far field (measured: all 48 corners
+had landed on the expanding foreground and none on the static background);
+pyramidal Lucas-Kanade, batched, 35 ms a frame; a RIGID fit -- rotation and
+shift, scale fixed -- because a free scale reads forward travel as a zoom
+and pushes an off-frame light out a little more every frame (drift 0.56 of
+the frame in 60 frames with scale free, 0.02 with it fixed); features
+weighted toward the light, with an outlier cutoff that adapts to how tightly
+the trusted features agree, since near parallax is only a pixel or two and
+a fixed cutoff waved it through.
+
+Three things came of it.
+
+`follow`: place the light where the source really is -- the picker now has
+room around the frame, and the node accepts positions outside it -- and the
+camera carries it. Nothing is detected, so nothing can be lost. On the
+owner's shot the light sits above the frame in every tile and the ghosts
+hold one spot; max step 0.0035.
+
+Scene anchoring for every detection mode: the light is carried from its
+most confident frame by the scene's motion, and only the detector's
+DISAGREEMENT with that is smoothed -- median-filtered, clipped to a few
+percent of frame so a hop to a rival cannot drag it, then low-passed. On
+the owner's shot detect went from a mean step of 0.26 with teleports to
+0.0016 with none; track 0.0099 to 0.0018; lock 0.0073 to 0.0014. `scene
+lock` sets the strength: 1 for a sun, 0 for a light that moves on its own
+(headlights, a torch), and a matte with no scene in it is left alone
+automatically -- the dot matte's dots keep their full travel.
+
+Mode defaults: choosing a mode now applies the settings measured best for
+it. Choosing a mode is choosing a job, and the job comes with its tools set.
+
+The research agent's survey of compositing practice said the same thing
+independently: solve the camera and carry the light; a sun needs a no-depth
+solve; never clamp the light to the frame; on driving shots the dominant
+motion is the road, so weight the far field.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning
