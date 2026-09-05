@@ -121,3 +121,24 @@ def test_workflows_exist_and_are_registered():
     assert {"flarecore_studio", "flarecore_trigger_lab"} <= found
     # the directory name ComfyUI scans for custom-node templates
     assert WORKFLOW_DIR.name == "example_workflows"
+
+
+@pytest.mark.parametrize("path", workflows(), ids=lambda p: p.name)
+def test_subgraph_definitions_ship_live_nodes(path):
+    """A subgraph definition freezes the mode its nodes had when it was made.
+
+    Converting a selection into a subgraph copies each node's current mode
+    into the definition, and nothing ever clears it again: muting is a
+    property of the subgraph INSTANCE in the parent graph, so the studio
+    switch (which mutes the instance) cannot reach inside. Ship a definition
+    built from muted or bypassed nodes and the bench is dead on arrival --
+    the generator contributes nothing and the node downstream of it fails
+    with "Required input is missing".
+    """
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    for sub in (doc.get("definitions") or {}).get("subgraphs", []):
+        for node in sub.get("nodes", []):
+            assert node.get("mode", 0) == 0, (
+                f"{path.name}: subgraph {sub.get('name')!r} node {node.get('id')} "
+                f"({node.get('type')}) ships at mode {node.get('mode')} — "
+                "a definition must contain live nodes; mute the instance instead")

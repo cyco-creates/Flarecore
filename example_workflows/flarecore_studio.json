@@ -2507,7 +2507,7 @@
             ],
             "flags": {},
             "order": 0,
-            "mode": 4,
+            "mode": 0,
             "inputs": [
               {
                 "localized_name": "unet_name",
@@ -2572,7 +2572,7 @@
             ],
             "flags": {},
             "order": 1,
-            "mode": 4,
+            "mode": 0,
             "inputs": [
               {
                 "localized_name": "clip_name",
@@ -2650,7 +2650,7 @@
             ],
             "flags": {},
             "order": 2,
-            "mode": 4,
+            "mode": 0,
             "inputs": [
               {
                 "localized_name": "vae_name",
@@ -2704,7 +2704,7 @@
             ],
             "flags": {},
             "order": 5,
-            "mode": 4,
+            "mode": 0,
             "inputs": [
               {
                 "localized_name": "clip",
@@ -2765,7 +2765,7 @@
             ],
             "flags": {},
             "order": 4,
-            "mode": 4,
+            "mode": 0,
             "inputs": [
               {
                 "localized_name": "clip",
@@ -2826,7 +2826,7 @@
             ],
             "flags": {},
             "order": 3,
-            "mode": 4,
+            "mode": 0,
             "inputs": [
               {
                 "localized_name": "width",
@@ -2902,7 +2902,7 @@
             ],
             "flags": {},
             "order": 7,
-            "mode": 4,
+            "mode": 0,
             "inputs": [
               {
                 "localized_name": "samples",
@@ -2953,7 +2953,7 @@
             ],
             "flags": {},
             "order": 6,
-            "mode": 4,
+            "mode": 0,
             "inputs": [
               {
                 "localized_name": "model",

@@ -651,6 +651,26 @@ memory), and 300x1080p completes in 16 s. Chunked and unchunked outputs
 match to one float ulp (the equality test allows 1e-6 for conv reduction
 order).
 
+## Subgraph definitions freeze the mode their nodes had
+
+Activating ELEMENT FORGE gave a bench that looked live but failed with
+"Required input is missing: image" on FlareTexturePrepare. The switch was
+doing its job -- every forge node, the subgraph instance included, went to
+mode 0 -- but all eight nodes INSIDE the Krea2 generator sat at mode 4.
+
+Converting a selection into a subgraph copies each node's current mode into
+the definition, and that copy is permanent. Muting reaches the subgraph
+INSTANCE in the parent graph; it never reaches the nodes inside it. Both
+times this subgraph was built it was built out of a muted bench -- the
+natural way to build one here -- so the definition shipped dead, twice
+(mode 2 in the first cut, mode 4 after the owner's arrangement).
+
+The definition now ships live nodes, guarded by a test over every shipped
+workflow. The switch also revives a subgraph whose nodes are ALL disabled
+when it activates a bench: that state is never a deliberate setup (it is
+just an expensive way to mute the instance), whereas SOME nodes bypassed
+is a real choice and is left alone.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

@@ -2010,6 +2010,22 @@ function nodesInGroup(graph, group) {
   });
 }
 
+// Converting a selection into a subgraph copies each node's CURRENT mode into
+// the definition, permanently: muting reaches the subgraph INSTANCE in the
+// parent graph, never the nodes inside it. Build a subgraph while its bench is
+// muted -- the normal way to build one here -- and the definition is frozen
+// dead, so activating the bench gives you a generator that contributes nothing
+// and a "Required input is missing" on the node downstream of it, far from the
+// cause. Every single inner node disabled is never a deliberate setup (it is
+// just an expensive way to mute the instance), so treat it as the trap it is.
+// SOME nodes bypassed is a real choice and is left alone.
+function reviveDeadSubgraph(node) {
+  const inner = node.subgraph?.nodes;
+  if (!inner || !inner.length) return;
+  if (inner.some((n) => (n.mode ?? 0) === 0)) return;
+  for (const n of inner) n.mode = 0;
+}
+
 function applyStudioSection(graph, active) {
   for (const g of graph._groups || []) {
     const entry = STUDIO_SECTIONS.find(([, t]) =>
@@ -2019,6 +2035,7 @@ function applyStudioSection(graph, active) {
     for (const n of nodesInGroup(graph, g)) {
       if (n.type === "FlarecoreStudioSwitch") continue;
       n.mode = on ? 0 : 2;                 // 2 = NEVER (muted)
+      if (on) reviveDeadSubgraph(n);
     }
     g.color = on ? (GROUP_ACTIVE[entry[1]] || g.color) : GROUP_DIM;
   }
