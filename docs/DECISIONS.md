@@ -501,6 +501,45 @@ plus unrelated-looking errors from other packs that touch every node type.
 And the builder writes virtual nodes by hand (like Note), since they are
 absent from /object_info.
 
+## 3x. Studio fixes: hidden widgets, a zoom-proof switch, subgraphs (2026-09-05)
+
+Four defects reported against the first studio build, and each had a
+different root cause worth recording.
+
+**Suppressed widgets were still painted.** The pack hid widgets by assigning
+`type = "hidden"` and a zero computeSize. Measured on a stock KSampler in
+this frontend: `widget.hidden = true` shrinks the node (262 -> 238), while
+`type = "hidden"` does nothing (262 -> 262). The legacy idiom is inert, so
+the raw `element` combo and the render node's inputs kept drawing over the
+panels. `hideWidget` now sets the flag (and keeps the type assignment for
+older frontends).
+
+**The switch did nothing.** Its buttons lived in a DOM widget, and ComfyUI
+hides DOM widgets below ~50% zoom — precisely the zoom you need to see three
+benches at once. It is now three NATIVE litegraph button widgets, drawn on
+the canvas at any scale, marked with a filled/hollow bullet.
+
+**Nothing was muted on load.** `group.recomputeInsideNodes()` walks each
+node's cached bounding box, which is only populated once the canvas has
+drawn; on a freshly loaded workflow it reported empty groups, so every bench
+came up live. Membership is now computed directly — the node's centre
+against the group rectangle — which needs no cache and is correct on the
+first pass.
+
+**Too many nodes in the forge.** The eight-node model/sampling chain is now
+one `Krea2 generator` subgraph exposing `text` and `seed`. The subgraph was
+produced by the frontend's own `LGraph.prototype.convertToSubgraph` and the
+result exported with `graph.serialize()`, rather than hand-authoring the
+`definitions.subgraphs` format. Note the instance method is monkey-patched by
+another installed pack, so the call has to go through the prototype.
+
+Regenerating the studio is therefore two steps: `build_workflows.py` writes
+the flat base, then the conversion is replayed in the browser and the export
+overwrites the shipped file. The procedure is in the builder's studio
+section. The flare bench also lost its depth chain — depth occlusion needs a
+depth model and belongs with footage, so it lives in the video bench, and
+FlareRender's `depth` input is still there for anyone who wants it.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

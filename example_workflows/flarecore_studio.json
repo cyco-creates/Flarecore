@@ -1,1619 +1,3092 @@
 {
- "id": "flarecore_studio",
- "revision": 0,
- "last_node_id": 31,
- "last_link_id": 28,
- "nodes": [
-  {
-   "id": 1,
-   "type": "FlareElementPrompts",
-   "pos": [
-    -2470,
-    -540
-   ],
-   "size": [
-    400,
-    340
-   ],
-   "flags": {},
-   "order": 1,
-   "mode": 0,
-   "inputs": [],
-   "outputs": [
+  "id": "flarecore_studio",
+  "revision": 0,
+  "last_node_id": 30,
+  "last_link_id": 29,
+  "nodes": [
     {
-     "name": "prompt",
-     "type": "STRING",
-     "links": [
-      1
-     ],
-     "slot_index": 0
+      "id": 1,
+      "type": "FlareElementPrompts",
+      "pos": [
+        -2470,
+        -540
+      ],
+      "size": [
+        400,
+        340
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 2,
+      "inputs": [
+        {
+          "localized_name": "element",
+          "name": "element",
+          "type": "COMBO",
+          "widget": {
+            "name": "element"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "extra_style",
+          "name": "extra_style",
+          "type": "STRING",
+          "widget": {
+            "name": "extra_style"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "custom_prompt",
+          "name": "custom_prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "custom_prompt"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "prompt",
+          "name": "prompt",
+          "type": "STRING",
+          "slot_index": 0,
+          "links": [
+            26
+          ]
+        },
+        {
+          "localized_name": "category",
+          "name": "category",
+          "type": "STRING",
+          "slot_index": 1,
+          "links": [
+            2
+          ]
+        },
+        {
+          "localized_name": "element_name",
+          "name": "element_name",
+          "type": "STRING",
+          "slot_index": 2,
+          "links": [
+            3
+          ]
+        }
+      ],
+      "title": "element prompt",
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.1.2",
+        "Node name for S&R": "FlareElementPrompts"
+      },
+      "widgets_values": [
+        "glows/soft_glow",
+        "",
+        "Abstract lens flare photography: a soft diffuse ball of pure warm light on a pure black background, roughly centered but slightly off-axis, smooth radial falloff with faint uneven blotches in the halo, subtle asymmetry as if photographed through a slightly hazy lens, no physical object, no lamp, no sun disc, no text"
+      ],
+      "widgets_values_named": {
+        "element": "glows/soft_glow",
+        "extra_style": "",
+        "custom_prompt": "Abstract lens flare photography: a soft diffuse ball of pure warm light on a pure black background, roughly centered but slightly off-axis, smooth radial falloff with faint uneven blotches in the halo, subtle asymmetry as if photographed through a slightly hazy lens, no physical object, no lamp, no sun disc, no text"
+      }
     },
     {
-     "name": "category",
-     "type": "STRING",
-     "links": [
-      2
-     ],
-     "slot_index": 1
+      "id": 10,
+      "type": "FlareTexturePrepare",
+      "pos": [
+        -1130,
+        -220
+      ],
+      "size": [
+        300,
+        222
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 2,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 27
+        },
+        {
+          "localized_name": "mode",
+          "name": "mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "black_point",
+          "name": "black_point",
+          "type": "FLOAT",
+          "widget": {
+            "name": "black_point"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "autocenter",
+          "name": "autocenter",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "autocenter"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "feather",
+          "name": "feather",
+          "type": "FLOAT",
+          "widget": {
+            "name": "feather"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "size",
+          "name": "size",
+          "type": "INT",
+          "widget": {
+            "name": "size"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "margin",
+          "name": "margin",
+          "type": "FLOAT",
+          "widget": {
+            "name": "margin"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "frame",
+          "name": "frame",
+          "type": "COMBO",
+          "widget": {
+            "name": "frame"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "texture",
+          "name": "texture",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            13,
+            14
+          ]
+        },
+        {
+          "localized_name": "texture_alpha",
+          "name": "texture_alpha",
+          "type": "MASK",
+          "slot_index": 1,
+          "links": []
+        }
+      ],
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.1.2",
+        "Node name for S&R": "FlareTexturePrepare"
+      },
+      "widgets_values": [
+        "rgb",
+        0.06,
+        true,
+        0.12,
+        2048,
+        0.25,
+        "square"
+      ],
+      "widgets_values_named": {
+        "mode": "rgb",
+        "black_point": 0.06,
+        "autocenter": true,
+        "feather": 0.12,
+        "size": 2048,
+        "margin": 0.25,
+        "frame": "square"
+      }
     },
     {
-     "name": "element_name",
-     "type": "STRING",
-     "links": [
-      3
-     ],
-     "slot_index": 2
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "FlareElementPrompts"
-   },
-   "widgets_values": [
-    "glows/soft_glow",
-    "",
-    ""
-   ],
-   "title": "element prompt"
-  },
-  {
-   "id": 2,
-   "type": "UNETLoader",
-   "pos": [
-    -2470,
-    -120
-   ],
-   "size": [
-    360,
-    82
-   ],
-   "flags": {},
-   "order": 2,
-   "mode": 0,
-   "inputs": [],
-   "outputs": [
-    {
-     "name": "MODEL",
-     "type": "MODEL",
-     "links": [
-      4
-     ],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "UNETLoader"
-   },
-   "widgets_values": [
-    "krea2_turbo_fp8_scaled.safetensors",
-    "default"
-   ]
-  },
-  {
-   "id": 3,
-   "type": "CLIPLoader",
-   "pos": [
-    -2470,
-    20
-   ],
-   "size": [
-    360,
-    106
-   ],
-   "flags": {},
-   "order": 3,
-   "mode": 0,
-   "inputs": [],
-   "outputs": [
-    {
-     "name": "CLIP",
-     "type": "CLIP",
-     "links": [
-      5,
-      6
-     ],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "CLIPLoader"
-   },
-   "widgets_values": [
-    "qwen3vl_4b_fp8_scaled.safetensors",
-    "krea2",
-    "default"
-   ]
-  },
-  {
-   "id": 4,
-   "type": "VAELoader",
-   "pos": [
-    -2470,
-    180
-   ],
-   "size": [
-    360,
-    60
-   ],
-   "flags": {},
-   "order": 4,
-   "mode": 0,
-   "inputs": [],
-   "outputs": [
-    {
-     "name": "VAE",
-     "type": "VAE",
-     "links": [
-      11
-     ],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "VAELoader"
-   },
-   "widgets_values": [
-    "qwen_image_vae.safetensors"
-   ]
-  },
-  {
-   "id": 5,
-   "type": "CLIPTextEncode",
-   "pos": [
-    -2050,
-    -320
-   ],
-   "size": [
-    300,
-    120
-   ],
-   "flags": {},
-   "order": 5,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "clip",
-     "type": "CLIP",
-     "link": 5
+      "id": 11,
+      "type": "FlareElementSave",
+      "pos": [
+        -790,
+        -220
+      ],
+      "size": [
+        300,
+        160
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 2,
+      "inputs": [
+        {
+          "localized_name": "texture",
+          "name": "texture",
+          "type": "IMAGE",
+          "link": 13
+        },
+        {
+          "localized_name": "category",
+          "name": "category",
+          "type": "STRING",
+          "widget": {
+            "name": "category"
+          },
+          "link": 2
+        },
+        {
+          "localized_name": "name",
+          "name": "name",
+          "type": "STRING",
+          "widget": {
+            "name": "name"
+          },
+          "link": 3
+        },
+        {
+          "localized_name": "overwrite",
+          "name": "overwrite",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "overwrite"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "file",
+          "name": "file",
+          "type": "STRING",
+          "slot_index": 0,
+          "links": []
+        },
+        {
+          "localized_name": "texture",
+          "name": "texture",
+          "type": "IMAGE",
+          "slot_index": 1,
+          "links": []
+        }
+      ],
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.1.2",
+        "Node name for S&R": "FlareElementSave"
+      },
+      "widgets_values": [
+        "custom",
+        "my_element",
+        false
+      ],
+      "widgets_values_named": {
+        "category": "custom",
+        "name": "my_element",
+        "overwrite": false
+      }
     },
     {
-     "name": "text",
-     "type": "STRING",
-     "link": 1,
-     "widget": {
-      "name": "text"
-     }
-    }
-   ],
-   "outputs": [
-    {
-     "name": "CONDITIONING",
-     "type": "CONDITIONING",
-     "links": [
-      7
-     ],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "CLIPTextEncode"
-   },
-   "widgets_values": [
-    ""
-   ],
-   "title": "positive (from prompt bank)"
-  },
-  {
-   "id": 6,
-   "type": "CLIPTextEncode",
-   "pos": [
-    -2050,
-    -140
-   ],
-   "size": [
-    300,
-    100
-   ],
-   "flags": {},
-   "order": 6,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "clip",
-     "type": "CLIP",
-     "link": 6
-    }
-   ],
-   "outputs": [
-    {
-     "name": "CONDITIONING",
-     "type": "CONDITIONING",
-     "links": [
-      8
-     ],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "CLIPTextEncode"
-   },
-   "widgets_values": [
-    ""
-   ],
-   "title": "negative (unused at cfg 1)"
-  },
-  {
-   "id": 7,
-   "type": "EmptySD3LatentImage",
-   "pos": [
-    -2050,
-    20
-   ],
-   "size": [
-    300,
-    110
-   ],
-   "flags": {},
-   "order": 7,
-   "mode": 0,
-   "inputs": [],
-   "outputs": [
-    {
-     "name": "LATENT",
-     "type": "LATENT",
-     "links": [
-      9
-     ],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "EmptySD3LatentImage"
-   },
-   "widgets_values": [
-    1328,
-    1328,
-    1
-   ]
-  },
-  {
-   "id": 8,
-   "type": "KSampler",
-   "pos": [
-    -1690,
-    -220
-   ],
-   "size": [
-    300,
-    262
-   ],
-   "flags": {},
-   "order": 8,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "model",
-     "type": "MODEL",
-     "link": 4
+      "id": 12,
+      "type": "PreviewImage",
+      "pos": [
+        -790,
+        0
+      ],
+      "size": [
+        300,
+        270
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 2,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 14
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": []
+        }
+      ],
+      "title": "saved element",
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.34.0",
+        "Node name for S&R": "PreviewImage"
+      }
     },
     {
-     "name": "positive",
-     "type": "CONDITIONING",
-     "link": 7
+      "id": 13,
+      "type": "Note",
+      "pos": [
+        -2010,
+        -580
+      ],
+      "size": [
+        440,
+        250
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 2,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "ELEMENT FORGE (Krea2)\n\n1. On the element prompt panel: pick a category, then an element.\n   Its prompt appears below, ready to edit - what you see is exactly\n   what is queued. The extra style line is appended only while its\n   toggle is on.\n2. Queue: Krea2 generates, Flare Texture Prepare conditions it, and\n   Flare Element Save files it under elements/<category>/<name>.png.\n   For lens plates (dirt, droplets) set frame = wide_16_9 on Prepare.\n3. Use it: in the Flare Lab editor, click any element's NAME to pick\n   your new file from its family gallery.\n4. Bump the sampler seed for variations; luminance mode makes\n   tintable neutral elements, rgb keeps the generated colour."
+      ],
+      "widgets_values_named": {
+        "text": "ELEMENT FORGE (Krea2)\n\n1. On the element prompt panel: pick a category, then an element.\n   Its prompt appears below, ready to edit - what you see is exactly\n   what is queued. The extra style line is appended only while its\n   toggle is on.\n2. Queue: Krea2 generates, Flare Texture Prepare conditions it, and\n   Flare Element Save files it under elements/<category>/<name>.png.\n   For lens plates (dirt, droplets) set frame = wide_16_9 on Prepare.\n3. Use it: in the Flare Lab editor, click any element's NAME to pick\n   your new file from its family gallery.\n4. Bump the sampler seed for variations; luminance mode makes\n   tintable neutral elements, rgb keeps the generated colour."
+      },
+      "color": "#432",
+      "bgcolor": "#653"
     },
     {
-     "name": "negative",
-     "type": "CONDITIONING",
-     "link": 8
+      "id": 14,
+      "type": "LoadImage",
+      "pos": [
+        -220,
+        60
+      ],
+      "size": [
+        300,
+        340
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "COMBO",
+          "widget": {
+            "name": "image"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "choose file to upload",
+          "name": "upload",
+          "type": "IMAGEUPLOAD",
+          "widget": {
+            "name": "upload"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            15
+          ]
+        },
+        {
+          "localized_name": "MASK",
+          "name": "MASK",
+          "type": "MASK",
+          "slot_index": 1,
+          "links": []
+        }
+      ],
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.34.0",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "flarecore_occlusion_scene.png",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "flarecore_occlusion_scene.png",
+        "upload": "image"
+      }
     },
     {
-     "name": "latent_image",
-     "type": "LATENT",
-     "link": 9
-    }
-   ],
-   "outputs": [
-    {
-     "name": "LATENT",
-     "type": "LATENT",
-     "links": [
-      10
-     ],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "KSampler"
-   },
-   "widgets_values": [
-    7,
-    "fixed",
-    8,
-    1.0,
-    "er_sde",
-    "simple",
-    1.0
-   ]
-  },
-  {
-   "id": 9,
-   "type": "VAEDecode",
-   "pos": [
-    -1350,
-    -220
-   ],
-   "size": [
-    180,
-    50
-   ],
-   "flags": {},
-   "order": 9,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "samples",
-     "type": "LATENT",
-     "link": 10
+      "id": 15,
+      "type": "FlareRender",
+      "pos": [
+        140,
+        -560
+      ],
+      "size": [
+        470,
+        770
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 15
+        },
+        {
+          "localized_name": "depth",
+          "name": "depth",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "lights",
+          "name": "lights",
+          "shape": 7,
+          "type": "FLARE_LIGHTS",
+          "link": null
+        },
+        {
+          "localized_name": "preset_json",
+          "name": "preset_json",
+          "type": "STRING",
+          "widget": {
+            "name": "preset_json"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "position_mode",
+          "name": "position_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "position_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "light_x",
+          "name": "light_x",
+          "type": "FLOAT",
+          "widget": {
+            "name": "light_x"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "light_y",
+          "name": "light_y",
+          "type": "FLOAT",
+          "widget": {
+            "name": "light_y"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "flare_x",
+          "name": "flare_x",
+          "type": "FLOAT",
+          "widget": {
+            "name": "flare_x"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "flare_y",
+          "name": "flare_y",
+          "type": "FLOAT",
+          "widget": {
+            "name": "flare_y"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "detect_threshold",
+          "name": "detect_threshold",
+          "type": "FLOAT",
+          "widget": {
+            "name": "detect_threshold"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "detect_max_lights",
+          "name": "detect_max_lights",
+          "type": "INT",
+          "widget": {
+            "name": "detect_max_lights"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "occlusion_radius",
+          "name": "occlusion_radius",
+          "type": "FLOAT",
+          "widget": {
+            "name": "occlusion_radius"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "light_depth",
+          "name": "light_depth",
+          "type": "FLOAT",
+          "widget": {
+            "name": "light_depth"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "invert_depth",
+          "name": "invert_depth",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "invert_depth"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "intensity",
+          "name": "intensity",
+          "type": "FLOAT",
+          "widget": {
+            "name": "intensity"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "scale",
+          "name": "scale",
+          "type": "FLOAT",
+          "widget": {
+            "name": "scale"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "blend_mode",
+          "name": "blend_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "blend_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "clamp_output",
+          "name": "clamp_output",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "clamp_output"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "seed",
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "occlusion_smooth",
+          "name": "occlusion_smooth",
+          "type": "FLOAT",
+          "widget": {
+            "name": "occlusion_smooth"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "scene_color",
+          "name": "scene_color",
+          "type": "FLOAT",
+          "widget": {
+            "name": "scene_color"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "track_smoothing",
+          "name": "track_smoothing",
+          "type": "FLOAT",
+          "widget": {
+            "name": "track_smoothing"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "track_max_jump",
+          "name": "track_max_jump",
+          "type": "FLOAT",
+          "widget": {
+            "name": "track_max_jump"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "depth_normalize",
+          "name": "depth_normalize",
+          "type": "COMBO",
+          "widget": {
+            "name": "depth_normalize"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "depth_blur",
+          "name": "depth_blur",
+          "type": "FLOAT",
+          "widget": {
+            "name": "depth_blur"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "depth_temporal_smooth",
+          "name": "depth_temporal_smooth",
+          "type": "FLOAT",
+          "widget": {
+            "name": "depth_temporal_smooth"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "light_path",
+          "name": "light_path",
+          "type": "STRING",
+          "widget": {
+            "name": "light_path"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "mask_falloff",
+          "name": "mask_falloff",
+          "type": "FLOAT",
+          "widget": {
+            "name": "mask_falloff"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            16,
+            20
+          ]
+        },
+        {
+          "localized_name": "flare_pass",
+          "name": "flare_pass",
+          "type": "IMAGE",
+          "slot_index": 1,
+          "links": [
+            17
+          ]
+        },
+        {
+          "localized_name": "flare_alpha",
+          "name": "flare_alpha",
+          "type": "MASK",
+          "slot_index": 2,
+          "links": [
+            18
+          ]
+        }
+      ],
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.1.2",
+        "Node name for S&R": "FlareRender",
+        "fc_advanced": false
+      },
+      "widgets_values": [
+        "{\n  \"schema_version\": 1,\n  \"name\": \"Cine Blue\",\n  \"author\": \"flarecore\",\n  \"global\": {\n    \"intensity\": 1.0,\n    \"scale\": 1.0,\n    \"aspect\": 1.0,\n    \"tint\": [\n      0.97,\n      0.99,\n      1.06\n    ],\n    \"seed\": 7\n  },\n  \"elements\": [\n    {\n      \"type\": \"glow\",\n      \"label\": \"core\",\n      \"id\": \"cine_core\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.09,\n      \"intensity\": 4.0,\n      \"color\": [\n        1.0,\n        1.0,\n        1.0\n      ],\n      \"params\": {\n        \"softness\": 0.3,\n        \"falloff\": 2.2\n      }\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"core bloom\",\n      \"id\": \"cine_bloom\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.5,\n      \"intensity\": 1.8,\n      \"color\": [\n        0.85,\n        0.9,\n        1.0\n      ],\n      \"params\": {\n        \"softness\": 0.55,\n        \"falloff\": 1.5\n      },\n      \"irregular\": 0.2\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"veil\",\n      \"id\": \"cine_veil\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 1.1,\n      \"intensity\": 0.12,\n      \"color\": [\n        0.42,\n        0.5,\n        0.95\n      ],\n      \"params\": {\n        \"softness\": 0.85,\n        \"falloff\": 1.05\n      },\n      \"irregular\": 0.25\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"wide haze\",\n      \"id\": \"cine_haze\",\n      \"slot\": \"glows\",\n      \"offset\": 0.15,\n      \"scale\": 2.2,\n      \"intensity\": 0.025,\n      \"color\": [\n        0.4,\n        0.42,\n        0.8\n      ],\n      \"blur\": 0.3,\n      \"params\": {\n        \"softness\": 1.0,\n        \"falloff\": 0.85\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"glint\",\n      \"label\": \"rays\",\n      \"id\": \"cine_rays\",\n      \"slot\": \"rays\",\n      \"offset\": 0.0,\n      \"scale\": 0.5,\n      \"intensity\": 0.42,\n      \"color\": [\n        0.9,\n        0.94,\n        1.0\n      ],\n      \"blur\": 0.05,\n      \"params\": {\n        \"points\": 46,\n        \"length\": 0.3,\n        \"thickness\": 0.0028,\n        \"length_jitter\": 0.8\n      },\n      \"irregular\": 0.45\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"streak\",\n      \"id\": \"cine_streak\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.42,\n      \"auto_rotate\": false,\n      \"color\": [\n        0.72,\n        0.82,\n        1.0\n      ],\n      \"blur\": 0.05,\n      \"params\": {\n        \"length\": 2.2,\n        \"thickness\": 0.007\n      },\n      \"irregular\": 0.25\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"streak haze\",\n      \"id\": \"cine_streakhaze\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.07,\n      \"auto_rotate\": false,\n      \"color\": [\n        0.6,\n        0.7,\n        1.0\n      ],\n      \"blur\": 0.25,\n      \"params\": {\n        \"length\": 1.4,\n        \"thickness\": 0.035\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"ring\",\n      \"label\": \"thin ring\",\n      \"id\": \"cine_ring\",\n      \"slot\": \"rings\",\n      \"offset\": 0.62,\n      \"scale\": 0.62,\n      \"intensity\": 0.085,\n      \"color\": [\n        0.72,\n        0.78,\n        0.95\n      ],\n      \"dispersion\": 0.45,\n      \"blur\": 0.04,\n      \"params\": {\n        \"radius\": 1.0,\n        \"thickness\": 0.012\n      },\n      \"irregular\": 0.4\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"magenta veil\",\n      \"id\": \"cine_magenta\",\n      \"slot\": \"glows\",\n      \"offset\": -0.62,\n      \"scale\": 0.85,\n      \"intensity\": 0.11,\n      \"rotation\": 0.0,\n      \"color\": [\n        0.8,\n        0.42,\n        0.85\n      ],\n      \"blur\": 0.28,\n      \"params\": {\n        \"softness\": 0.8,\n        \"falloff\": 1.15\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghosts near\",\n      \"id\": \"cine_ghost1\",\n      \"slot\": \"ghosts\",\n      \"offset\": 1.3,\n      \"count\": 3,\n      \"spread\": 0.1,\n      \"scale\": 0.1,\n      \"count_scale_step\": 1.22,\n      \"count_falloff\": 0.9,\n      \"intensity\": 0.22,\n      \"color\": [\n        0.68,\n        0.8,\n        1.0\n      ],\n      \"dispersion\": 0.4,\n      \"blur\": 0.1,\n      \"params\": {\n        \"blades\": 20,\n        \"edge_softness\": 0.65\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghosts far\",\n      \"id\": \"cine_ghost2\",\n      \"slot\": \"ghosts\",\n      \"offset\": 2.25,\n      \"count\": 3,\n      \"spread\": 0.24,\n      \"scale\": 0.135,\n      \"count_scale_step\": 1.15,\n      \"count_falloff\": 0.8,\n      \"intensity\": 0.2,\n      \"color\": [\n        0.6,\n        0.74,\n        1.0\n      ],\n      \"dispersion\": 0.6,\n      \"blur\": 0.12,\n      \"params\": {\n        \"blades\": 20,\n        \"edge_softness\": 0.7\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"hex ghost\",\n      \"id\": \"cine_hex\",\n      \"slot\": \"ghosts\",\n      \"offset\": 1.62,\n      \"scale\": 0.1,\n      \"intensity\": 0.16,\n      \"color\": [\n        0.7,\n        0.82,\n        1.0\n      ],\n      \"dispersion\": 0.9,\n      \"blur\": 0.05,\n      \"params\": {\n        \"blades\": 6,\n        \"edge_softness\": 0.35\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"warm dot\",\n      \"id\": \"cine_warm\",\n      \"slot\": \"glows\",\n      \"offset\": 3.15,\n      \"scale\": 0.035,\n      \"intensity\": 0.5,\n      \"color\": [\n        1.0,\n        0.5,\n        0.28\n      ],\n      \"blur\": 0.05,\n      \"params\": {\n        \"softness\": 0.5,\n        \"falloff\": 1.6\n      }\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghost rim\",\n      \"id\": \"cine_ghostrim\",\n      \"slot\": \"ghosts\",\n      \"offset\": 2.25,\n      \"count\": 3,\n      \"spread\": 0.24,\n      \"scale\": 0.135,\n      \"count_scale_step\": 1.15,\n      \"count_falloff\": 0.8,\n      \"intensity\": 0.13,\n      \"color\": [\n        0.75,\n        0.85,\n        1.0\n      ],\n      \"dispersion\": 0.8,\n      \"blur\": 0.05,\n      \"params\": {\n        \"blades\": 20,\n        \"edge_softness\": 0.35,\n        \"hollow\": 0.72\n      },\n      \"irregular\": 0.35\n    }\n  ]\n}",
+        "manual",
+        0.42,
+        0.3,
+        0.62,
+        0.55,
+        0.8,
+        1,
+        0.06,
+        0,
+        false,
+        1,
+        1,
+        "add",
+        true,
+        0,
+        "fixed",
+        0.4,
+        0,
+        0.6,
+        0.06,
+        "as_is",
+        0,
+        0,
+        "",
+        0.35
+      ],
+      "widgets_values_named": {
+        "preset_json": "{\n  \"schema_version\": 1,\n  \"name\": \"Cine Blue\",\n  \"author\": \"flarecore\",\n  \"global\": {\n    \"intensity\": 1.0,\n    \"scale\": 1.0,\n    \"aspect\": 1.0,\n    \"tint\": [\n      0.97,\n      0.99,\n      1.06\n    ],\n    \"seed\": 7\n  },\n  \"elements\": [\n    {\n      \"type\": \"glow\",\n      \"label\": \"core\",\n      \"id\": \"cine_core\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.09,\n      \"intensity\": 4.0,\n      \"color\": [\n        1.0,\n        1.0,\n        1.0\n      ],\n      \"params\": {\n        \"softness\": 0.3,\n        \"falloff\": 2.2\n      }\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"core bloom\",\n      \"id\": \"cine_bloom\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.5,\n      \"intensity\": 1.8,\n      \"color\": [\n        0.85,\n        0.9,\n        1.0\n      ],\n      \"params\": {\n        \"softness\": 0.55,\n        \"falloff\": 1.5\n      },\n      \"irregular\": 0.2\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"veil\",\n      \"id\": \"cine_veil\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 1.1,\n      \"intensity\": 0.12,\n      \"color\": [\n        0.42,\n        0.5,\n        0.95\n      ],\n      \"params\": {\n        \"softness\": 0.85,\n        \"falloff\": 1.05\n      },\n      \"irregular\": 0.25\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"wide haze\",\n      \"id\": \"cine_haze\",\n      \"slot\": \"glows\",\n      \"offset\": 0.15,\n      \"scale\": 2.2,\n      \"intensity\": 0.025,\n      \"color\": [\n        0.4,\n        0.42,\n        0.8\n      ],\n      \"blur\": 0.3,\n      \"params\": {\n        \"softness\": 1.0,\n        \"falloff\": 0.85\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"glint\",\n      \"label\": \"rays\",\n      \"id\": \"cine_rays\",\n      \"slot\": \"rays\",\n      \"offset\": 0.0,\n      \"scale\": 0.5,\n      \"intensity\": 0.42,\n      \"color\": [\n        0.9,\n        0.94,\n        1.0\n      ],\n      \"blur\": 0.05,\n      \"params\": {\n        \"points\": 46,\n        \"length\": 0.3,\n        \"thickness\": 0.0028,\n        \"length_jitter\": 0.8\n      },\n      \"irregular\": 0.45\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"streak\",\n      \"id\": \"cine_streak\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.42,\n      \"auto_rotate\": false,\n      \"color\": [\n        0.72,\n        0.82,\n        1.0\n      ],\n      \"blur\": 0.05,\n      \"params\": {\n        \"length\": 2.2,\n        \"thickness\": 0.007\n      },\n      \"irregular\": 0.25\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"streak haze\",\n      \"id\": \"cine_streakhaze\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.07,\n      \"auto_rotate\": false,\n      \"color\": [\n        0.6,\n        0.7,\n        1.0\n      ],\n      \"blur\": 0.25,\n      \"params\": {\n        \"length\": 1.4,\n        \"thickness\": 0.035\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"ring\",\n      \"label\": \"thin ring\",\n      \"id\": \"cine_ring\",\n      \"slot\": \"rings\",\n      \"offset\": 0.62,\n      \"scale\": 0.62,\n      \"intensity\": 0.085,\n      \"color\": [\n        0.72,\n        0.78,\n        0.95\n      ],\n      \"dispersion\": 0.45,\n      \"blur\": 0.04,\n      \"params\": {\n        \"radius\": 1.0,\n        \"thickness\": 0.012\n      },\n      \"irregular\": 0.4\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"magenta veil\",\n      \"id\": \"cine_magenta\",\n      \"slot\": \"glows\",\n      \"offset\": -0.62,\n      \"scale\": 0.85,\n      \"intensity\": 0.11,\n      \"rotation\": 0.0,\n      \"color\": [\n        0.8,\n        0.42,\n        0.85\n      ],\n      \"blur\": 0.28,\n      \"params\": {\n        \"softness\": 0.8,\n        \"falloff\": 1.15\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghosts near\",\n      \"id\": \"cine_ghost1\",\n      \"slot\": \"ghosts\",\n      \"offset\": 1.3,\n      \"count\": 3,\n      \"spread\": 0.1,\n      \"scale\": 0.1,\n      \"count_scale_step\": 1.22,\n      \"count_falloff\": 0.9,\n      \"intensity\": 0.22,\n      \"color\": [\n        0.68,\n        0.8,\n        1.0\n      ],\n      \"dispersion\": 0.4,\n      \"blur\": 0.1,\n      \"params\": {\n        \"blades\": 20,\n        \"edge_softness\": 0.65\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghosts far\",\n      \"id\": \"cine_ghost2\",\n      \"slot\": \"ghosts\",\n      \"offset\": 2.25,\n      \"count\": 3,\n      \"spread\": 0.24,\n      \"scale\": 0.135,\n      \"count_scale_step\": 1.15,\n      \"count_falloff\": 0.8,\n      \"intensity\": 0.2,\n      \"color\": [\n        0.6,\n        0.74,\n        1.0\n      ],\n      \"dispersion\": 0.6,\n      \"blur\": 0.12,\n      \"params\": {\n        \"blades\": 20,\n        \"edge_softness\": 0.7\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"hex ghost\",\n      \"id\": \"cine_hex\",\n      \"slot\": \"ghosts\",\n      \"offset\": 1.62,\n      \"scale\": 0.1,\n      \"intensity\": 0.16,\n      \"color\": [\n        0.7,\n        0.82,\n        1.0\n      ],\n      \"dispersion\": 0.9,\n      \"blur\": 0.05,\n      \"params\": {\n        \"blades\": 6,\n        \"edge_softness\": 0.35\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"warm dot\",\n      \"id\": \"cine_warm\",\n      \"slot\": \"glows\",\n      \"offset\": 3.15,\n      \"scale\": 0.035,\n      \"intensity\": 0.5,\n      \"color\": [\n        1.0,\n        0.5,\n        0.28\n      ],\n      \"blur\": 0.05,\n      \"params\": {\n        \"softness\": 0.5,\n        \"falloff\": 1.6\n      }\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghost rim\",\n      \"id\": \"cine_ghostrim\",\n      \"slot\": \"ghosts\",\n      \"offset\": 2.25,\n      \"count\": 3,\n      \"spread\": 0.24,\n      \"scale\": 0.135,\n      \"count_scale_step\": 1.15,\n      \"count_falloff\": 0.8,\n      \"intensity\": 0.13,\n      \"color\": [\n        0.75,\n        0.85,\n        1.0\n      ],\n      \"dispersion\": 0.8,\n      \"blur\": 0.05,\n      \"params\": {\n        \"blades\": 20,\n        \"edge_softness\": 0.35,\n        \"hollow\": 0.72\n      },\n      \"irregular\": 0.35\n    }\n  ]\n}",
+        "position_mode": "manual",
+        "light_x": 0.42,
+        "light_y": 0.3,
+        "flare_x": 0.62,
+        "flare_y": 0.55,
+        "detect_threshold": 0.8,
+        "detect_max_lights": 1,
+        "occlusion_radius": 0.06,
+        "light_depth": 0,
+        "invert_depth": false,
+        "intensity": 1,
+        "scale": 1,
+        "blend_mode": "add",
+        "clamp_output": true,
+        "seed": 0,
+        "control_after_generate": "fixed",
+        "occlusion_smooth": 0.4,
+        "scene_color": 0,
+        "track_smoothing": 0.6,
+        "track_max_jump": 0.06,
+        "depth_normalize": "as_is",
+        "depth_blur": 0,
+        "depth_temporal_smooth": 0,
+        "light_path": "",
+        "mask_falloff": 0.35
+      }
     },
     {
-     "name": "vae",
-     "type": "VAE",
-     "link": 11
-    }
-   ],
-   "outputs": [
+      "id": 16,
+      "type": "PreviewImage",
+      "pos": [
+        680,
+        -560
+      ],
+      "size": [
+        420,
+        300
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": []
+        }
+      ],
+      "title": "composite",
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.34.0",
+        "Node name for S&R": "PreviewImage"
+      }
+    },
     {
-     "name": "IMAGE",
-     "type": "IMAGE",
-     "links": [
-      12
-     ],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "VAEDecode"
-   },
-   "widgets_values": []
-  },
-  {
-   "id": 10,
-   "type": "FlareTexturePrepare",
-   "pos": [
-    -1130,
-    -220
-   ],
-   "size": [
-    300,
-    220
-   ],
-   "flags": {},
-   "order": 10,
-   "mode": 0,
-   "inputs": [
+      "id": 17,
+      "type": "PreviewImage",
+      "pos": [
+        680,
+        -210
+      ],
+      "size": [
+        420,
+        300
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 17
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": []
+        }
+      ],
+      "title": "flare pass",
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.34.0",
+        "Node name for S&R": "PreviewImage"
+      }
+    },
     {
-     "name": "image",
-     "type": "IMAGE",
-     "link": 12
-    }
-   ],
-   "outputs": [
+      "id": 18,
+      "type": "MaskToImage",
+      "pos": [
+        680,
+        130
+      ],
+      "size": [
+        210,
+        40
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "mask",
+          "name": "mask",
+          "type": "MASK",
+          "link": 18
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            19
+          ]
+        }
+      ],
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.34.0",
+        "Node name for S&R": "MaskToImage"
+      }
+    },
     {
-     "name": "texture",
-     "type": "IMAGE",
-     "links": [
+      "id": 19,
+      "type": "PreviewImage",
+      "pos": [
+        930,
+        130
+      ],
+      "size": [
+        300,
+        240
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 19
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": []
+        }
+      ],
+      "title": "flare alpha",
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.34.0",
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 20,
+      "type": "SaveImage",
+      "pos": [
+        1140,
+        -560
+      ],
+      "size": [
+        360,
+        340
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 20
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": []
+        }
+      ],
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.34.0",
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "flarecore_lab"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "flarecore_lab"
+      }
+    },
+    {
+      "id": 21,
+      "type": "Note",
+      "pos": [
+        -220,
+        -400
+      ],
+      "size": [
+        340,
+        330
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "FLARE LAB\n\n1. Drag the orange LIGHT point and the cyan FLARE ANCHOR directly on\n   the picker at the top of Flare Render. Ghost spacing follows the\n   distance between the two points.\n2. Build the flare in the editor below it: + add, then the\n   pos / size / opac sliders. The chevron on a row opens the full\n   parameter set (colour, dispersion, count chains, triggers...).\n   Click an element's NAME to swap it for one of your own from the\n   family gallery.\n3. presets loads shipped looks; save... writes your own next to them.\n   The gear reveals the node's inputs; everything else stays hidden.\n4. flare_pass is the flare over black for external compositing.\n\nDepth occlusion lives in the VIDEO bench, where the footage is -\nwire any depth map into Flare Render's depth input to use it here.\n\nThe panels hide below ~50% zoom - a ComfyUI DOM widget rule."
+      ],
+      "widgets_values_named": {
+        "text": "FLARE LAB\n\n1. Drag the orange LIGHT point and the cyan FLARE ANCHOR directly on\n   the picker at the top of Flare Render. Ghost spacing follows the\n   distance between the two points.\n2. Build the flare in the editor below it: + add, then the\n   pos / size / opac sliders. The chevron on a row opens the full\n   parameter set (colour, dispersion, count chains, triggers...).\n   Click an element's NAME to swap it for one of your own from the\n   family gallery.\n3. presets loads shipped looks; save... writes your own next to them.\n   The gear reveals the node's inputs; everything else stays hidden.\n4. flare_pass is the flare over black for external compositing.\n\nDepth occlusion lives in the VIDEO bench, where the footage is -\nwire any depth map into Flare Render's depth input to use it here.\n\nThe panels hide below ~50% zoom - a ComfyUI DOM widget rule."
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 22,
+      "type": "VHS_LoadVideo",
+      "pos": [
+        1790,
+        -40
+      ],
+      "size": [
+        320,
+        492.7188019966722
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 2,
+      "inputs": [
+        {
+          "localized_name": "meta_batch",
+          "name": "meta_batch",
+          "shape": 7,
+          "type": "VHS_BatchManager",
+          "link": null
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "shape": 7,
+          "type": "VAE",
+          "link": null
+        },
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "COMBO",
+          "widget": {
+            "name": "video"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "force_rate",
+          "name": "force_rate",
+          "type": "FLOAT",
+          "widget": {
+            "name": "force_rate"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "custom_width",
+          "name": "custom_width",
+          "type": "INT",
+          "widget": {
+            "name": "custom_width"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "custom_height",
+          "name": "custom_height",
+          "type": "INT",
+          "widget": {
+            "name": "custom_height"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "frame_load_cap",
+          "name": "frame_load_cap",
+          "type": "INT",
+          "widget": {
+            "name": "frame_load_cap"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "skip_first_frames",
+          "name": "skip_first_frames",
+          "type": "INT",
+          "widget": {
+            "name": "skip_first_frames"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "select_every_nth",
+          "name": "select_every_nth",
+          "type": "INT",
+          "widget": {
+            "name": "select_every_nth"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "format",
+          "name": "format",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "format"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            21,
+            22
+          ]
+        },
+        {
+          "localized_name": "frame_count",
+          "name": "frame_count",
+          "type": "INT",
+          "slot_index": 1,
+          "links": []
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "slot_index": 2,
+          "links": []
+        },
+        {
+          "localized_name": "video_info",
+          "name": "video_info",
+          "type": "VHS_VIDEOINFO",
+          "slot_index": 3,
+          "links": []
+        }
+      ],
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.1.2",
+        "Node name for S&R": "VHS_LoadVideo"
+      },
+      "widgets_values": {
+        "video": "test.mp4",
+        "force_rate": 0,
+        "custom_width": 0,
+        "custom_height": 0,
+        "frame_load_cap": 0,
+        "skip_first_frames": 0,
+        "select_every_nth": 1,
+        "format": "AnimateDiff",
+        "choose video to upload": "image",
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {
+            "filename": "test.mp4",
+            "type": "input",
+            "format": "video/mp4",
+            "force_rate": 0,
+            "custom_width": 0,
+            "custom_height": 0,
+            "frame_load_cap": 0,
+            "skip_first_frames": 0,
+            "select_every_nth": 1
+          }
+        }
+      },
+      "widgets_values_named": {
+        "video": "test.mp4",
+        "force_rate": 0,
+        "custom_width": 0,
+        "custom_height": 0,
+        "frame_load_cap": 0,
+        "skip_first_frames": 0,
+        "select_every_nth": 1,
+        "format": "AnimateDiff",
+        "choose video to upload": "image",
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {
+            "filename": "test.mp4",
+            "type": "input",
+            "format": "video/mp4",
+            "force_rate": 0,
+            "custom_width": 0,
+            "custom_height": 0,
+            "frame_load_cap": 0,
+            "skip_first_frames": 0,
+            "select_every_nth": 1
+          }
+        }
+      }
+    },
+    {
+      "id": 23,
+      "type": "DepthAnythingV2Preprocessor",
+      "pos": [
+        1790,
+        340
+      ],
+      "size": [
+        320,
+        110
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 2,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 22
+        },
+        {
+          "localized_name": "ckpt_name",
+          "name": "ckpt_name",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "ckpt_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "resolution",
+          "name": "resolution",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "resolution"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            23
+          ]
+        }
+      ],
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.1.2",
+        "Node name for S&R": "DepthAnythingV2Preprocessor"
+      },
+      "widgets_values": [
+        "depth_anything_v2_vitl.pth",
+        512
+      ],
+      "widgets_values_named": {
+        "ckpt_name": "depth_anything_v2_vitl.pth",
+        "resolution": 512
+      }
+    },
+    {
+      "id": 24,
+      "type": "FlareRender",
+      "pos": [
+        2190,
+        -560
+      ],
+      "size": [
+        470,
+        860
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 2,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 21
+        },
+        {
+          "localized_name": "depth",
+          "name": "depth",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 23
+        },
+        {
+          "localized_name": "lights",
+          "name": "lights",
+          "shape": 7,
+          "type": "FLARE_LIGHTS",
+          "link": null
+        },
+        {
+          "localized_name": "preset_json",
+          "name": "preset_json",
+          "type": "STRING",
+          "widget": {
+            "name": "preset_json"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "position_mode",
+          "name": "position_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "position_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "light_x",
+          "name": "light_x",
+          "type": "FLOAT",
+          "widget": {
+            "name": "light_x"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "light_y",
+          "name": "light_y",
+          "type": "FLOAT",
+          "widget": {
+            "name": "light_y"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "flare_x",
+          "name": "flare_x",
+          "type": "FLOAT",
+          "widget": {
+            "name": "flare_x"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "flare_y",
+          "name": "flare_y",
+          "type": "FLOAT",
+          "widget": {
+            "name": "flare_y"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "detect_threshold",
+          "name": "detect_threshold",
+          "type": "FLOAT",
+          "widget": {
+            "name": "detect_threshold"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "detect_max_lights",
+          "name": "detect_max_lights",
+          "type": "INT",
+          "widget": {
+            "name": "detect_max_lights"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "occlusion_radius",
+          "name": "occlusion_radius",
+          "type": "FLOAT",
+          "widget": {
+            "name": "occlusion_radius"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "light_depth",
+          "name": "light_depth",
+          "type": "FLOAT",
+          "widget": {
+            "name": "light_depth"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "invert_depth",
+          "name": "invert_depth",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "invert_depth"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "intensity",
+          "name": "intensity",
+          "type": "FLOAT",
+          "widget": {
+            "name": "intensity"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "scale",
+          "name": "scale",
+          "type": "FLOAT",
+          "widget": {
+            "name": "scale"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "blend_mode",
+          "name": "blend_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "blend_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "clamp_output",
+          "name": "clamp_output",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "clamp_output"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "seed",
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "occlusion_smooth",
+          "name": "occlusion_smooth",
+          "type": "FLOAT",
+          "widget": {
+            "name": "occlusion_smooth"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "scene_color",
+          "name": "scene_color",
+          "type": "FLOAT",
+          "widget": {
+            "name": "scene_color"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "track_smoothing",
+          "name": "track_smoothing",
+          "type": "FLOAT",
+          "widget": {
+            "name": "track_smoothing"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "track_max_jump",
+          "name": "track_max_jump",
+          "type": "FLOAT",
+          "widget": {
+            "name": "track_max_jump"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "depth_normalize",
+          "name": "depth_normalize",
+          "type": "COMBO",
+          "widget": {
+            "name": "depth_normalize"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "depth_blur",
+          "name": "depth_blur",
+          "type": "FLOAT",
+          "widget": {
+            "name": "depth_blur"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "depth_temporal_smooth",
+          "name": "depth_temporal_smooth",
+          "type": "FLOAT",
+          "widget": {
+            "name": "depth_temporal_smooth"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "light_path",
+          "name": "light_path",
+          "type": "STRING",
+          "widget": {
+            "name": "light_path"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "mask_falloff",
+          "name": "mask_falloff",
+          "type": "FLOAT",
+          "widget": {
+            "name": "mask_falloff"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            24
+          ]
+        },
+        {
+          "localized_name": "flare_pass",
+          "name": "flare_pass",
+          "type": "IMAGE",
+          "slot_index": 1,
+          "links": [
+            25
+          ]
+        },
+        {
+          "localized_name": "flare_alpha",
+          "name": "flare_alpha",
+          "type": "MASK",
+          "slot_index": 2,
+          "links": []
+        }
+      ],
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.1.2",
+        "Node name for S&R": "FlareRender",
+        "fc_advanced": false
+      },
+      "widgets_values": [
+        "{\n  \"schema_version\": 1,\n  \"name\": \"Anamorphic Gold\",\n  \"author\": \"flarecore\",\n  \"global\": {\n    \"intensity\": 1.0,\n    \"scale\": 1.0,\n    \"aspect\": 1.6,\n    \"tint\": [\n      1.0,\n      0.98,\n      0.94\n    ],\n    \"seed\": 21,\n    \"fringe\": 0.2,\n    \"edge_fade_start\": 0.15,\n    \"edge_fade_range\": 0.5\n  },\n  \"elements\": [\n    {\n      \"type\": \"glow\",\n      \"label\": \"core\",\n      \"id\": \"ag_core\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.08,\n      \"intensity\": 4.5,\n      \"color\": [\n        1.0,\n        0.98,\n        0.9\n      ],\n      \"params\": {\n        \"softness\": 0.3,\n        \"falloff\": 2.2\n      }\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"gold bloom\",\n      \"id\": \"ag_bloom\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.5,\n      \"intensity\": 0.85,\n      \"irregular\": 0.25,\n      \"color\": [\n        1.0,\n        0.82,\n        0.5\n      ],\n      \"params\": {\n        \"softness\": 0.5,\n        \"falloff\": 1.4\n      }\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"anamorphic streak\",\n      \"id\": \"ag_streak\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.55,\n      \"auto_rotate\": false,\n      \"irregular\": 0.3,\n      \"blur\": 0.04,\n      \"color\": [\n        1.0,\n        0.86,\n        0.55\n      ],\n      \"params\": {\n        \"length\": 2.6,\n        \"thickness\": 0.006\n      }\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"streak haze\",\n      \"id\": \"ag_streakhaze\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.09,\n      \"auto_rotate\": false,\n      \"blur\": 0.3,\n      \"color\": [\n        1.0,\n        0.8,\n        0.5\n      ],\n      \"params\": {\n        \"length\": 1.8,\n        \"thickness\": 0.05\n      }\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"anamorphic bars\",\n      \"id\": \"ag_bars\",\n      \"slot\": \"ghosts\",\n      \"offset\": 0.6,\n      \"count\": 4,\n      \"spread\": 0.35,\n      \"scale\": 0.045,\n      \"count_scale_step\": 1.3,\n      \"count_falloff\": 0.85,\n      \"intensity\": 0.22,\n      \"stretch\": [\n        3.2,\n        0.45\n      ],\n      \"auto_rotate\": false,\n      \"move\": [\n        1.0,\n        0.15\n      ],\n      \"irregular\": 0.35,\n      \"dispersion\": 0.5,\n      \"blur\": 0.03,\n      \"color\": [\n        1.0,\n        0.75,\n        0.45\n      ],\n      \"params\": {\n        \"blades\": 4,\n        \"edge_softness\": 0.35\n      }\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghost chain\",\n      \"id\": \"ag_ghosts\",\n      \"slot\": \"ghosts\",\n      \"offset\": 1.35,\n      \"count\": 3,\n      \"spread\": 0.28,\n      \"scale\": 0.11,\n      \"count_scale_step\": 1.2,\n      \"count_falloff\": 0.85,\n      \"intensity\": 0.16,\n      \"irregular\": 0.3,\n      \"dispersion\": 0.6,\n      \"blur\": 0.1,\n      \"color\": [\n        1.0,\n        0.8,\n        0.55\n      ],\n      \"params\": {\n        \"blades\": 8,\n        \"edge_softness\": 0.6\n      }\n    },\n    {\n      \"type\": \"glint\",\n      \"label\": \"rays\",\n      \"id\": \"ag_rays\",\n      \"slot\": \"rays\",\n      \"offset\": 0.0,\n      \"scale\": 0.55,\n      \"intensity\": 0.35,\n      \"irregular\": 0.5,\n      \"blur\": 0.05,\n      \"color\": [\n        1.0,\n        0.94,\n        0.8\n      ],\n      \"params\": {\n        \"points\": 36,\n        \"length\": 0.4,\n        \"thickness\": 0.003,\n        \"length_jitter\": 0.75\n      }\n    },\n    {\n      \"type\": \"hoop\",\n      \"label\": \"gold hoop\",\n      \"id\": \"ag_hoop\",\n      \"slot\": \"hoops\",\n      \"offset\": 0.5,\n      \"scale\": 0.9,\n      \"intensity\": 0.06,\n      \"irregular\": 0.4,\n      \"dispersion\": 1.2,\n      \"blur\": 0.06,\n      \"color\": [\n        1.0,\n        0.7,\n        0.4\n      ],\n      \"params\": {\n        \"radius\": 0.9,\n        \"thickness\": 0.2,\n        \"angular_falloff\": 0.85,\n        \"completion\": 220,\n        \"completion_feather\": 0.35\n      }\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"edge gleam\",\n      \"id\": \"ag_gleam\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 1.8,\n      \"intensity\": 0.0,\n      \"auto_rotate\": false,\n      \"stretch\": [\n        1.0,\n        0.08\n      ],\n      \"blur\": 0.2,\n      \"color\": [\n        1.0,\n        0.7,\n        0.35\n      ],\n      \"trigger\": {\n        \"mode\": \"border\",\n        \"source\": \"light\",\n        \"inner\": -0.1,\n        \"outer\": 0.35,\n        \"falloff\": \"smooth\",\n        \"brightness\": 0.45,\n        \"scale\": 0.3,\n        \"color\": [\n          1.0,\n          0.55,\n          0.25\n        ]\n      },\n      \"params\": {\n        \"softness\": 0.9,\n        \"falloff\": 1.2\n      }\n    },\n    {\n      \"type\": \"orbs\",\n      \"label\": \"lens orbs\",\n      \"id\": \"ag_orbs\",\n      \"slot\": \"ghosts\",\n      \"scale\": 1.0,\n      \"intensity\": 0.07,\n      \"blur\": 0.06,\n      \"color\": [\n        1.0,\n        0.9,\n        0.7\n      ],\n      \"params\": {\n        \"count\": 26,\n        \"size\": 0.045,\n        \"size_jitter\": 0.7,\n        \"spread\": 1.4,\n        \"edge_softness\": 0.35,\n        \"illumination\": 0.55,\n        \"shape\": \"disc\",\n        \"blades\": 6\n      }\n    }\n  ]\n}\n",
+        "track",
+        0.5,
+        0.5,
+        0.5,
+        0.55,
+        0.75,
+        1,
+        0.06,
+        0,
+        false,
+        1,
+        1,
+        "add",
+        true,
+        0,
+        "fixed",
+        0.5,
+        0.35,
+        0.6,
+        0.05,
+        "per_batch",
+        0.012,
+        0.5,
+        "",
+        0.35
+      ],
+      "widgets_values_named": {
+        "preset_json": "{\n  \"schema_version\": 1,\n  \"name\": \"Anamorphic Gold\",\n  \"author\": \"flarecore\",\n  \"global\": {\n    \"intensity\": 1.0,\n    \"scale\": 1.0,\n    \"aspect\": 1.6,\n    \"tint\": [\n      1.0,\n      0.98,\n      0.94\n    ],\n    \"seed\": 21,\n    \"fringe\": 0.2,\n    \"edge_fade_start\": 0.15,\n    \"edge_fade_range\": 0.5\n  },\n  \"elements\": [\n    {\n      \"type\": \"glow\",\n      \"label\": \"core\",\n      \"id\": \"ag_core\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.08,\n      \"intensity\": 4.5,\n      \"color\": [\n        1.0,\n        0.98,\n        0.9\n      ],\n      \"params\": {\n        \"softness\": 0.3,\n        \"falloff\": 2.2\n      }\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"gold bloom\",\n      \"id\": \"ag_bloom\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.5,\n      \"intensity\": 0.85,\n      \"irregular\": 0.25,\n      \"color\": [\n        1.0,\n        0.82,\n        0.5\n      ],\n      \"params\": {\n        \"softness\": 0.5,\n        \"falloff\": 1.4\n      }\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"anamorphic streak\",\n      \"id\": \"ag_streak\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.55,\n      \"auto_rotate\": false,\n      \"irregular\": 0.3,\n      \"blur\": 0.04,\n      \"color\": [\n        1.0,\n        0.86,\n        0.55\n      ],\n      \"params\": {\n        \"length\": 2.6,\n        \"thickness\": 0.006\n      }\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"streak haze\",\n      \"id\": \"ag_streakhaze\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.09,\n      \"auto_rotate\": false,\n      \"blur\": 0.3,\n      \"color\": [\n        1.0,\n        0.8,\n        0.5\n      ],\n      \"params\": {\n        \"length\": 1.8,\n        \"thickness\": 0.05\n      }\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"anamorphic bars\",\n      \"id\": \"ag_bars\",\n      \"slot\": \"ghosts\",\n      \"offset\": 0.6,\n      \"count\": 4,\n      \"spread\": 0.35,\n      \"scale\": 0.045,\n      \"count_scale_step\": 1.3,\n      \"count_falloff\": 0.85,\n      \"intensity\": 0.22,\n      \"stretch\": [\n        3.2,\n        0.45\n      ],\n      \"auto_rotate\": false,\n      \"move\": [\n        1.0,\n        0.15\n      ],\n      \"irregular\": 0.35,\n      \"dispersion\": 0.5,\n      \"blur\": 0.03,\n      \"color\": [\n        1.0,\n        0.75,\n        0.45\n      ],\n      \"params\": {\n        \"blades\": 4,\n        \"edge_softness\": 0.35\n      }\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghost chain\",\n      \"id\": \"ag_ghosts\",\n      \"slot\": \"ghosts\",\n      \"offset\": 1.35,\n      \"count\": 3,\n      \"spread\": 0.28,\n      \"scale\": 0.11,\n      \"count_scale_step\": 1.2,\n      \"count_falloff\": 0.85,\n      \"intensity\": 0.16,\n      \"irregular\": 0.3,\n      \"dispersion\": 0.6,\n      \"blur\": 0.1,\n      \"color\": [\n        1.0,\n        0.8,\n        0.55\n      ],\n      \"params\": {\n        \"blades\": 8,\n        \"edge_softness\": 0.6\n      }\n    },\n    {\n      \"type\": \"glint\",\n      \"label\": \"rays\",\n      \"id\": \"ag_rays\",\n      \"slot\": \"rays\",\n      \"offset\": 0.0,\n      \"scale\": 0.55,\n      \"intensity\": 0.35,\n      \"irregular\": 0.5,\n      \"blur\": 0.05,\n      \"color\": [\n        1.0,\n        0.94,\n        0.8\n      ],\n      \"params\": {\n        \"points\": 36,\n        \"length\": 0.4,\n        \"thickness\": 0.003,\n        \"length_jitter\": 0.75\n      }\n    },\n    {\n      \"type\": \"hoop\",\n      \"label\": \"gold hoop\",\n      \"id\": \"ag_hoop\",\n      \"slot\": \"hoops\",\n      \"offset\": 0.5,\n      \"scale\": 0.9,\n      \"intensity\": 0.06,\n      \"irregular\": 0.4,\n      \"dispersion\": 1.2,\n      \"blur\": 0.06,\n      \"color\": [\n        1.0,\n        0.7,\n        0.4\n      ],\n      \"params\": {\n        \"radius\": 0.9,\n        \"thickness\": 0.2,\n        \"angular_falloff\": 0.85,\n        \"completion\": 220,\n        \"completion_feather\": 0.35\n      }\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"edge gleam\",\n      \"id\": \"ag_gleam\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 1.8,\n      \"intensity\": 0.0,\n      \"auto_rotate\": false,\n      \"stretch\": [\n        1.0,\n        0.08\n      ],\n      \"blur\": 0.2,\n      \"color\": [\n        1.0,\n        0.7,\n        0.35\n      ],\n      \"trigger\": {\n        \"mode\": \"border\",\n        \"source\": \"light\",\n        \"inner\": -0.1,\n        \"outer\": 0.35,\n        \"falloff\": \"smooth\",\n        \"brightness\": 0.45,\n        \"scale\": 0.3,\n        \"color\": [\n          1.0,\n          0.55,\n          0.25\n        ]\n      },\n      \"params\": {\n        \"softness\": 0.9,\n        \"falloff\": 1.2\n      }\n    },\n    {\n      \"type\": \"orbs\",\n      \"label\": \"lens orbs\",\n      \"id\": \"ag_orbs\",\n      \"slot\": \"ghosts\",\n      \"scale\": 1.0,\n      \"intensity\": 0.07,\n      \"blur\": 0.06,\n      \"color\": [\n        1.0,\n        0.9,\n        0.7\n      ],\n      \"params\": {\n        \"count\": 26,\n        \"size\": 0.045,\n        \"size_jitter\": 0.7,\n        \"spread\": 1.4,\n        \"edge_softness\": 0.35,\n        \"illumination\": 0.55,\n        \"shape\": \"disc\",\n        \"blades\": 6\n      }\n    }\n  ]\n}\n",
+        "position_mode": "track",
+        "light_x": 0.5,
+        "light_y": 0.5,
+        "flare_x": 0.5,
+        "flare_y": 0.55,
+        "detect_threshold": 0.75,
+        "detect_max_lights": 1,
+        "occlusion_radius": 0.06,
+        "light_depth": 0,
+        "invert_depth": false,
+        "intensity": 1,
+        "scale": 1,
+        "blend_mode": "add",
+        "clamp_output": true,
+        "seed": 0,
+        "control_after_generate": "fixed",
+        "occlusion_smooth": 0.5,
+        "scene_color": 0.35,
+        "track_smoothing": 0.6,
+        "track_max_jump": 0.05,
+        "depth_normalize": "per_batch",
+        "depth_blur": 0.012,
+        "depth_temporal_smooth": 0.5,
+        "light_path": "",
+        "mask_falloff": 0.35
+      }
+    },
+    {
+      "id": 25,
+      "type": "VHS_VideoCombine",
+      "pos": [
+        2710,
+        -560
+      ],
+      "size": [
+        360,
+        238
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 2,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 24
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        },
+        {
+          "localized_name": "meta_batch",
+          "name": "meta_batch",
+          "shape": 7,
+          "type": "VHS_BatchManager",
+          "link": null
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "shape": 7,
+          "type": "VAE",
+          "link": null
+        },
+        {
+          "localized_name": "frame_rate",
+          "name": "frame_rate",
+          "type": "FLOAT",
+          "widget": {
+            "name": "frame_rate"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "loop_count",
+          "name": "loop_count",
+          "type": "INT",
+          "widget": {
+            "name": "loop_count"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "format",
+          "name": "format",
+          "type": "COMBO",
+          "widget": {
+            "name": "format"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "pingpong",
+          "name": "pingpong",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "pingpong"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "save_output",
+          "name": "save_output",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "save_output"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "Filenames",
+          "name": "Filenames",
+          "type": "VHS_FILENAMES",
+          "slot_index": 0,
+          "links": []
+        }
+      ],
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.1.2",
+        "Node name for S&R": "VHS_VideoCombine"
+      },
+      "widgets_values": {
+        "frame_rate": 24,
+        "loop_count": 0,
+        "filename_prefix": "flarecore_video",
+        "format": "image/gif",
+        "pingpong": false,
+        "save_output": true,
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {}
+        }
+      },
+      "widgets_values_named": {
+        "frame_rate": 24,
+        "loop_count": 0,
+        "filename_prefix": "flarecore_video",
+        "format": "image/gif",
+        "pingpong": false,
+        "save_output": true,
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {}
+        }
+      }
+    },
+    {
+      "id": 26,
+      "type": "VHS_VideoCombine",
+      "pos": [
+        2710,
+        -180
+      ],
+      "size": [
+        360,
+        238
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 2,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 25
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        },
+        {
+          "localized_name": "meta_batch",
+          "name": "meta_batch",
+          "shape": 7,
+          "type": "VHS_BatchManager",
+          "link": null
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "shape": 7,
+          "type": "VAE",
+          "link": null
+        },
+        {
+          "localized_name": "frame_rate",
+          "name": "frame_rate",
+          "type": "FLOAT",
+          "widget": {
+            "name": "frame_rate"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "loop_count",
+          "name": "loop_count",
+          "type": "INT",
+          "widget": {
+            "name": "loop_count"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "format",
+          "name": "format",
+          "type": "COMBO",
+          "widget": {
+            "name": "format"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "pingpong",
+          "name": "pingpong",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "pingpong"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "save_output",
+          "name": "save_output",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "save_output"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "Filenames",
+          "name": "Filenames",
+          "type": "VHS_FILENAMES",
+          "slot_index": 0,
+          "links": []
+        }
+      ],
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.1.2",
+        "Node name for S&R": "VHS_VideoCombine"
+      },
+      "widgets_values": {
+        "frame_rate": 24,
+        "loop_count": 0,
+        "filename_prefix": "flarecore_video_pass",
+        "format": "image/gif",
+        "pingpong": false,
+        "save_output": true,
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {}
+        }
+      },
+      "widgets_values_named": {
+        "frame_rate": 24,
+        "loop_count": 0,
+        "filename_prefix": "flarecore_video_pass",
+        "format": "image/gif",
+        "pingpong": false,
+        "save_output": true,
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {}
+        }
+      }
+    },
+    {
+      "id": 27,
+      "type": "Note",
+      "pos": [
+        1790,
+        -560
+      ],
+      "size": [
+        400,
+        620
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 2,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "VIDEO LAB - one node does the work\\n\\nLoad Video -> Flare Render -> Combine. Tracking, depth conditioning\nand the light source all live inside Flare Render (open the gear).\n\nPick the light source from the LIGHT SOURCE dropdown at the top of\nthe panel - each mode shows only its own controls:\n  manual      - drag the light on the picker.\n  detect      - brightest spot, each frame on its own.\n  track       - the same, followed through the clip. This is the one\n                for footage. If the flare wanders between nearby\n                lights, lower track_max_jump.\n  track_dots  - a black plate with white dots: every dot gets its own\n                flare, with its own identity across the clip. Raise\n                detect_max_lights to the number of dots you expect.\n                The threshold is relative to the brightest thing in\n                the clip, so a matte that never reaches pure white\n                still works. Take flare_pass to composite the result\n                over your real footage.\n  path        - draw the light's route. Choosing this mode arms the\n                picker: click to drop a point, drag to move one,\n                shift-click to remove. The light travels the whole\n                path across the clip, so put points closer together\n                where you want it to slow down.\n\nDepth is optional: wire a raw depth model straight into depth and set\ndepth_normalize to per_batch. Flare Depth Adapter still exists if you\nwant level remapping or per-frame modes.\n\nThe flare animates itself as the light moves: rows with a RED EDGE in\nthe editor carry a trigger rule, and the lens row has flicker and\nedge fade. Both outputs: composite, and the flare over black.\n"
+      ],
+      "widgets_values_named": {
+        "text": "VIDEO LAB - one node does the work\\n\\nLoad Video -> Flare Render -> Combine. Tracking, depth conditioning\nand the light source all live inside Flare Render (open the gear).\n\nPick the light source from the LIGHT SOURCE dropdown at the top of\nthe panel - each mode shows only its own controls:\n  manual      - drag the light on the picker.\n  detect      - brightest spot, each frame on its own.\n  track       - the same, followed through the clip. This is the one\n                for footage. If the flare wanders between nearby\n                lights, lower track_max_jump.\n  track_dots  - a black plate with white dots: every dot gets its own\n                flare, with its own identity across the clip. Raise\n                detect_max_lights to the number of dots you expect.\n                The threshold is relative to the brightest thing in\n                the clip, so a matte that never reaches pure white\n                still works. Take flare_pass to composite the result\n                over your real footage.\n  path        - draw the light's route. Choosing this mode arms the\n                picker: click to drop a point, drag to move one,\n                shift-click to remove. The light travels the whole\n                path across the clip, so put points closer together\n                where you want it to slow down.\n\nDepth is optional: wire a raw depth model straight into depth and set\ndepth_normalize to per_batch. Flare Depth Adapter still exists if you\nwant level remapping or per-frame modes.\n\nThe flare animates itself as the light moves: rows with a RED EDGE in\nthe editor carry a trigger rule, and the lens row has flicker and\nedge fade. Both outputs: composite, and the flare over black.\n"
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 28,
+      "type": "FlarecoreStudioSwitch",
+      "pos": [
+        -2920,
+        -420
+      ],
+      "size": [
+        250,
+        180
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "active": "flare lab"
+      }
+    },
+    {
+      "id": 29,
+      "type": "Note",
+      "pos": [
+        -2920,
+        -640
+      ],
+      "size": [
+        250,
+        190
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "FLARECORE STUDIO\n\nThree benches, one switch. Click a bench\non the Flarecore Studio node:\n\n  Element forge - make new elements\n  Flare lab     - design the flare\n  Video lab     - track it over footage\n\nThe two inactive benches grey out and\nare muted, so Queue only runs the one\nyou are working in."
+      ],
+      "widgets_values_named": {
+        "text": "FLARECORE STUDIO\n\nThree benches, one switch. Click a bench\non the Flarecore Studio node:\n\n  Element forge - make new elements\n  Flare lab     - design the flare\n  Video lab     - track it over footage\n\nThe two inactive benches grey out and\nare muted, so Queue only runs the one\nyou are working in."
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 30,
+      "type": "c3afbd95-c405-48e0-8a7f-2ed3678b1064",
+      "pos": [
+        -2420,
+        -60
+      ],
+      "size": [
+        300,
+        136
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 2,
+      "inputs": [
+        {
+          "label": "prompt",
+          "localized_name": "text",
+          "name": "text",
+          "type": "STRING",
+          "widget": {
+            "name": "text"
+          },
+          "link": 26
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            27
+          ]
+        }
+      ],
+      "title": "Krea2 generator",
+      "properties": {
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "ver": "0.34.0",
+        "previewExposures": [
+          {
+            "name": "$$canvas-image-preview",
+            "sourceNodeId": "8",
+            "sourcePreviewName": "$$canvas-image-preview"
+          }
+        ]
+      },
+      "widgets_values": [
+        "",
+        7
+      ],
+      "widgets_values_named": {
+        "text": "",
+        "seed": 7
+      }
+    }
+  ],
+  "links": [
+    [
+      2,
+      1,
+      1,
+      11,
+      1,
+      "STRING"
+    ],
+    [
+      3,
+      1,
+      2,
+      11,
+      2,
+      "STRING"
+    ],
+    [
       13,
-      14
-     ],
-     "slot_index": 0
-    },
-    {
-     "name": "texture_alpha",
-     "type": "MASK",
-     "links": [],
-     "slot_index": 1
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "FlareTexturePrepare"
-   },
-   "widgets_values": [
-    "rgb",
-    0.06,
-    true,
-    0.12,
-    2048,
-    0.25,
-    "square"
-   ]
-  },
-  {
-   "id": 11,
-   "type": "FlareElementSave",
-   "pos": [
-    -790,
-    -220
-   ],
-   "size": [
-    300,
-    160
-   ],
-   "flags": {},
-   "order": 11,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "texture",
-     "type": "IMAGE",
-     "link": 13
-    },
-    {
-     "name": "category",
-     "type": "STRING",
-     "link": 2,
-     "widget": {
-      "name": "category"
-     }
-    },
-    {
-     "name": "name",
-     "type": "STRING",
-     "link": 3,
-     "widget": {
-      "name": "name"
-     }
-    }
-   ],
-   "outputs": [
-    {
-     "name": "file",
-     "type": "STRING",
-     "links": [],
-     "slot_index": 0
-    },
-    {
-     "name": "texture",
-     "type": "IMAGE",
-     "links": [],
-     "slot_index": 1
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "FlareElementSave"
-   },
-   "widgets_values": [
-    "custom",
-    "my_element",
-    false
-   ]
-  },
-  {
-   "id": 12,
-   "type": "PreviewImage",
-   "pos": [
-    -790,
-    0
-   ],
-   "size": [
-    300,
-    270
-   ],
-   "flags": {},
-   "order": 12,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "link": 14
-    }
-   ],
-   "outputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "links": [],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "PreviewImage"
-   },
-   "widgets_values": [],
-   "title": "saved element"
-  },
-  {
-   "id": 13,
-   "type": "Note",
-   "pos": [
-    -2010,
-    -580
-   ],
-   "size": [
-    440,
-    250
-   ],
-   "flags": {},
-   "order": 13,
-   "mode": 0,
-   "inputs": [],
-   "outputs": [],
-   "properties": {},
-   "widgets_values": [
-    "ELEMENT FORGE (Krea2)\n\n1. On the element prompt panel: pick a category, then an element.\n   Its prompt appears below, ready to edit - what you see is exactly\n   what is queued. The extra style line is appended only while its\n   toggle is on.\n2. Queue: Krea2 generates, Flare Texture Prepare conditions it, and\n   Flare Element Save files it under elements/<category>/<name>.png.\n   For lens plates (dirt, droplets) set frame = wide_16_9 on Prepare.\n3. Use it: in the Flare Lab editor, click any element's NAME to pick\n   your new file from its family gallery.\n4. Bump the sampler seed for variations; luminance mode makes\n   tintable neutral elements, rgb keeps the generated colour."
-   ],
-   "color": "#432",
-   "bgcolor": "#653"
-  },
-  {
-   "id": 14,
-   "type": "LoadImage",
-   "pos": [
-    -220,
-    60
-   ],
-   "size": [
-    300,
-    340
-   ],
-   "flags": {},
-   "order": 14,
-   "mode": 0,
-   "inputs": [],
-   "outputs": [
-    {
-     "name": "IMAGE",
-     "type": "IMAGE",
-     "links": [
+      10,
+      0,
+      11,
+      0,
+      "IMAGE"
+    ],
+    [
+      14,
+      10,
+      0,
+      12,
+      0,
+      "IMAGE"
+    ],
+    [
       15,
-      16
-     ],
-     "slot_index": 0
-    },
-    {
-     "name": "MASK",
-     "type": "MASK",
-     "links": [],
-     "slot_index": 1
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "LoadImage"
-   },
-   "widgets_values": [
-    "flarecore_occlusion_scene.png",
-    "image"
-   ]
-  },
-  {
-   "id": 15,
-   "type": "DepthAnythingV2Preprocessor",
-   "pos": [
-    140,
-    420
-   ],
-   "size": [
-    300,
-    110
-   ],
-   "flags": {},
-   "order": 15,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "image",
-     "type": "IMAGE",
-     "link": 16
-    }
-   ],
-   "outputs": [
-    {
-     "name": "IMAGE",
-     "type": "IMAGE",
-     "links": [
-      17
-     ],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "DepthAnythingV2Preprocessor"
-   },
-   "widgets_values": [
-    "depth_anything_v2_vitl.pth",
-    512
-   ]
-  },
-  {
-   "id": 16,
-   "type": "FlareDepthAdapter",
-   "pos": [
-    500,
-    420
-   ],
-   "size": [
-    290,
-    170
-   ],
-   "flags": {},
-   "order": 16,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "depth",
-     "type": "IMAGE",
-     "link": 17
-    }
-   ],
-   "outputs": [
-    {
-     "name": "depth",
-     "type": "IMAGE",
-     "links": [
-      18
-     ],
-     "slot_index": 0
-    },
-    {
-     "name": "depth_mask",
-     "type": "MASK",
-     "links": [],
-     "slot_index": 1
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "FlareDepthAdapter"
-   },
-   "widgets_values": [
-    "per_batch",
-    false,
-    0.01,
-    0.0,
-    1.0,
-    0.0
-   ]
-  },
-  {
-   "id": 17,
-   "type": "FlareRender",
-   "pos": [
-    140,
-    -560
-   ],
-   "size": [
-    470,
-    770
-   ],
-   "flags": {},
-   "order": 17,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "image",
-     "type": "IMAGE",
-     "link": 15
-    },
-    {
-     "name": "depth",
-     "type": "IMAGE",
-     "link": 18
-    },
-    {
-     "name": "lights",
-     "type": "FLARE_LIGHTS",
-     "link": null
-    }
-   ],
-   "outputs": [
-    {
-     "name": "image",
-     "type": "IMAGE",
-     "links": [
+      14,
+      0,
+      15,
+      0,
+      "IMAGE"
+    ],
+    [
+      16,
+      15,
+      0,
+      16,
+      0,
+      "IMAGE"
+    ],
+    [
+      17,
+      15,
+      1,
+      17,
+      0,
+      "IMAGE"
+    ],
+    [
+      18,
+      15,
+      2,
+      18,
+      0,
+      "MASK"
+    ],
+    [
       19,
-      23
-     ],
-     "slot_index": 0
-    },
-    {
-     "name": "flare_pass",
-     "type": "IMAGE",
-     "links": [
-      20
-     ],
-     "slot_index": 1
-    },
-    {
-     "name": "flare_alpha",
-     "type": "MASK",
-     "links": [
-      21
-     ],
-     "slot_index": 2
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "FlareRender"
-   },
-   "widgets_values": [
-    "{\n  \"schema_version\": 1,\n  \"name\": \"Cine Blue\",\n  \"author\": \"flarecore\",\n  \"global\": {\n    \"intensity\": 1.0,\n    \"scale\": 1.0,\n    \"aspect\": 1.0,\n    \"tint\": [\n      0.97,\n      0.99,\n      1.06\n    ],\n    \"seed\": 7\n  },\n  \"elements\": [\n    {\n      \"type\": \"glow\",\n      \"label\": \"core\",\n      \"id\": \"cine_core\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.09,\n      \"intensity\": 4.0,\n      \"color\": [\n        1.0,\n        1.0,\n        1.0\n      ],\n      \"params\": {\n        \"softness\": 0.3,\n        \"falloff\": 2.2\n      }\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"core bloom\",\n      \"id\": \"cine_bloom\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.5,\n      \"intensity\": 1.8,\n      \"color\": [\n        0.85,\n        0.9,\n        1.0\n      ],\n      \"params\": {\n        \"softness\": 0.55,\n        \"falloff\": 1.5\n      },\n      \"irregular\": 0.2\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"veil\",\n      \"id\": \"cine_veil\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 1.1,\n      \"intensity\": 0.12,\n      \"color\": [\n        0.42,\n        0.5,\n        0.95\n      ],\n      \"params\": {\n        \"softness\": 0.85,\n        \"falloff\": 1.05\n      },\n      \"irregular\": 0.25\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"wide haze\",\n      \"id\": \"cine_haze\",\n      \"slot\": \"glows\",\n      \"offset\": 0.15,\n      \"scale\": 2.2,\n      \"intensity\": 0.025,\n      \"color\": [\n        0.4,\n        0.42,\n        0.8\n      ],\n      \"blur\": 0.3,\n      \"params\": {\n        \"softness\": 1.0,\n        \"falloff\": 0.85\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"glint\",\n      \"label\": \"rays\",\n      \"id\": \"cine_rays\",\n      \"slot\": \"rays\",\n      \"offset\": 0.0,\n      \"scale\": 0.5,\n      \"intensity\": 0.42,\n      \"color\": [\n        0.9,\n        0.94,\n        1.0\n      ],\n      \"blur\": 0.05,\n      \"params\": {\n        \"points\": 46,\n        \"length\": 0.3,\n        \"thickness\": 0.0028,\n        \"length_jitter\": 0.8\n      },\n      \"irregular\": 0.45\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"streak\",\n      \"id\": \"cine_streak\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.42,\n      \"auto_rotate\": false,\n      \"color\": [\n        0.72,\n        0.82,\n        1.0\n      ],\n      \"blur\": 0.05,\n      \"params\": {\n        \"length\": 2.2,\n        \"thickness\": 0.007\n      },\n      \"irregular\": 0.25\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"streak haze\",\n      \"id\": \"cine_streakhaze\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.07,\n      \"auto_rotate\": false,\n      \"color\": [\n        0.6,\n        0.7,\n        1.0\n      ],\n      \"blur\": 0.25,\n      \"params\": {\n        \"length\": 1.4,\n        \"thickness\": 0.035\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"ring\",\n      \"label\": \"thin ring\",\n      \"id\": \"cine_ring\",\n      \"slot\": \"rings\",\n      \"offset\": 0.62,\n      \"scale\": 0.62,\n      \"intensity\": 0.085,\n      \"color\": [\n        0.72,\n        0.78,\n        0.95\n      ],\n      \"dispersion\": 0.45,\n      \"blur\": 0.04,\n      \"params\": {\n        \"radius\": 1.0,\n        \"thickness\": 0.012\n      },\n      \"irregular\": 0.4\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"magenta veil\",\n      \"id\": \"cine_magenta\",\n      \"slot\": \"glows\",\n      \"offset\": -0.62,\n      \"scale\": 0.85,\n      \"intensity\": 0.11,\n      \"rotation\": 0.0,\n      \"color\": [\n        0.8,\n        0.42,\n        0.85\n      ],\n      \"blur\": 0.28,\n      \"params\": {\n        \"softness\": 0.8,\n        \"falloff\": 1.15\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghosts near\",\n      \"id\": \"cine_ghost1\",\n      \"slot\": \"ghosts\",\n      \"offset\": 1.3,\n      \"count\": 3,\n      \"spread\": 0.1,\n      \"scale\": 0.1,\n      \"count_scale_step\": 1.22,\n      \"count_falloff\": 0.9,\n      \"intensity\": 0.22,\n      \"color\": [\n        0.68,\n        0.8,\n        1.0\n      ],\n      \"dispersion\": 0.4,\n      \"blur\": 0.1,\n      \"params\": {\n        \"blades\": 20,\n        \"edge_softness\": 0.65\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghosts far\",\n      \"id\": \"cine_ghost2\",\n      \"slot\": \"ghosts\",\n      \"offset\": 2.25,\n      \"count\": 3,\n      \"spread\": 0.24,\n      \"scale\": 0.135,\n      \"count_scale_step\": 1.15,\n      \"count_falloff\": 0.8,\n      \"intensity\": 0.2,\n      \"color\": [\n        0.6,\n        0.74,\n        1.0\n      ],\n      \"dispersion\": 0.6,\n      \"blur\": 0.12,\n      \"params\": {\n        \"blades\": 20,\n        \"edge_softness\": 0.7\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"hex ghost\",\n      \"id\": \"cine_hex\",\n      \"slot\": \"ghosts\",\n      \"offset\": 1.62,\n      \"scale\": 0.1,\n      \"intensity\": 0.16,\n      \"color\": [\n        0.7,\n        0.82,\n        1.0\n      ],\n      \"dispersion\": 0.9,\n      \"blur\": 0.05,\n      \"params\": {\n        \"blades\": 6,\n        \"edge_softness\": 0.35\n      },\n      \"irregular\": 0.3\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"warm dot\",\n      \"id\": \"cine_warm\",\n      \"slot\": \"glows\",\n      \"offset\": 3.15,\n      \"scale\": 0.035,\n      \"intensity\": 0.5,\n      \"color\": [\n        1.0,\n        0.5,\n        0.28\n      ],\n      \"blur\": 0.05,\n      \"params\": {\n        \"softness\": 0.5,\n        \"falloff\": 1.6\n      }\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghost rim\",\n      \"id\": \"cine_ghostrim\",\n      \"slot\": \"ghosts\",\n      \"offset\": 2.25,\n      \"count\": 3,\n      \"spread\": 0.24,\n      \"scale\": 0.135,\n      \"count_scale_step\": 1.15,\n      \"count_falloff\": 0.8,\n      \"intensity\": 0.13,\n      \"color\": [\n        0.75,\n        0.85,\n        1.0\n      ],\n      \"dispersion\": 0.8,\n      \"blur\": 0.05,\n      \"params\": {\n        \"blades\": 20,\n        \"edge_softness\": 0.35,\n        \"hollow\": 0.72\n      },\n      \"irregular\": 0.35\n    }\n  ]\n}",
-    "manual",
-    0.42,
-    0.3,
-    0.62,
-    0.55,
-    0.8,
-    1,
-    0.06,
-    0.0,
-    false,
-    1.0,
-    1.0,
-    "add",
-    true,
-    0,
-    "fixed",
-    0.4,
-    0.0,
-    0.6,
-    0.06,
-    "as_is",
-    0.0,
-    0.0,
-    "",
-    0.35
-   ]
-  },
-  {
-   "id": 18,
-   "type": "PreviewImage",
-   "pos": [
-    680,
-    -560
-   ],
-   "size": [
-    420,
-    300
-   ],
-   "flags": {},
-   "order": 18,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "link": 19
-    }
-   ],
-   "outputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "links": [],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "PreviewImage"
-   },
-   "widgets_values": [],
-   "title": "composite"
-  },
-  {
-   "id": 19,
-   "type": "PreviewImage",
-   "pos": [
-    680,
-    -210
-   ],
-   "size": [
-    420,
-    300
-   ],
-   "flags": {},
-   "order": 19,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "link": 20
-    }
-   ],
-   "outputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "links": [],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "PreviewImage"
-   },
-   "widgets_values": [],
-   "title": "flare pass"
-  },
-  {
-   "id": 20,
-   "type": "MaskToImage",
-   "pos": [
-    680,
-    130
-   ],
-   "size": [
-    210,
-    40
-   ],
-   "flags": {},
-   "order": 20,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "mask",
-     "type": "MASK",
-     "link": 21
-    }
-   ],
-   "outputs": [
-    {
-     "name": "IMAGE",
-     "type": "IMAGE",
-     "links": [
-      22
-     ],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "MaskToImage"
-   },
-   "widgets_values": []
-  },
-  {
-   "id": 21,
-   "type": "PreviewImage",
-   "pos": [
-    930,
-    130
-   ],
-   "size": [
-    300,
-    240
-   ],
-   "flags": {},
-   "order": 21,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "link": 22
-    }
-   ],
-   "outputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "links": [],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "PreviewImage"
-   },
-   "widgets_values": [],
-   "title": "flare alpha"
-  },
-  {
-   "id": 22,
-   "type": "SaveImage",
-   "pos": [
-    1140,
-    -560
-   ],
-   "size": [
-    360,
-    340
-   ],
-   "flags": {},
-   "order": 22,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "link": 23
-    }
-   ],
-   "outputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "links": [],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "SaveImage"
-   },
-   "widgets_values": [
-    "flarecore_lab"
-   ]
-  },
-  {
-   "id": 23,
-   "type": "Note",
-   "pos": [
-    -220,
-    -400
-   ],
-   "size": [
-    340,
-    330
-   ],
-   "flags": {},
-   "order": 23,
-   "mode": 0,
-   "inputs": [],
-   "outputs": [],
-   "properties": {},
-   "widgets_values": [
-    "FLARE LAB\n\n1. Drag the orange LIGHT point and the cyan FLARE ANCHOR directly on\n   the picker at the top of Flare Render. Ghost spacing follows the\n   distance between the two points.\n2. Build the flare in the editor below it: + add, then the\n   pos / size / opac sliders. The small arrow on a row opens the full\n   parameter set (color, dispersion, count chains, textures...).\n3. presets loads shipped looks; save... writes your own next to them.\n   The gear reveals the node's advanced inputs (detection, occlusion,\n   raw point coordinates).\n4. The depth branch keeps the flare occluded when the light hides\n   behind the pillar - drag the light behind it and render.\n5. flare_pass output is the flare over black for external compositing.\n\nThe panels hide below ~50% zoom - that is a ComfyUI DOM widget rule,\nzoom back in and they return."
-   ],
-   "color": "#432",
-   "bgcolor": "#653"
-  },
-  {
-   "id": 24,
-   "type": "VHS_LoadVideo",
-   "pos": [
-    1790,
-    -40
-   ],
-   "size": [
-    320,
-    340
-   ],
-   "flags": {},
-   "order": 24,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "meta_batch",
-     "type": "VHS_BatchManager",
-     "link": null
-    },
-    {
-     "name": "vae",
-     "type": "VAE",
-     "link": null
-    }
-   ],
-   "outputs": [
-    {
-     "name": "IMAGE",
-     "type": "IMAGE",
-     "links": [
+      18,
+      0,
+      19,
+      0,
+      "IMAGE"
+    ],
+    [
+      20,
+      15,
+      0,
+      20,
+      0,
+      "IMAGE"
+    ],
+    [
+      21,
+      22,
+      0,
       24,
-      25
-     ],
-     "slot_index": 0
+      0,
+      "IMAGE"
+    ],
+    [
+      22,
+      22,
+      0,
+      23,
+      0,
+      "IMAGE"
+    ],
+    [
+      23,
+      23,
+      0,
+      24,
+      1,
+      "IMAGE"
+    ],
+    [
+      24,
+      24,
+      0,
+      25,
+      0,
+      "IMAGE"
+    ],
+    [
+      25,
+      24,
+      1,
+      26,
+      0,
+      "IMAGE"
+    ],
+    [
+      26,
+      1,
+      0,
+      30,
+      0,
+      "STRING"
+    ],
+    [
+      27,
+      30,
+      0,
+      10,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "ELEMENT FORGE",
+      "bounding": [
+        -2500,
+        -640,
+        2050,
+        1320
+      ],
+      "color": "#26262b",
+      "flags": {}
     },
     {
-     "name": "frame_count",
-     "type": "INT",
-     "links": [],
-     "slot_index": 1
+      "id": 2,
+      "title": "FLARE LAB",
+      "bounding": [
+        -250,
+        -640,
+        1810,
+        1320
+      ],
+      "color": "#3f5159",
+      "flags": {}
     },
     {
-     "name": "audio",
-     "type": "AUDIO",
-     "links": [],
-     "slot_index": 2
-    },
-    {
-     "name": "video_info",
-     "type": "VHS_VIDEOINFO",
-     "links": [],
-     "slot_index": 3
+      "id": 3,
+      "title": "VIDEO LAB",
+      "bounding": [
+        1760,
+        -640,
+        1620,
+        1320
+      ],
+      "color": "#26262b",
+      "flags": {}
     }
-   ],
-   "properties": {
-    "Node name for S&R": "VHS_LoadVideo"
-   },
-   "widgets_values": [
-    "test.mp4",
-    0.0,
-    0,
-    0,
-    0,
-    0,
-    1,
-    "None"
-   ]
+  ],
+  "definitions": {
+    "subgraphs": [
+      {
+        "id": "c3afbd95-c405-48e0-8a7f-2ed3678b1064",
+        "version": 1,
+        "state": {
+          "lastGroupId": 3,
+          "lastNodeId": 30,
+          "lastLinkId": 29,
+          "lastRerouteId": 0
+        },
+        "revision": 0,
+        "config": {},
+        "name": "Krea2 generator",
+        "inputNode": {
+          "id": -10,
+          "bounding": [
+            -2658,
+            -89,
+            128,
+            68
+          ]
+        },
+        "outputNode": {
+          "id": -20,
+          "bounding": [
+            -1110,
+            -89,
+            128,
+            68
+          ]
+        },
+        "inputs": [
+          {
+            "id": "7079f669-4723-433b-8cfd-ac81a47ab640",
+            "name": "text",
+            "type": "STRING",
+            "linkIds": [
+              1
+            ],
+            "localized_name": "text",
+            "label": "prompt",
+            "pos": [
+              51,
+              24
+            ]
+          },
+          {
+            "id": "3bebbdb4-fd4f-4700-b123-330bccc9c876",
+            "name": "seed",
+            "type": "INT",
+            "linkIds": [
+              29
+            ],
+            "pos": [
+              0,
+              0
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "id": "6593fb81-553b-409a-84ff-e7e6eb8eab56",
+            "name": "IMAGE",
+            "type": "IMAGE",
+            "linkIds": [
+              12
+            ],
+            "localized_name": "IMAGE",
+            "pos": [
+              24,
+              24
+            ]
+          }
+        ],
+        "widgets": [],
+        "nodes": [
+          {
+            "id": 2,
+            "type": "UNETLoader",
+            "pos": [
+              -2470,
+              -120
+            ],
+            "size": [
+              360,
+              82
+            ],
+            "flags": {},
+            "order": 0,
+            "mode": 2,
+            "inputs": [
+              {
+                "localized_name": "unet_name",
+                "name": "unet_name",
+                "type": "COMBO",
+                "widget": {
+                  "name": "unet_name"
+                },
+                "link": null
+              },
+              {
+                "localized_name": "weight_dtype",
+                "name": "weight_dtype",
+                "type": "COMBO",
+                "widget": {
+                  "name": "weight_dtype"
+                },
+                "link": null
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "MODEL",
+                "name": "MODEL",
+                "type": "MODEL",
+                "slot_index": 0,
+                "links": [
+                  4
+                ]
+              }
+            ],
+            "properties": {
+              "enableTabs": false,
+              "tabWidth": 65,
+              "tabXOffset": 10,
+              "hasSecondTab": false,
+              "secondTabText": "Send Back",
+              "secondTabOffset": 80,
+              "secondTabWidth": 65,
+              "ver": "0.34.0",
+              "Node name for S&R": "UNETLoader"
+            },
+            "widgets_values": [
+              "krea2_turbo_fp8_scaled.safetensors",
+              "default"
+            ],
+            "widgets_values_named": {
+              "unet_name": "krea2_turbo_fp8_scaled.safetensors",
+              "weight_dtype": "default"
+            }
+          },
+          {
+            "id": 3,
+            "type": "CLIPLoader",
+            "pos": [
+              -2470,
+              20
+            ],
+            "size": [
+              360,
+              106
+            ],
+            "flags": {},
+            "order": 1,
+            "mode": 2,
+            "inputs": [
+              {
+                "localized_name": "clip_name",
+                "name": "clip_name",
+                "type": "COMBO",
+                "widget": {
+                  "name": "clip_name"
+                },
+                "link": null
+              },
+              {
+                "localized_name": "type",
+                "name": "type",
+                "type": "COMBO",
+                "widget": {
+                  "name": "type"
+                },
+                "link": null
+              },
+              {
+                "localized_name": "device",
+                "name": "device",
+                "shape": 7,
+                "type": "COMBO",
+                "widget": {
+                  "name": "device"
+                },
+                "link": null
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "CLIP",
+                "name": "CLIP",
+                "type": "CLIP",
+                "slot_index": 0,
+                "links": [
+                  5,
+                  6
+                ]
+              }
+            ],
+            "properties": {
+              "enableTabs": false,
+              "tabWidth": 65,
+              "tabXOffset": 10,
+              "hasSecondTab": false,
+              "secondTabText": "Send Back",
+              "secondTabOffset": 80,
+              "secondTabWidth": 65,
+              "ver": "0.34.0",
+              "Node name for S&R": "CLIPLoader"
+            },
+            "widgets_values": [
+              "qwen3vl_4b_fp8_scaled.safetensors",
+              "krea2",
+              "default"
+            ],
+            "widgets_values_named": {
+              "clip_name": "qwen3vl_4b_fp8_scaled.safetensors",
+              "type": "krea2",
+              "device": "default"
+            }
+          },
+          {
+            "id": 4,
+            "type": "VAELoader",
+            "pos": [
+              -2470,
+              180
+            ],
+            "size": [
+              360,
+              60
+            ],
+            "flags": {},
+            "order": 2,
+            "mode": 2,
+            "inputs": [
+              {
+                "localized_name": "vae_name",
+                "name": "vae_name",
+                "type": "COMBO",
+                "widget": {
+                  "name": "vae_name"
+                },
+                "link": null
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "VAE",
+                "name": "VAE",
+                "type": "VAE",
+                "slot_index": 0,
+                "links": [
+                  11
+                ]
+              }
+            ],
+            "properties": {
+              "enableTabs": false,
+              "tabWidth": 65,
+              "tabXOffset": 10,
+              "hasSecondTab": false,
+              "secondTabText": "Send Back",
+              "secondTabOffset": 80,
+              "secondTabWidth": 65,
+              "ver": "0.34.0",
+              "Node name for S&R": "VAELoader"
+            },
+            "widgets_values": [
+              "qwen_image_vae.safetensors"
+            ],
+            "widgets_values_named": {
+              "vae_name": "qwen_image_vae.safetensors"
+            }
+          },
+          {
+            "id": 5,
+            "type": "CLIPTextEncode",
+            "pos": [
+              -2050,
+              -320
+            ],
+            "size": [
+              300,
+              120
+            ],
+            "flags": {},
+            "order": 5,
+            "mode": 2,
+            "inputs": [
+              {
+                "localized_name": "clip",
+                "name": "clip",
+                "type": "CLIP",
+                "link": 5
+              },
+              {
+                "localized_name": "text",
+                "name": "text",
+                "type": "STRING",
+                "widget": {
+                  "name": "text"
+                },
+                "link": 1
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "CONDITIONING",
+                "name": "CONDITIONING",
+                "type": "CONDITIONING",
+                "slot_index": 0,
+                "links": [
+                  7
+                ]
+              }
+            ],
+            "title": "positive (from prompt bank)",
+            "properties": {
+              "enableTabs": false,
+              "tabWidth": 65,
+              "tabXOffset": 10,
+              "hasSecondTab": false,
+              "secondTabText": "Send Back",
+              "secondTabOffset": 80,
+              "secondTabWidth": 65,
+              "ver": "0.34.0",
+              "Node name for S&R": "CLIPTextEncode"
+            },
+            "widgets_values": [
+              ""
+            ],
+            "widgets_values_named": {
+              "text": ""
+            }
+          },
+          {
+            "id": 6,
+            "type": "CLIPTextEncode",
+            "pos": [
+              -2050,
+              -140
+            ],
+            "size": [
+              300,
+              100
+            ],
+            "flags": {},
+            "order": 4,
+            "mode": 2,
+            "inputs": [
+              {
+                "localized_name": "clip",
+                "name": "clip",
+                "type": "CLIP",
+                "link": 6
+              },
+              {
+                "localized_name": "text",
+                "name": "text",
+                "type": "STRING",
+                "widget": {
+                  "name": "text"
+                },
+                "link": null
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "CONDITIONING",
+                "name": "CONDITIONING",
+                "type": "CONDITIONING",
+                "slot_index": 0,
+                "links": [
+                  8
+                ]
+              }
+            ],
+            "title": "negative (unused at cfg 1)",
+            "properties": {
+              "enableTabs": false,
+              "tabWidth": 65,
+              "tabXOffset": 10,
+              "hasSecondTab": false,
+              "secondTabText": "Send Back",
+              "secondTabOffset": 80,
+              "secondTabWidth": 65,
+              "ver": "0.34.0",
+              "Node name for S&R": "CLIPTextEncode"
+            },
+            "widgets_values": [
+              ""
+            ],
+            "widgets_values_named": {
+              "text": ""
+            }
+          },
+          {
+            "id": 7,
+            "type": "EmptySD3LatentImage",
+            "pos": [
+              -2050,
+              20
+            ],
+            "size": [
+              300,
+              110
+            ],
+            "flags": {},
+            "order": 3,
+            "mode": 2,
+            "inputs": [
+              {
+                "localized_name": "width",
+                "name": "width",
+                "type": "INT",
+                "widget": {
+                  "name": "width"
+                },
+                "link": null
+              },
+              {
+                "localized_name": "height",
+                "name": "height",
+                "type": "INT",
+                "widget": {
+                  "name": "height"
+                },
+                "link": null
+              },
+              {
+                "localized_name": "batch_size",
+                "name": "batch_size",
+                "type": "INT",
+                "widget": {
+                  "name": "batch_size"
+                },
+                "link": null
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "LATENT",
+                "name": "LATENT",
+                "type": "LATENT",
+                "slot_index": 0,
+                "links": [
+                  9
+                ]
+              }
+            ],
+            "properties": {
+              "enableTabs": false,
+              "tabWidth": 65,
+              "tabXOffset": 10,
+              "hasSecondTab": false,
+              "secondTabText": "Send Back",
+              "secondTabOffset": 80,
+              "secondTabWidth": 65,
+              "ver": "0.34.0",
+              "Node name for S&R": "EmptySD3LatentImage"
+            },
+            "widgets_values": [
+              1328,
+              1328,
+              1
+            ],
+            "widgets_values_named": {
+              "width": 1328,
+              "height": 1328,
+              "batch_size": 1
+            }
+          },
+          {
+            "id": 8,
+            "type": "KSampler",
+            "pos": [
+              -1690,
+              -220
+            ],
+            "size": [
+              300,
+              262
+            ],
+            "flags": {},
+            "order": 6,
+            "mode": 2,
+            "inputs": [
+              {
+                "localized_name": "model",
+                "name": "model",
+                "type": "MODEL",
+                "link": 4
+              },
+              {
+                "localized_name": "positive",
+                "name": "positive",
+                "type": "CONDITIONING",
+                "link": 7
+              },
+              {
+                "localized_name": "negative",
+                "name": "negative",
+                "type": "CONDITIONING",
+                "link": 8
+              },
+              {
+                "localized_name": "latent_image",
+                "name": "latent_image",
+                "type": "LATENT",
+                "link": 9
+              },
+              {
+                "localized_name": "seed",
+                "name": "seed",
+                "type": "INT",
+                "widget": {
+                  "name": "seed"
+                },
+                "link": 29
+              },
+              {
+                "localized_name": "steps",
+                "name": "steps",
+                "type": "INT",
+                "widget": {
+                  "name": "steps"
+                },
+                "link": null
+              },
+              {
+                "localized_name": "cfg",
+                "name": "cfg",
+                "type": "FLOAT",
+                "widget": {
+                  "name": "cfg"
+                },
+                "link": null
+              },
+              {
+                "localized_name": "sampler_name",
+                "name": "sampler_name",
+                "type": "COMBO",
+                "widget": {
+                  "name": "sampler_name"
+                },
+                "link": null
+              },
+              {
+                "localized_name": "scheduler",
+                "name": "scheduler",
+                "type": "COMBO",
+                "widget": {
+                  "name": "scheduler"
+                },
+                "link": null
+              },
+              {
+                "localized_name": "denoise",
+                "name": "denoise",
+                "type": "FLOAT",
+                "widget": {
+                  "name": "denoise"
+                },
+                "link": null
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "LATENT",
+                "name": "LATENT",
+                "type": "LATENT",
+                "slot_index": 0,
+                "links": [
+                  10
+                ]
+              }
+            ],
+            "properties": {
+              "enableTabs": false,
+              "tabWidth": 65,
+              "tabXOffset": 10,
+              "hasSecondTab": false,
+              "secondTabText": "Send Back",
+              "secondTabOffset": 80,
+              "secondTabWidth": 65,
+              "ver": "0.34.0",
+              "Node name for S&R": "KSampler"
+            },
+            "widgets_values": [
+              7,
+              "fixed",
+              8,
+              1,
+              "er_sde",
+              "simple",
+              1
+            ],
+            "widgets_values_named": {
+              "seed": 7,
+              "control_after_generate": "fixed",
+              "steps": 8,
+              "cfg": 1,
+              "sampler_name": "er_sde",
+              "scheduler": "simple",
+              "denoise": 1
+            }
+          },
+          {
+            "id": 9,
+            "type": "VAEDecode",
+            "pos": [
+              -1350,
+              -220
+            ],
+            "size": [
+              180,
+              50
+            ],
+            "flags": {},
+            "order": 7,
+            "mode": 2,
+            "inputs": [
+              {
+                "localized_name": "samples",
+                "name": "samples",
+                "type": "LATENT",
+                "link": 10
+              },
+              {
+                "localized_name": "vae",
+                "name": "vae",
+                "type": "VAE",
+                "link": 11
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "IMAGE",
+                "name": "IMAGE",
+                "type": "IMAGE",
+                "slot_index": 0,
+                "links": [
+                  12
+                ]
+              }
+            ],
+            "properties": {
+              "enableTabs": false,
+              "tabWidth": 65,
+              "tabXOffset": 10,
+              "hasSecondTab": false,
+              "secondTabText": "Send Back",
+              "secondTabOffset": 80,
+              "secondTabWidth": 65,
+              "ver": "0.34.0",
+              "Node name for S&R": "VAEDecode"
+            }
+          }
+        ],
+        "groups": [],
+        "links": [
+          {
+            "id": 5,
+            "origin_id": 3,
+            "origin_slot": 0,
+            "target_id": 5,
+            "target_slot": 0,
+            "type": "CLIP"
+          },
+          {
+            "id": 6,
+            "origin_id": 3,
+            "origin_slot": 0,
+            "target_id": 6,
+            "target_slot": 0,
+            "type": "CLIP"
+          },
+          {
+            "id": 4,
+            "origin_id": 2,
+            "origin_slot": 0,
+            "target_id": 8,
+            "target_slot": 0,
+            "type": "MODEL"
+          },
+          {
+            "id": 7,
+            "origin_id": 5,
+            "origin_slot": 0,
+            "target_id": 8,
+            "target_slot": 1,
+            "type": "CONDITIONING"
+          },
+          {
+            "id": 8,
+            "origin_id": 6,
+            "origin_slot": 0,
+            "target_id": 8,
+            "target_slot": 2,
+            "type": "CONDITIONING"
+          },
+          {
+            "id": 9,
+            "origin_id": 7,
+            "origin_slot": 0,
+            "target_id": 8,
+            "target_slot": 3,
+            "type": "LATENT"
+          },
+          {
+            "id": 10,
+            "origin_id": 8,
+            "origin_slot": 0,
+            "target_id": 9,
+            "target_slot": 0,
+            "type": "LATENT"
+          },
+          {
+            "id": 11,
+            "origin_id": 4,
+            "origin_slot": 0,
+            "target_id": 9,
+            "target_slot": 1,
+            "type": "VAE"
+          },
+          {
+            "id": 1,
+            "origin_id": -10,
+            "origin_slot": 0,
+            "target_id": 5,
+            "target_slot": 1,
+            "type": "STRING"
+          },
+          {
+            "id": 12,
+            "origin_id": 9,
+            "origin_slot": 0,
+            "target_id": -20,
+            "target_slot": 0,
+            "type": "IMAGE"
+          },
+          {
+            "id": 29,
+            "origin_id": -10,
+            "origin_slot": 1,
+            "target_id": 8,
+            "target_slot": 4,
+            "type": "INT"
+          }
+        ],
+        "extra": {
+          "pixaromaGroups": []
+        }
+      }
+    ]
   },
-  {
-   "id": 25,
-   "type": "DepthAnythingV2Preprocessor",
-   "pos": [
-    1790,
-    340
-   ],
-   "size": [
-    320,
-    110
-   ],
-   "flags": {},
-   "order": 25,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "image",
-     "type": "IMAGE",
-     "link": 25
-    }
-   ],
-   "outputs": [
-    {
-     "name": "IMAGE",
-     "type": "IMAGE",
-     "links": [
-      26
-     ],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "DepthAnythingV2Preprocessor"
-   },
-   "widgets_values": [
-    "depth_anything_v2_vitl.pth",
-    512
-   ]
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.23960066555740434,
+      "offset": [
+        3931.6666666666665,
+        2363.75
+      ]
+    },
+    "anomalous_hashes": {}
   },
-  {
-   "id": 26,
-   "type": "FlareRender",
-   "pos": [
-    2190,
-    -560
-   ],
-   "size": [
-    470,
-    860
-   ],
-   "flags": {},
-   "order": 26,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "image",
-     "type": "IMAGE",
-     "link": 24
-    },
-    {
-     "name": "depth",
-     "type": "IMAGE",
-     "link": 26
-    },
-    {
-     "name": "lights",
-     "type": "FLARE_LIGHTS",
-     "link": null
-    }
-   ],
-   "outputs": [
-    {
-     "name": "image",
-     "type": "IMAGE",
-     "links": [
-      27
-     ],
-     "slot_index": 0
-    },
-    {
-     "name": "flare_pass",
-     "type": "IMAGE",
-     "links": [
-      28
-     ],
-     "slot_index": 1
-    },
-    {
-     "name": "flare_alpha",
-     "type": "MASK",
-     "links": [],
-     "slot_index": 2
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "FlareRender"
-   },
-   "widgets_values": [
-    "{\n  \"schema_version\": 1,\n  \"name\": \"Anamorphic Gold\",\n  \"author\": \"flarecore\",\n  \"global\": {\n    \"intensity\": 1.0,\n    \"scale\": 1.0,\n    \"aspect\": 1.6,\n    \"tint\": [\n      1.0,\n      0.98,\n      0.94\n    ],\n    \"seed\": 21,\n    \"fringe\": 0.2,\n    \"edge_fade_start\": 0.15,\n    \"edge_fade_range\": 0.5\n  },\n  \"elements\": [\n    {\n      \"type\": \"glow\",\n      \"label\": \"core\",\n      \"id\": \"ag_core\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.08,\n      \"intensity\": 4.5,\n      \"color\": [\n        1.0,\n        0.98,\n        0.9\n      ],\n      \"params\": {\n        \"softness\": 0.3,\n        \"falloff\": 2.2\n      }\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"gold bloom\",\n      \"id\": \"ag_bloom\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.5,\n      \"intensity\": 0.85,\n      \"irregular\": 0.25,\n      \"color\": [\n        1.0,\n        0.82,\n        0.5\n      ],\n      \"params\": {\n        \"softness\": 0.5,\n        \"falloff\": 1.4\n      }\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"anamorphic streak\",\n      \"id\": \"ag_streak\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.55,\n      \"auto_rotate\": false,\n      \"irregular\": 0.3,\n      \"blur\": 0.04,\n      \"color\": [\n        1.0,\n        0.86,\n        0.55\n      ],\n      \"params\": {\n        \"length\": 2.6,\n        \"thickness\": 0.006\n      }\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"streak haze\",\n      \"id\": \"ag_streakhaze\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.09,\n      \"auto_rotate\": false,\n      \"blur\": 0.3,\n      \"color\": [\n        1.0,\n        0.8,\n        0.5\n      ],\n      \"params\": {\n        \"length\": 1.8,\n        \"thickness\": 0.05\n      }\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"anamorphic bars\",\n      \"id\": \"ag_bars\",\n      \"slot\": \"ghosts\",\n      \"offset\": 0.6,\n      \"count\": 4,\n      \"spread\": 0.35,\n      \"scale\": 0.045,\n      \"count_scale_step\": 1.3,\n      \"count_falloff\": 0.85,\n      \"intensity\": 0.22,\n      \"stretch\": [\n        3.2,\n        0.45\n      ],\n      \"auto_rotate\": false,\n      \"move\": [\n        1.0,\n        0.15\n      ],\n      \"irregular\": 0.35,\n      \"dispersion\": 0.5,\n      \"blur\": 0.03,\n      \"color\": [\n        1.0,\n        0.75,\n        0.45\n      ],\n      \"params\": {\n        \"blades\": 4,\n        \"edge_softness\": 0.35\n      }\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghost chain\",\n      \"id\": \"ag_ghosts\",\n      \"slot\": \"ghosts\",\n      \"offset\": 1.35,\n      \"count\": 3,\n      \"spread\": 0.28,\n      \"scale\": 0.11,\n      \"count_scale_step\": 1.2,\n      \"count_falloff\": 0.85,\n      \"intensity\": 0.16,\n      \"irregular\": 0.3,\n      \"dispersion\": 0.6,\n      \"blur\": 0.1,\n      \"color\": [\n        1.0,\n        0.8,\n        0.55\n      ],\n      \"params\": {\n        \"blades\": 8,\n        \"edge_softness\": 0.6\n      }\n    },\n    {\n      \"type\": \"glint\",\n      \"label\": \"rays\",\n      \"id\": \"ag_rays\",\n      \"slot\": \"rays\",\n      \"offset\": 0.0,\n      \"scale\": 0.55,\n      \"intensity\": 0.35,\n      \"irregular\": 0.5,\n      \"blur\": 0.05,\n      \"color\": [\n        1.0,\n        0.94,\n        0.8\n      ],\n      \"params\": {\n        \"points\": 36,\n        \"length\": 0.4,\n        \"thickness\": 0.003,\n        \"length_jitter\": 0.75\n      }\n    },\n    {\n      \"type\": \"hoop\",\n      \"label\": \"gold hoop\",\n      \"id\": \"ag_hoop\",\n      \"slot\": \"hoops\",\n      \"offset\": 0.5,\n      \"scale\": 0.9,\n      \"intensity\": 0.06,\n      \"irregular\": 0.4,\n      \"dispersion\": 1.2,\n      \"blur\": 0.06,\n      \"color\": [\n        1.0,\n        0.7,\n        0.4\n      ],\n      \"params\": {\n        \"radius\": 0.9,\n        \"thickness\": 0.2,\n        \"angular_falloff\": 0.85,\n        \"completion\": 220,\n        \"completion_feather\": 0.35\n      }\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"edge gleam\",\n      \"id\": \"ag_gleam\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 1.8,\n      \"intensity\": 0.0,\n      \"auto_rotate\": false,\n      \"stretch\": [\n        1.0,\n        0.08\n      ],\n      \"blur\": 0.2,\n      \"color\": [\n        1.0,\n        0.7,\n        0.35\n      ],\n      \"trigger\": {\n        \"mode\": \"border\",\n        \"source\": \"light\",\n        \"inner\": -0.1,\n        \"outer\": 0.35,\n        \"falloff\": \"smooth\",\n        \"brightness\": 0.45,\n        \"scale\": 0.3,\n        \"color\": [\n          1.0,\n          0.55,\n          0.25\n        ]\n      },\n      \"params\": {\n        \"softness\": 0.9,\n        \"falloff\": 1.2\n      }\n    },\n    {\n      \"type\": \"orbs\",\n      \"label\": \"lens orbs\",\n      \"id\": \"ag_orbs\",\n      \"slot\": \"ghosts\",\n      \"scale\": 1.0,\n      \"intensity\": 0.07,\n      \"blur\": 0.06,\n      \"color\": [\n        1.0,\n        0.9,\n        0.7\n      ],\n      \"params\": {\n        \"count\": 26,\n        \"size\": 0.045,\n        \"size_jitter\": 0.7,\n        \"spread\": 1.4,\n        \"edge_softness\": 0.35,\n        \"illumination\": 0.55,\n        \"shape\": \"disc\",\n        \"blades\": 6\n      }\n    }\n  ]\n}\n",
-    "track",
-    0.5,
-    0.5,
-    0.5,
-    0.55,
-    0.75,
-    1,
-    0.06,
-    0.0,
-    false,
-    1.0,
-    1.0,
-    "add",
-    true,
-    0,
-    "fixed",
-    0.5,
-    0.35,
-    0.6,
-    0.05,
-    "per_batch",
-    0.012,
-    0.5,
-    "",
-    0.35
-   ]
-  },
-  {
-   "id": 27,
-   "type": "VHS_VideoCombine",
-   "pos": [
-    2710,
-    -560
-   ],
-   "size": [
-    360,
-    340
-   ],
-   "flags": {},
-   "order": 27,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "link": 27
-    },
-    {
-     "name": "audio",
-     "type": "AUDIO",
-     "link": null
-    },
-    {
-     "name": "meta_batch",
-     "type": "VHS_BatchManager",
-     "link": null
-    },
-    {
-     "name": "vae",
-     "type": "VAE",
-     "link": null
-    }
-   ],
-   "outputs": [
-    {
-     "name": "Filenames",
-     "type": "VHS_FILENAMES",
-     "links": [],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "VHS_VideoCombine"
-   },
-   "widgets_values": [
-    24.0,
-    0,
-    "flarecore_video",
-    "image/gif",
-    false,
-    true
-   ]
-  },
-  {
-   "id": 28,
-   "type": "VHS_VideoCombine",
-   "pos": [
-    2710,
-    -180
-   ],
-   "size": [
-    360,
-    340
-   ],
-   "flags": {},
-   "order": 28,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "link": 28
-    },
-    {
-     "name": "audio",
-     "type": "AUDIO",
-     "link": null
-    },
-    {
-     "name": "meta_batch",
-     "type": "VHS_BatchManager",
-     "link": null
-    },
-    {
-     "name": "vae",
-     "type": "VAE",
-     "link": null
-    }
-   ],
-   "outputs": [
-    {
-     "name": "Filenames",
-     "type": "VHS_FILENAMES",
-     "links": [],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "VHS_VideoCombine"
-   },
-   "widgets_values": [
-    24.0,
-    0,
-    "flarecore_video_pass",
-    "image/gif",
-    false,
-    true
-   ]
-  },
-  {
-   "id": 29,
-   "type": "Note",
-   "pos": [
-    1790,
-    -560
-   ],
-   "size": [
-    400,
-    620
-   ],
-   "flags": {},
-   "order": 29,
-   "mode": 0,
-   "inputs": [],
-   "outputs": [],
-   "properties": {},
-   "widgets_values": [
-    "VIDEO LAB - one node does the work\\n\\nLoad Video -> Flare Render -> Combine. Tracking, depth conditioning\nand the light source all live inside Flare Render (open the gear).\n\nPick the light source from the LIGHT SOURCE dropdown at the top of\nthe panel - each mode shows only its own controls:\n  manual      - drag the light on the picker.\n  detect      - brightest spot, each frame on its own.\n  track       - the same, followed through the clip. This is the one\n                for footage. If the flare wanders between nearby\n                lights, lower track_max_jump.\n  track_dots  - a black plate with white dots: every dot gets its own\n                flare, with its own identity across the clip. Raise\n                detect_max_lights to the number of dots you expect.\n                The threshold is relative to the brightest thing in\n                the clip, so a matte that never reaches pure white\n                still works. Take flare_pass to composite the result\n                over your real footage.\n  path        - draw the light's route. Choosing this mode arms the\n                picker: click to drop a point, drag to move one,\n                shift-click to remove. The light travels the whole\n                path across the clip, so put points closer together\n                where you want it to slow down.\n\nDepth is optional: wire a raw depth model straight into depth and set\ndepth_normalize to per_batch. Flare Depth Adapter still exists if you\nwant level remapping or per-frame modes.\n\nThe flare animates itself as the light moves: rows with a RED EDGE in\nthe editor carry a trigger rule, and the lens row has flicker and\nedge fade. Both outputs: composite, and the flare over black.\n"
-   ],
-   "color": "#432",
-   "bgcolor": "#653"
-  },
-  {
-   "id": 30,
-   "type": "FlarecoreStudioSwitch",
-   "pos": [
-    -2920,
-    -420
-   ],
-   "size": [
-    250,
-    180
-   ],
-   "flags": {},
-   "order": 30,
-   "mode": 0,
-   "inputs": [],
-   "outputs": [],
-   "properties": {
-    "active": "flare lab"
-   },
-   "widgets_values": []
-  },
-  {
-   "id": 31,
-   "type": "Note",
-   "pos": [
-    -2920,
-    -640
-   ],
-   "size": [
-    250,
-    190
-   ],
-   "flags": {},
-   "order": 31,
-   "mode": 0,
-   "inputs": [],
-   "outputs": [],
-   "properties": {},
-   "widgets_values": [
-    "FLARECORE STUDIO\n\nThree benches, one switch. Click a bench\non the Flarecore Studio node:\n\n  Element forge - make new elements\n  Flare lab     - design the flare\n  Video lab     - track it over footage\n\nThe two inactive benches grey out and\nare muted, so Queue only runs the one\nyou are working in."
-   ],
-   "color": "#432",
-   "bgcolor": "#653"
-  }
- ],
- "links": [
-  [
-   1,
-   1,
-   0,
-   5,
-   1,
-   "STRING"
-  ],
-  [
-   2,
-   1,
-   1,
-   11,
-   1,
-   "STRING"
-  ],
-  [
-   3,
-   1,
-   2,
-   11,
-   2,
-   "STRING"
-  ],
-  [
-   4,
-   2,
-   0,
-   8,
-   0,
-   "MODEL"
-  ],
-  [
-   5,
-   3,
-   0,
-   5,
-   0,
-   "CLIP"
-  ],
-  [
-   6,
-   3,
-   0,
-   6,
-   0,
-   "CLIP"
-  ],
-  [
-   7,
-   5,
-   0,
-   8,
-   1,
-   "CONDITIONING"
-  ],
-  [
-   8,
-   6,
-   0,
-   8,
-   2,
-   "CONDITIONING"
-  ],
-  [
-   9,
-   7,
-   0,
-   8,
-   3,
-   "LATENT"
-  ],
-  [
-   10,
-   8,
-   0,
-   9,
-   0,
-   "LATENT"
-  ],
-  [
-   11,
-   4,
-   0,
-   9,
-   1,
-   "VAE"
-  ],
-  [
-   12,
-   9,
-   0,
-   10,
-   0,
-   "IMAGE"
-  ],
-  [
-   13,
-   10,
-   0,
-   11,
-   0,
-   "IMAGE"
-  ],
-  [
-   14,
-   10,
-   0,
-   12,
-   0,
-   "IMAGE"
-  ],
-  [
-   15,
-   14,
-   0,
-   17,
-   0,
-   "IMAGE"
-  ],
-  [
-   16,
-   14,
-   0,
-   15,
-   0,
-   "IMAGE"
-  ],
-  [
-   17,
-   15,
-   0,
-   16,
-   0,
-   "IMAGE"
-  ],
-  [
-   18,
-   16,
-   0,
-   17,
-   1,
-   "IMAGE"
-  ],
-  [
-   19,
-   17,
-   0,
-   18,
-   0,
-   "IMAGE"
-  ],
-  [
-   20,
-   17,
-   1,
-   19,
-   0,
-   "IMAGE"
-  ],
-  [
-   21,
-   17,
-   2,
-   20,
-   0,
-   "MASK"
-  ],
-  [
-   22,
-   20,
-   0,
-   21,
-   0,
-   "IMAGE"
-  ],
-  [
-   23,
-   17,
-   0,
-   22,
-   0,
-   "IMAGE"
-  ],
-  [
-   24,
-   24,
-   0,
-   26,
-   0,
-   "IMAGE"
-  ],
-  [
-   25,
-   24,
-   0,
-   25,
-   0,
-   "IMAGE"
-  ],
-  [
-   26,
-   25,
-   0,
-   26,
-   1,
-   "IMAGE"
-  ],
-  [
-   27,
-   26,
-   0,
-   27,
-   0,
-   "IMAGE"
-  ],
-  [
-   28,
-   26,
-   1,
-   28,
-   0,
-   "IMAGE"
-  ]
- ],
- "groups": [
-  {
-   "title": "ELEMENT FORGE",
-   "bounding": [
-    -2500,
-    -640,
-    2050,
-    1320
-   ],
-   "color": "#59453f",
-   "font_size": 22,
-   "flags": {}
-  },
-  {
-   "title": "FLARE LAB",
-   "bounding": [
-    -250,
-    -640,
-    1810,
-    1320
-   ],
-   "color": "#3f5159",
-   "font_size": 22,
-   "flags": {}
-  },
-  {
-   "title": "DEPTH OCCLUSION",
-   "bounding": [
-    -250,
-    340,
-    1080,
-    330
-   ],
-   "color": "#535f42",
-   "font_size": 22,
-   "flags": {}
-  },
-  {
-   "title": "VIDEO LAB",
-   "bounding": [
-    1760,
-    -640,
-    1620,
-    1320
-   ],
-   "color": "#3f4459",
-   "font_size": 22,
-   "flags": {}
-  }
- ],
- "config": {},
- "extra": {},
- "version": 0.4
+  "version": 0.4
 }

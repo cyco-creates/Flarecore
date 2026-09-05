@@ -26,11 +26,18 @@ function nodeWidgets(node) {
   return (node.widgets || []).filter((w) => !PANEL_WIDGETS.has(w.name));
 }
 
+// `widget.hidden` is what the current frontend's layout and draw both read.
+// The old idiom of assigning type = "hidden" is inert here — measured on a
+// stock KSampler, the node height ignored it (262 -> 262) while the hidden
+// flag shrank it (262 -> 238) — which is why suppressed widgets were still
+// being painted over the panels. Both are set: the flag for this frontend,
+// the type for older ones.
 function hideWidget(w) {
   if (w._fcHidden) return;
   w._fcHidden = true;
   w._fcType = w.type;
   w._fcCompute = w.computeSize;
+  w.hidden = true;
   w.type = "hidden";
   w.computeSize = () => [0, -4];
   if (w.element?.style) w.element.style.display = "none";
@@ -39,6 +46,7 @@ function hideWidget(w) {
 function showWidget(w) {
   if (!w._fcHidden) return;
   w._fcHidden = false;
+  w.hidden = false;
   w.type = w._fcType;
   if (w._fcCompute) w.computeSize = w._fcCompute;
   else delete w.computeSize;
@@ -710,14 +718,7 @@ const CSS = `
 .fcore-forge input[type=text] { background: #101014; color: #ddd; flex: 1;
   border: 1px solid #34343e; border-radius: 6px; font-size: 11px;
   height: 24px; padding: 0 8px; }
-.fcore-studio { display: flex; flex-direction: column; gap: 6px;
-  padding: 4px; box-sizing: border-box; }
-.fcore-studio button { text-align: left; background: #1a1a20; color: #9a9aa6;
-  border: 1px solid #2b2b33; border-radius: 8px; padding: 8px 12px;
-  font-size: 13px; cursor: pointer; }
-.fcore-studio button.on { background: #2f4a3a; border-color: #7ce38b;
-  color: #eafff0; }
-.fcore-studio button:hover { border-color: #e8a33d; }
+
 .fcore-adv { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px 10px;
   padding: 8px 2px 2px 40px; border-top: 1px dashed #2b2b33; margin-top: 7px; }
 .fcore-adv select { background: #1e1e25; color: #ddd; border: 1px solid #34343e;
@@ -1935,15 +1936,30 @@ const GROUP_ACTIVE = { "ELEMENT FORGE": "#59453f", "FLARE LAB": "#3f5159",
                        "VIDEO LAB": "#3f4459" };
 const GROUP_DIM = "#26262b";
 
+// Membership is computed here rather than through group.recomputeInsideNodes()
+// on purpose: that walks each node's cached bounding box, which is only filled
+// in once the canvas has drawn. On a freshly loaded workflow it reports an
+// empty group, so the benches all came up live and the switch looked dead
+// until you clicked something. A node's centre against the group rectangle
+// needs no cache and gives the same answer.
+function nodesInGroup(graph, group) {
+  const b = group._bounding || group.bounding || [0, 0, 0, 0];
+  const [gx, gy, gw, gh] = b;
+  return (graph._nodes || []).filter((n) => {
+    const cx = n.pos[0] + (n.size?.[0] || 0) / 2;
+    const cy = n.pos[1] + (n.size?.[1] || 0) / 2;
+    return cx >= gx && cx <= gx + gw && cy >= gy && cy <= gy + gh;
+  });
+}
+
 function applyStudioSection(graph, active) {
   for (const g of graph._groups || []) {
     const entry = STUDIO_SECTIONS.find(([, t]) =>
       (g.title || "").toUpperCase().startsWith(t));
     if (!entry) continue;
     const on = entry[0] === active;
-    g.recomputeInsideNodes();
-    for (const n of g._nodes || []) {
-      if (n.constructor?.title === "Flarecore Studio") continue;
+    for (const n of nodesInGroup(graph, g)) {
+      if (n.type === "FlarecoreStudioSwitch") continue;
       n.mode = on ? 0 : 2;                 // 2 = NEVER (muted)
     }
     g.color = on ? (GROUP_ACTIVE[entry[1]] || g.color) : GROUP_DIM;
@@ -1958,33 +1974,29 @@ function registerStudioSwitch(app) {
     constructor() {
       super("Flarecore Studio");
       this.isVirtualNode = true;           // stays out of the API prompt
-      this.serialize_widgets = true;
-      this.size = [230, 150];
+      this.serialize_widgets = false;      // the choice lives in properties
+      this.size = [250, 120];
       this.properties = { active: "flare lab" };
-      injectCSS();
-      const root = document.createElement("div");
-      root.className = "fcore fcore-studio";
-      this._buttons = {};
+      // NATIVE widgets, deliberately not a DOM panel: this is a global
+      // control that has to work while zoomed out far enough to see all
+      // three benches, and ComfyUI hides DOM widgets below ~50% zoom.
+      // litegraph draws these on the canvas at any scale.
       for (const [key] of STUDIO_SECTIONS) {
-        const b = document.createElement("button");
-        b.textContent = key.replace(/^./, (c) => c.toUpperCase());
-        b.onclick = () => this.setActive(key);
-        root.appendChild(b);
-        this._buttons[key] = b;
+        this.addWidget("button", key, null, () => this.setActive(key));
       }
-      const w = this.addDOMWidget("studio_panel", "flarecore.studio", root,
-        { serialize: false, hideOnZoom: true, getMinHeight: () => 120 });
-      w.serialize = false;
-      w.serializeValue = () => undefined;
-      w.computeSize = (width) => [Number(width) || 230, 126];
     }
 
     setActive(key) {
       this.properties.active = key;
-      for (const [k, b] of Object.entries(this._buttons)) {
-        b.classList.toggle("on", k === key);
-      }
+      STUDIO_SECTIONS.forEach(([k], i) => {
+        const w = this.widgets?.[i];
+        if (!w) return;
+        const title = k.replace(/^./, (c) => c.toUpperCase());
+        w.name = (k === key ? "\u25cf  " : "\u25cb  ") + title;
+        w.label = w.name;
+      });
       if (this.graph) applyStudioSection(this.graph, key);
+      this.setDirtyCanvas?.(true, true);
     }
 
     onAdded() { setTimeout(() => this.setActive(this.properties.active), 30); }

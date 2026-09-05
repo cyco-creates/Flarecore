@@ -196,7 +196,13 @@ The forge bench's prompt node carries its own panel: pick a **category**,
 then an **element**, and its bank prompt appears in an editable box — what
 you see is exactly what queues. The **extra style** suggestion is appended
 only while its toggle is on. The old raw widgets still exist underneath and
-still drive everything, so saved workflows and API use are unchanged.
+still drive everything, so saved workflows and API use are unchanged. The
+model and sampling chain is collapsed into a **Krea2 generator** subgraph —
+double-click it to look inside; `seed` is exposed on the outside for quick
+variations.
+
+Depth occlusion lives in the video bench, where the footage is; wire any
+depth map into FlareRender's `depth` input to use it elsewhere.
 
 - The forge itself — generate custom element textures with your
   local image model (wired for Krea2), condition them, and file them in the
