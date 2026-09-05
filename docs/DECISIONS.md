@@ -581,6 +581,26 @@ its 70px minimum. Scoped to `.fcore-forge .fcore-hint { flex: 0 0 auto; }`.
 Worth remembering: a shared utility class with a flex-basis is direction-
 dependent, and reads completely differently in a row and in a column.
 
+## 3aa. DOM widget height comes from getMinHeight, not computeSize (2026-09-05)
+
+The forge panel was still fixed after 3z. Measured on the live widget: it
+exposes `computeLayoutSize()`, which returned `{minHeight: 150}` straight
+from `options.getMinHeight`, while `widget.computeSize(400)` reported 754 and
+was ignored. The layout engine in this frontend reads the option; the
+computeSize override is dead code for DOM widgets, exactly as `widget.type =
+"hidden"` was dead for hiding (3x).
+
+`getMinHeight` is a callback, so it can be dynamic. Both panels now report
+their fluid height there — the forge panel `node._fcForgeH`, the stack editor
+`max(280, node._fcEditorH)`. Since that value is the node height minus the
+panel's own offset, it can never drive the node larger than it already is.
+Verified: layout min-height tracks 354 / 654 / 954 as the node goes 400 /
+700 / 1000, and the prompt box goes from 70px to 369px at the shipped node
+size and 649px at 800.
+
+The prompt box also carries `resize: vertical` so it can be dragged on its
+own, and the shipped prompt node is 460x520 rather than 431x359.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

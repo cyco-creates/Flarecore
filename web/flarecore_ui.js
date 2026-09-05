@@ -710,9 +710,9 @@ const CSS = `
   line-height: 1.35; }
 .fcore-forge { display: flex; flex-direction: column; gap: 8px; height: 100%;
   box-sizing: border-box; }
-.fcore-forge textarea { background: #101014; color: #ddd; flex: 1;
+.fcore-forge textarea { background: #101014; color: #ddd; flex: 1 1 auto;
   border: 1px solid #34343e; border-radius: 8px; font: 12px/1.45 sans-serif;
-  padding: 8px; resize: none; min-height: 70px; }
+  padding: 8px; resize: vertical; min-height: 150px; }
 .fcore-forge textarea:focus { outline: none; border-color: #e8a33d; }
 .fcore-forge .rowline { display: flex; gap: 8px; align-items: center; }
 .fcore-forge input[type=text] { background: #101014; color: #ddd; flex: 1;
@@ -1923,8 +1923,15 @@ function setupForgePanel(nodeType) {
     // Fluid like the flare editor: the panel takes whatever node height is
     // left below it, and the prompt box (flex: 1 in the CSS) absorbs the
     // slack — drag the node taller and you get more prompt, not dead space.
+    // The layout engine asks options.getMinHeight (via the widget's
+    // computeLayoutSize) and ignores widget.computeSize entirely — measured:
+    // computeSize reported 754 while computeLayoutSize still said 150, and
+    // the panel stayed at its minimum. So the fluid height has to be
+    // reported HERE. It is always node height minus the panel's own offset,
+    // so it can never drive the node bigger than it already is.
     const widget = node.addDOMWidget("forge_panel", "flarecore.forge", root,
-      { serialize: false, hideOnZoom: true, getMinHeight: () => 150 });
+      { serialize: false, hideOnZoom: true,
+        getMinHeight: () => node._fcForgeH ?? 260 });
     widget.serialize = false;
     widget.serializeValue = () => undefined;
     widget.computeSize = (w) =>
@@ -2091,7 +2098,8 @@ app.registerExtension({
       // height to the editor, so dragging the node bigger gives more room
       // for sliders and elements instead of dead space + scrolling.
       const editorWidget = node.addDOMWidget("flare_editor", "flarecore.editor",
-        editor.root, { serialize: false, hideOnZoom: true, getMinHeight: () => 280 });
+        editor.root, { serialize: false, hideOnZoom: true,
+          getMinHeight: () => Math.max(280, node._fcEditorH ?? 400) });
       editorWidget.serialize = false;
       editorWidget.serializeValue = () => undefined;
       editorWidget.computeSize = (w) =>
