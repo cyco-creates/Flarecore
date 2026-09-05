@@ -882,6 +882,23 @@ Tracking stays as it is: it is cheaper, it is causal, and it wins on jitter
 at default settings. `lock` is for the shot where a rival source is bright
 enough to steal a few frames.
 
+## `travel`: one dial for how much the flare moves
+
+Steadying the solve made the light calmer but never still, and "how still"
+is a look decision, not something a solver should decide. `light_travel`
+scales each light's excursion about the average of its own path: 1 is the
+detected or tracked path untouched, 0 pins it for the whole clip.
+
+It is applied after the light is resolved, so it works for every mode --
+detect, track, lock, dots and a drawn path alike -- rather than being a
+property of one of them. Each track is damped about ITS OWN centre, because
+several dots on a matte pulled toward one shared point would collapse
+together.
+
+Measured on the owner's shot with lock: travel 1.0 gives 0.0073 mean travel
+and a 0.115 vertical range; 0.5 gives 0.0041 and 0.058; 0.0 gives exactly
+zero movement.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

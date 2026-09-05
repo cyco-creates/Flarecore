@@ -76,6 +76,42 @@ def _engine_version() -> str:
     return f"{newest:.3f}"
 
 
+def _damp_travel(lights_per_frame, amount):
+    """Scale each light's excursion about its own average position.
+
+    1 leaves the path alone; 0 pins every light to the mean of its own path,
+    so the flare holds still for the whole clip. Each track is damped about
+    ITS OWN centre -- with several dots on a matte, pulling them all toward
+    one shared point would collapse them together.
+    """
+    if amount >= 1.0 or not lights_per_frame:
+        return lights_per_frame
+    k = min(max(amount, 0.0), 1.0)
+    # A light keeps its identity through "tid" when tracking assigned one,
+    # and otherwise by its slot in the frame's list.
+    sums: dict = {}
+    for frame in lights_per_frame:
+        for slot, light in enumerate(frame):
+            key = light.get("tid", slot)
+            u, v, n = sums.get(key, (0.0, 0.0, 0))
+            sums[key] = (u + light["u"], v + light["v"], n + 1)
+    centre = {key: (u / n, v / n) for key, (u, v, n) in sums.items() if n}
+    out = []
+    for frame in lights_per_frame:
+        damped = []
+        for slot, light in enumerate(frame):
+            cu, cv = centre.get(light.get("tid", slot), (light["u"], light["v"]))
+            moved = dict(light)
+            moved["u"] = cu + (light["u"] - cu) * k
+            moved["v"] = cv + (light["v"] - cv) * k
+            if "au" in light and "av" in light:
+                moved["au"] = cu + (light["au"] - cu) * k
+                moved["av"] = cv + (light["av"] - cv) * k
+            damped.append(moved)
+        out.append(damped)
+    return out
+
+
 class FlareRender:
     CATEGORY = "flare"
     FUNCTION = "render"
@@ -192,6 +228,16 @@ class FlareRender:
                                "passes — passed through untouched, so a "
                                "Nuke/Resolve round trip stays correct.",
                 }),
+                "light_travel": ("FLOAT", {
+                    "default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01,
+                    "tooltip": "how much the light is allowed to move. 1 "
+                               "follows the detected or tracked path exactly; "
+                               "0 pins it to one spot for the whole clip and "
+                               "the flare stops moving altogether. In between "
+                               "it keeps the same path with the excursion "
+                               "scaled down, so a source that should barely "
+                               "drift can be calmed without losing its shape.",
+                }),
                 "chunk_frames": ("INT", {
                     "default": 0, "min": 0, "max": 512,
                     "tooltip": "frames rendered per GPU slice. 0 sizes the "
@@ -216,7 +262,7 @@ class FlareRender:
                scene_color=0.0, track_smoothing=0.6, track_max_jump=0.06,
                depth_normalize="as_is", depth_blur=0.0,
                depth_temporal_smooth=0.0, light_path="", mask_falloff=0.35,
-               colorspace="srgb", chunk_frames=0, depth=None, lights=None):
+               colorspace="srgb", chunk_frames=0, light_travel=1.0, depth=None, lights=None):
         preset = load_preset(preset_json)
 
         # ComfyUI passes IMAGE tensors on the CPU regardless of where they
@@ -258,6 +304,8 @@ class FlareRender:
                 smoothing=track_smoothing, max_jump=track_max_jump,
                 light_path=light_path,
             )
+
+        lights_per_frame = _damp_travel(lights_per_frame, light_travel)
 
         if depth is not None:
             bd = depth.shape[0]

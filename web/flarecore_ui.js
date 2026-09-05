@@ -1493,6 +1493,7 @@ class FlareEditor {
     if (mode === "detect" || mode === "detect_with_manual_offset") {
       nodeSlider("threshold", "detect_threshold", [0, 1, 0.01]);
       nodeSlider("max lights", "detect_max_lights", [1, 16, 1]);
+      nodeSlider("travel", "light_travel", [0, 1, 0.01]);
     } else if (mode === "track" || mode === "track_dots" || mode === "lock") {
       nodeSlider(mode === "track_dots" ? "dot threshold" : "threshold",
         "detect_threshold", [0, 1, 0.01]);
@@ -1500,6 +1501,7 @@ class FlareEditor {
         "detect_max_lights", [1, 16, 1]);
       nodeSlider("smoothing", "track_smoothing", [0, 0.98, 0.01]);
       nodeSlider("max jump", "track_max_jump", [0.01, 0.5, 0.01]);
+      nodeSlider("travel", "light_travel", [0, 1, 0.01]);
     } else if (mode === "path") {
       const pts = parsePath(getStr(this.node, "light_path"));
       const count = document.createElement("label");

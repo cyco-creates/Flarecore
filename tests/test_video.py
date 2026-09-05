@@ -1055,3 +1055,49 @@ class TestWholeClipSolve:
     def test_the_node_exposes_it(self):
         modes = PKG.NODE_CLASS_MAPPINGS["FlareRender"].INPUT_TYPES()
         assert "lock" in modes["required"]["position_mode"][0]
+
+
+class TestLightTravel:
+    """One dial for how much the flare is allowed to move: 1 follows the
+    tracked path, 0 pins it for the whole clip."""
+
+    def _clip(self, b=12, h=120, w=200):
+        clip = torch.zeros(b, h, w, 3)
+        for i in range(b):
+            cx = 20 + i * 12
+            clip[i, 40:52, cx:cx + 10] = 1.0
+        return clip
+
+    def _light_path(self, travel, mode="track"):
+        lights_seen = []
+        out, fp, alpha = run_node(self._clip(), position_mode=mode,
+                                  detect_threshold=0.6, detect_max_lights=1,
+                                  light_travel=travel)
+        B, H, W, _ = fp.shape
+        lum = fp.mean(-1)
+        return [( float(int(lum[i].argmax()) % W) / W,
+                  float(int(lum[i].argmax()) // W) / H) for i in range(B)]
+
+    def test_zero_holds_the_flare_still(self):
+        pts = self._light_path(0.0)
+        us = [p[0] for p in pts]
+        assert max(us) - min(us) < 0.01, f"still moving: {us}"
+
+    def test_one_is_the_tracked_path(self):
+        pts = self._light_path(1.0)
+        us = [p[0] for p in pts]
+        assert max(us) - min(us) > 0.3, f"barely moved: {us}"
+
+    def test_half_moves_about_half_as_far(self):
+        full = self._light_path(1.0); half = self._light_path(0.5)
+        span = lambda p: max(x for x, _ in p) - min(x for x, _ in p)
+        assert 0.3 < span(half) / span(full) < 0.7,             f"{span(half):.3f} of {span(full):.3f}"
+
+    def test_each_dot_is_damped_about_its_own_centre(self):
+        """Several dots must not collapse onto one shared point at travel 0."""
+        _damp_travel = PKG.nodes.render._damp_travel
+        frames = [[{"u": 0.2 + 0.01 * i, "v": 0.5, "tid": 0},
+                   {"u": 0.8 - 0.01 * i, "v": 0.5, "tid": 1}] for i in range(10)]
+        damped = _damp_travel(frames, 0.0)
+        assert all(abs(f[0]["u"] - damped[0][0]["u"]) < 1e-9 for f in damped)
+        assert damped[0][0]["u"] < 0.35 and damped[0][1]["u"] > 0.65,             "the two lights were pulled together"
