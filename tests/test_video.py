@@ -611,14 +611,11 @@ class TestIrregular:
                 {"type": "glow", "irregular": 1.5, "params": {}}]})
 
 
-class TestLightsSwitch:
-    """The switch picks which source drives Flare Render's light, so a graph
-    can keep tracking and keyframes wired at once and choose between them —
-    including 'manual', which passes nothing so the render node's own picker
-    points take over."""
-
-    def _switch(self):
-        return PKG.NODE_CLASS_MAPPINGS["FlareLightsSwitch"]()
+class TestLightSourcePrecedence:
+    """Flare Render's `lights` input outranks its own picker points whenever
+    it carries data, and hands control back the moment it does not. This used
+    to be routed through a switch node; the contract belongs to the render
+    node and is pinned here directly."""
 
     def _clip(self, b=4, h=120, w=200):
         clip = torch.zeros(b, h, w, 3)
@@ -627,43 +624,23 @@ class TestLightsSwitch:
             clip[i, 45:60, cx:cx + 14] = 1.0
         return clip
 
-    def test_modes_select_the_right_input(self):
-        sw = self._switch()
-        tracked = [[{"u": 0.1, "v": 0.2, "brightness": 1.0}]]
-        keyed = [[{"u": 0.8, "v": 0.9, "brightness": 1.0}]]
-        assert sw.pick(sw.MODES[0], tracked, keyed)[0] is tracked
-        assert sw.pick(sw.MODES[1], tracked, keyed)[0] is keyed
-        assert sw.pick(sw.MODES[2], tracked, keyed)[0] is None
-
-    def test_missing_input_names_the_problem(self):
-        sw = self._switch()
-        with pytest.raises(ValueError, match="detected"):
-            sw.pick(sw.MODES[0], None, [[{"u": 0.5, "v": 0.5}]])
-        with pytest.raises(ValueError, match="keyframed"):
-            sw.pick(sw.MODES[1], [[{"u": 0.5, "v": 0.5}]], None)
-
-    def test_manual_mode_hands_the_light_back_to_the_picker(self):
-        # the whole point: with the switch on manual, light_x/light_y move
-        # the flare again even though the lights chain is still wired up
+    def test_no_lights_hands_the_light_back_to_the_picker(self):
+        # with nothing on the lights input, light_x/light_y move the flare
         clip = self._clip()
-        sw = self._switch()
-        none_lights = sw.pick(sw.MODES[2], [[{"u": 0.1, "v": 0.1}]], None)[0]
-        a = run_node(clip, lights=none_lights, light_x=0.2, light_y=0.3)[1]
-        b = run_node(clip, lights=none_lights, light_x=0.8, light_y=0.7)[1]
+        a = run_node(clip, lights=None, light_x=0.2, light_y=0.3)[1]
+        b = run_node(clip, lights=None, light_x=0.8, light_y=0.7)[1]
         assert not torch.allclose(a, b)
         ua, va = argmax_uv(a[0].sum(-1))
         ub, vb = argmax_uv(b[0].sum(-1))
         assert ua < ub and va < vb
 
-    def test_tracked_mode_still_overrides_the_light(self):
+    def test_connected_lights_still_override_the_picker(self):
         clip = self._clip()
         tracked = PKG.NODE_CLASS_MAPPINGS["FlareTrack"]().track(
             clip, detect_threshold=0.75, detect_max_lights=1, smoothing=0.5,
             max_jump=0.4, hold_frames=3, fade_frames=1)[0]
-        sw = self._switch()
-        lights = sw.pick(sw.MODES[0], tracked, None)[0]
-        a = run_node(clip, lights=lights, light_x=0.2, light_y=0.3)[1]
-        b = run_node(clip, lights=lights, light_x=0.8, light_y=0.7)[1]
+        a = run_node(clip, lights=tracked, light_x=0.2, light_y=0.3)[1]
+        b = run_node(clip, lights=tracked, light_x=0.8, light_y=0.7)[1]
         assert torch.allclose(a, b)          # the tracker owns the light
 
     def test_keyframed_anchor_animates(self):

@@ -29,8 +29,8 @@ CUDA, MPS, and CPU.
   restarting ComfyUI.
 - **FlareDepthAdapter** — conditions a depth map for occlusion use: normalize
   range, flip near/far convention, remap levels, blur edges. Pure tensor math.
-- **FlareElementPrompts / FlareTexturePrepare / FlareElementSave /
-  FlareElementPicker** — the element forge: an editable prompt bank
+- **FlareElementPrompts / FlareTexturePrepare / FlareElementSave** — the
+  element forge: an editable prompt bank
   (`prompts/element_prompts.json`), post-processing that turns a generated
   image into a compositing-safe element (black floor, auto-center, border
   feather), and the element library under `elements/<category>/`.
@@ -131,8 +131,9 @@ path when path mode is selected.
 
 Wire a raw depth model straight into `depth` and set `depth_normalize` to
 `per_batch`; `depth_blur` and `depth_temporal_smooth` replace the adapter for
-ordinary use. FlareTrack, FlareDepthAdapter and FlareLightsSwitch still exist
-for graphs that want the pieces separately.
+ordinary use. FlareTrack and FlareDepthAdapter still exist for graphs that
+want the pieces separately -- Flare Track in particular still owns the search
+region and hold/fade controls that Flare Render does not expose.
 
 The parts that make flares hold together across frames:
 
@@ -159,16 +160,11 @@ The parts that make flares hold together across frames:
   motion.
 - **FlareKeyframes** hand-animates instead: `frame: u,v` paths for the light
   and optionally the flare anchor, linear or eased.
-- **FlareLightsSwitch** decides which one drives the flare, so a graph can
-  keep both wired and switch with a dropdown:
-  - `detect (tracked)` — Flare Track owns the light; the picker's light
-    handle greys out and says so.
-  - `keyframes` — Flare Keyframes drives **both** points by hand:
-    `light_keys` and `anchor_keys`, each `frame: u,v; frame: u,v`.
-  - `manual (render node's points)` — nothing is passed through, so Flare
-    Render uses its own `position_mode` and you drag the light and the
-    anchor on the picker as usual.
-- **FlareRender**'s optional `lights` input consumes any of them, and reports
+- **FlareRender**'s `position_mode` decides what drives the flare -- manual,
+  detect, track, track_dots or a drawn path -- and its optional `lights`
+  input outranks all of them whenever something is connected. Leave it
+  unconnected and the picker's own light and anchor take over. It consumes
+  any of the sources above, and reports
   back which control actually placed the light so the picker never shows a
   handle that moves nothing. Its `occlusion_smooth` spreads occlusion changes
   for tracked lights across frames — a thin occluder becomes a fade, never a

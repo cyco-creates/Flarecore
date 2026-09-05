@@ -4,9 +4,8 @@
 The pipeline: FlareElementPrompts hands an editable, categorised prompt to
 whatever image model the user runs (the shipped workflow uses their local
 Krea2), FlareTexturePrepare turns the generated picture into a compositing-
-safe element texture, FlareElementSave files it in the element library, and
-FlareElementPicker references library entries from other nodes. The engine
-itself never generates anything.
+safe element texture, and FlareElementSave files it in the element library.
+The engine itself never generates anything.
 """
 
 import json
@@ -211,30 +210,3 @@ class FlareElementSave:
             refs.append(path.relative_to(ELEMENTS_DIR).as_posix())
 
         return {"ui": {"text": refs}, "result": (refs[0], texture)}
-
-
-class FlareElementPicker:
-    CATEGORY = "flare"
-    FUNCTION = "pick"
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("file",)
-
-    @classmethod
-    def INPUT_TYPES(cls):
-        files = list_elements()
-        return {"required": {"file": (files or ["<library is empty>"],)}}
-
-    @classmethod
-    def IS_CHANGED(cls, file):
-        try:
-            return str((ELEMENTS_DIR / file).stat().st_mtime)
-        except OSError:
-            return ""
-
-    def pick(self, file):
-        if file == "<library is empty>":
-            raise ValueError(
-                "the element library is empty; generate and save an element "
-                "first (see the element forge workflow)"
-            )
-        return (file,)

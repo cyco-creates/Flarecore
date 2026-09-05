@@ -55,9 +55,9 @@ class TestFlareRender:
     def test_registration_contract(self):
         assert set(PKG.NODE_CLASS_MAPPINGS) == {
             "FlareRender", "FlarePresetLoader", "FlareDepthAdapter",
-            "FlareTrack", "FlareKeyframes", "FlareLightsSwitch",
+            "FlareTrack", "FlareKeyframes",
             "FlareElementPrompts", "FlareTexturePrepare",
-            "FlareElementSave", "FlareElementPicker",
+            "FlareElementSave",
         }
         assert PKG.WEB_DIRECTORY == "./web"
         assert FlareRender.CATEGORY == "flare"

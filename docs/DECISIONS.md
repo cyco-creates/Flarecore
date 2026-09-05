@@ -693,6 +693,25 @@ a multiple of 16); everything else stays 1328x1328. The studio wires them
 into the generator's latent. Unwired, nothing changes -- the cover-crop
 still protects any square source that reaches prepare.
 
+## Two nodes retired
+
+The pack registered ten nodes; two of them no longer did anything.
+
+FlareLightsSwitch routed between a tracker, keyframes and the picker. That
+job moved into FlareRender when position_mode arrived: the `lights` input
+outranks the picker when connected and yields when it is not, which is the
+whole of what the switch decided. FlareElementPicker returned a library file
+path that no node in the pack consumes.
+
+Neither appeared in any shipped workflow. The two contracts the switch's
+tests happened to cover -- connected lights outrank the picker, absent
+lights hand it back -- belong to the render node and are pinned there now.
+
+FlareTrack and FlareDepthAdapter stay: Track still owns the search region
+and hold/fade controls that Render does not expose, and the Adapter still
+owns depth black/white point. Preset Loader stays as the file-driven route
+for API runs.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

@@ -16,11 +16,9 @@ if __package__:
         FlareDepthAdapter,
         FlareTrack,
         FlareKeyframes,
-        FlareLightsSwitch,
         FlareElementPrompts,
         FlareTexturePrepare,
         FlareElementSave,
-        FlareElementPicker,
     )
     from .nodes.api import register_routes
 else:
@@ -53,11 +51,9 @@ else:
     FlareDepthAdapter = _pkg.FlareDepthAdapter
     FlareTrack = _pkg.FlareTrack
     FlareKeyframes = _pkg.FlareKeyframes
-    FlareLightsSwitch = _pkg.FlareLightsSwitch
     FlareElementPrompts = _pkg.FlareElementPrompts
     FlareTexturePrepare = _pkg.FlareTexturePrepare
     FlareElementSave = _pkg.FlareElementSave
-    FlareElementPicker = _pkg.FlareElementPicker
     register_routes = _pkg.register_routes
 
 # Editor and point-picker widgets.
@@ -73,11 +69,9 @@ NODE_CLASS_MAPPINGS = {
     "FlareDepthAdapter": FlareDepthAdapter,
     "FlareTrack": FlareTrack,
     "FlareKeyframes": FlareKeyframes,
-    "FlareLightsSwitch": FlareLightsSwitch,
     "FlareElementPrompts": FlareElementPrompts,
     "FlareTexturePrepare": FlareTexturePrepare,
     "FlareElementSave": FlareElementSave,
-    "FlareElementPicker": FlareElementPicker,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -86,11 +80,9 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "FlareDepthAdapter": "Flare Depth Adapter",
     "FlareTrack": "Flare Track",
     "FlareKeyframes": "Flare Keyframes",
-    "FlareLightsSwitch": "Flare Lights Switch",
     "FlareElementPrompts": "Flare Element Prompts",
     "FlareTexturePrepare": "Flare Texture Prepare",
     "FlareElementSave": "Flare Element Save",
-    "FlareElementPicker": "Flare Element Picker",
 }
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]
