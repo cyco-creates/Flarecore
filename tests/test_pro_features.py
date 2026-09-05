@@ -298,3 +298,46 @@ class TestTriggerLightModeAndRotation:
             glow(offset=0.0, enabled=False, solo=True),
             glow(offset=1.5)]}
         assert render(p, [{"x": -0.5, "y": 0.0}]).sum() == 0.0
+
+class TestMaskFloor:
+    """A lens plate must be revealed only around the light. The mask is
+    max(scene luminance, the light's glow) and neither term reaches zero, so
+    without a floor the dirt stays faintly visible over the whole frame."""
+
+    def _plate(self, mask_floor):
+        import json
+        from test_nodes import run_node
+        preset = {"schema_version": 1, "elements": [{
+            "type": "glow", "label": "dirt", "offset": 0.0, "scale": 2.0,
+            "intensity": 1.0, "screen_space": True, "fill_frame": True,
+            "light_mask": 1.0, "mask_floor": mask_floor,
+            "params": {"softness": 1.0, "falloff": 0.2}}]}
+        clip = torch.full((1, 120, 200, 3), 0.05)      # a dim, not-black plate
+        clip[0, 40:60, 150:170] = 1.0                  # the light, off to the right
+        out, fp, alpha = run_node(clip, preset_json=json.dumps(preset),
+                                  position_mode="detect", mask_falloff=0.35)
+        return fp[0]
+
+    def test_floor_clears_the_element_from_the_dark_side_of_frame(self):
+        dark = (slice(0, 40), slice(0, 40))            # far corner from the light
+        open_pass = self._plate(0.0)
+        floored = self._plate(0.5)
+        assert float(open_pass[dark].max()) > 0.0, "nothing to clear"
+        assert float(floored[dark].max()) == 0.0, (
+            f"dirt still showing in the dark corner: {float(floored[dark].max()):.5f}")
+
+    def test_the_light_pool_itself_survives_the_floor(self):
+        near = (slice(40, 60), slice(150, 170))        # right on the light
+        assert float(self._plate(0.5)[near].max()) > 0.0, "the floor ate the pool too"
+
+    def test_floor_zero_changes_nothing(self):
+        a = self._plate(0.0)
+        b = self._plate(0.0)
+        assert torch.equal(a, b)
+
+    def test_raising_the_floor_only_ever_shrinks_the_reveal(self):
+        wide = self._plate(0.1)
+        tight = self._plate(0.6)
+        assert float(tight.sum()) < float(wide.sum())
+        assert float(tight.max()) <= float(wide.max()) + 1e-6
+

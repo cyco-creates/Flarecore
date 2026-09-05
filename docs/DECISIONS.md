@@ -753,6 +753,28 @@ The limit is honest and stated in the UI: a light moving more than about
 means. The hint now reads in both directions -- lower it when the flare
 wanders, raise it when the flare duplicates or drops out.
 
+## A light mask needs a floor, not just a radius
+
+Lens dirt added from the library rendered as a full-frame wash, and once
+light_mask was raised by hand the particles were still visible in the
+darkest corner of frame.
+
+Both halves were real. The mask is max(scene luminance, the light's glow):
+a real plate is never pure black and a gaussian has no edge, so the mask
+never reaches zero and an element modulated by it is never fully hidden.
+mask_falloff sets the glow's radius but cannot remove that floor -- and it
+was a node widget the panel never showed, so it was unreachable anyway.
+
+Elements gained mask_floor: subtract it and renormalise, so the pool gets a
+real edge and tightens around the light as the floor rises. It sits beside
+light_mask in the element's own controls, where the look is being made.
+
+The wash itself was the older failure: choosing a lens_dirt texture from the
+library did not carry the plate treatment, so the reveal had to be
+discovered knob by knob. Picking one now sets fill_frame, screen_space,
+light_mask and mask_floor -- but only while those are untouched, so a
+deliberate look is never overwritten. Same rule as frame: auto, same reason.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

@@ -196,6 +196,22 @@ def _blur_rgb(rgb: torch.Tensor, amount: float) -> torch.Tensor:
     return blur_depth(rgb.permute(2, 0, 1), amount).permute(1, 2, 0)
 
 
+def _floored(mask: torch.Tensor, floor: float) -> torch.Tensor:
+    """Rescale a light mask so everything below `floor` reads as nothing.
+
+    The mask is max(scene luminance, the light's own glow), and neither term
+    ever reaches zero: a real plate is never pure black, and a gaussian has
+    no edge. An element modulated by that stays faintly lit across the whole
+    frame -- lens dirt with particles still visible in the darkest corner.
+    Subtracting the floor and renormalising gives the pool a real edge, and
+    tightens it around the light as the floor rises, which is the falloff
+    control the mask radius alone cannot provide.
+    """
+    if floor <= 0.0:
+        return mask
+    return ((mask - floor) / (1.0 - floor)).clamp_(0.0, 1.0)
+
+
 def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
                         base_seed, elem_index, light_weight, scene_mask=None,
                         global_aspect=1.0, frame_aspect=1.0, light_rgb=None):
@@ -232,6 +248,7 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
 
     blur = elem.get("blur", 0.0)
     lmask = elem.get("light_mask", 0.0)
+    mfloor = elem.get("mask_floor", 0.0)
     heavy = blur > 0.0 or (lmask > 0.0 and scene_mask is not None)
 
     rot = math.radians(elem["rotation"])
@@ -325,7 +342,7 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
                 inst = _blur_rgb(inst, blur * BLUR_SIGMA_MAX)
             if lmask > 0.0 and scene_mask is not None:
                 # fade the element toward the scene's bright areas
-                factor = (1.0 - lmask) + lmask * scene_mask
+                factor = (1.0 - lmask) + lmask * _floored(scene_mask, mfloor)
                 inst = inst * factor.unsqueeze(-1)
             out.add_(inst, alpha=intensity_i * light_weight)
         else:

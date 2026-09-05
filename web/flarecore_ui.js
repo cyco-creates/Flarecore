@@ -540,7 +540,7 @@ const ADD_MENU = [
 const ADD_DEFAULTS = {
   glow: { type: "glow", label: "glow", offset: 0, scale: 0.4, intensity: 1, color: [1, 0.95, 0.85], params: { softness: 0.35, falloff: 1.3 } },
   bloom: { type: "glow", label: "bloom", offset: 0, scale: 2.2, intensity: 0.5, auto_rotate: false, light_mask: 1, color: [1, 0.97, 0.9], params: { softness: 1.1, falloff: 0.7 } },
-  lens_dirt: { type: "texture", label: "lens dirt", offset: 0, scale: 1.0, intensity: 0.7, auto_rotate: false, screen_space: true, fill_frame: true, light_mask: 1, params: { file: "", channel: "auto" } },
+  lens_dirt: { type: "texture", label: "lens dirt", offset: 0, scale: 1.0, intensity: 0.7, auto_rotate: false, screen_space: true, fill_frame: true, light_mask: 1, mask_floor: 0.35, params: { file: "", channel: "auto" } },
   fog: { type: "glow", label: "fog", offset: 0, scale: 1.6, intensity: 0.25, color: [1, 0.97, 0.9], params: { softness: 0.8, falloff: 0.8 } },
   disc: { type: "iris", label: "disc", offset: 0.5, scale: 0.16, intensity: 0.3, color: [0.8, 0.9, 1], params: { blades: 24, edge_softness: 0.55 } },
   iris: { type: "iris", label: "iris", offset: 0.7, scale: 0.12, intensity: 0.25, color: [0.85, 0.93, 1], dispersion: 0.4, params: { blades: 8, edge_softness: 0.3 } },
@@ -590,12 +590,31 @@ function triggerFactor(trig, x, y, frameAspect, lx = 0, ly = 0) {
   return 1 - triggerRamp((d - trig.inner) / span, trig.falloff);
 }
 
+// A lens-surface texture (dirt, droplets) is not a shape on black: it covers
+// the front element and is revealed only where the light falls. Choosing one
+// from the library therefore carries the plate treatment with it, the same
+// way FlareTexturePrepare's frame: auto reads the category — without it the
+// element renders as a full-frame wash and the reveal has to be discovered
+// knob by knob. Only applied while the mask settings are untouched, so a
+// deliberate look is never overwritten.
+const LENS_PLATE_SLOTS = new Set(["lens_dirt"]);
+function applyLensPlateDefaults(elem, ref) {
+  if (!LENS_PLATE_SLOTS.has(String(ref).split("/")[0])) return;
+  if (elem.light_mask || elem.fill_frame) return;   // the owner has decided
+  elem.fill_frame = true;
+  elem.screen_space = true;
+  elem.light_mask = 1;
+  elem.mask_floor = 0.35;
+  elem.auto_rotate = false;
+}
+
 // Element settings copied with "copy settings" (everything but identity).
 let clipboardElem = null;
 
 const COMMON_SPECS = {
   irregular: [0, 1, 0.01],
   light_mask: [0, 1, 0.01],
+  mask_floor: [0, 0.95, 0.01],
   dispersion: [0, 3, 0.05], dispersion_samples: [3, 15, 2],
   rotation: [-180, 180, 1], count: [1, 24, 1], spread: [0, 1, 0.01],
   count_falloff: [0.1, 1, 0.01], count_scale_step: [0.5, 2, 0.01],
@@ -606,6 +625,7 @@ const COMMON_SPECS = {
 const COMMON_DEFAULTS = {
   irregular: 0,
   light_mask: 0,
+  mask_floor: 0,
   dispersion: 0, dispersion_samples: 3, rotation: 0, count: 1, spread: 0,
   count_falloff: 1, count_scale_step: 1,
 };
@@ -1180,6 +1200,7 @@ class FlareEditor {
           e.params.file = ref;
         }
         e.label = ref.split("/").pop().replace(/\.png$/, "").replace(/_/g, " ");
+        applyLensPlateDefaults(e, ref);
       }));
     });
   }
