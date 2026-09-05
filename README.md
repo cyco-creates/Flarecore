@@ -98,6 +98,30 @@ Elements can react to where the light is without keyframes:
 ## Video
 
 In ComfyUI a video is an image batch, and every node here is batch-native.
+**One node does the work**: FlareRender tracks, conditions depth and picks
+where the light comes from, so the graph is Load Video -> Flare Render ->
+Combine. `position_mode` chooses:
+
+- `manual` — drag the light on the picker.
+- `detect` — the brightest spot, each frame on its own.
+- `track` — the same, followed through the clip. For footage. If the flare
+  wanders between nearby lights, lower `track_max_jump`.
+- `track_dots` — a black plate with white dots as a control layer: **every
+  dot gets its own flare** with its own identity across the clip. The
+  threshold is relative to the brightest thing in the clip, so a matte that
+  never reaches pure white still works. Raise `detect_max_lights` to the
+  number of dots you expect and take `flare_pass` to composite over your
+  real footage.
+- `path` — **draw the light's route**. Press `path` at the top right of the
+  picker, click to drop points, drag to move, shift-click to remove. The
+  light travels the whole path across the clip, so put points closer together
+  where you want it to slow down.
+
+Wire a raw depth model straight into `depth` and set `depth_normalize` to
+`per_batch`; `depth_blur` and `depth_temporal_smooth` replace the adapter for
+ordinary use. FlareTrack, FlareDepthAdapter and FlareLightsSwitch still exist
+for graphs that want the pieces separately.
+
 The parts that make flares hold together across frames:
 
 - **FlareTrack** turns per-frame detections into stable tracks: one identity

@@ -350,6 +350,52 @@ this footage because every bright thing has clipped to pure white; size
 still can. It is a secondary effect next to the gate, kept because it is the
 part that generalises to a sun beside a small specular glint.
 
+## 3r. One node for the video path (2026-09-05)
+
+Owner: "I feel I have too many nodes (detect the light, flare depth adapter,
+pick which one drives the flare), I only want one node." Tracking, depth
+conditioning and light-source selection folded into FlareRender:
+
+- `position_mode` gained `track`, `track_dots` and `path`. Extending a COMBO
+  is safe for saved workflows because widgets_values stores the selected
+  STRING, and every previous option still exists.
+- Depth conditioning happens in the node when a raw map is wired to `depth`.
+  **The appended inputs default to the previous behaviour** — `depth_normalize`
+  is `as_is`, blur and temporal smooth are 0. The first cut defaulted to
+  per_batch normalisation and broke three depth tests, correctly: normalising
+  rescales the map, and `light_depth` is an absolute reference ON that scale,
+  so a constant-depth wall became a no-op. Normalisation can only ever be
+  opt-in.
+- FlareTrack, FlareDepthAdapter and FlareLightsSwitch still exist and still
+  work; they are no longer required, and the shipped video lab went from 11
+  nodes to 6, one of which is ours.
+
+## 3s. Dot-matte tracking and drawn paths (2026-09-05)
+
+`track_dots` is for a control layer: white dots on black, one flare per dot.
+The threshold is taken relative to the brightest thing in the CLIP rather
+than as an absolute, because a matte is whatever white the render produced —
+the owner's example peaks at 0.92 sRGB over a lifted black, which an absolute
+0.8 linear threshold misses entirely. Each dot becomes its own track with its
+own identity, so `detect_max_lights` is simply how many dots to expect.
+
+Measured on that clip (174 frames, 1-3 dots at a time): 98.6% of dots carry a
+flare within 0.03 of their centre, median distance 0.0022. The flares that
+sit on no dot are fade-out tails after a dot leaves, which hold/fade control.
+
+A note on measuring: the first evaluation of this looked terrible (mean error
+0.077) because the ground truth averaged every bright pixel into one
+centroid, which lands between dots when several are present. The tracker was
+right and the metric was wrong.
+
+`path` mode follows a route drawn on the picker: press `path` at its top
+right, click to drop points, drag to move, shift-click to remove. The light
+travels the whole path across the batch, so spacing points controls speed.
+The curve is Catmull-Rom with duplicated end points so it passes through
+every point; `sample_path` in flare/track.py evaluates it and the editor
+draws the same curve in JavaScript, with `test_path_reference_points` pinning
+values both must produce.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

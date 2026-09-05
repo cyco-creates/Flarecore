@@ -1,15 +1,15 @@
 {
  "id": "flarecore_video_lab",
  "revision": 0,
- "last_node_id": 11,
- "last_link_id": 12,
+ "last_node_id": 6,
+ "last_link_id": 5,
  "nodes": [
   {
    "id": 1,
    "type": "VHS_LoadVideo",
    "pos": [
-    -1020,
-    -60
+    -980,
+    -40
    ],
    "size": [
     320,
@@ -36,9 +36,7 @@
      "type": "IMAGE",
      "links": [
       1,
-      2,
-      3,
-      4
+      2
      ],
      "slot_index": 0
     },
@@ -77,171 +75,17 @@
   },
   {
    "id": 2,
-   "type": "FlareTrack",
-   "pos": [
-    -640,
-    -160
-   ],
-   "size": [
-    300,
-    330
-   ],
-   "flags": {},
-   "order": 2,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "image",
-     "type": "IMAGE",
-     "link": 3
-    }
-   ],
-   "outputs": [
-    {
-     "name": "lights",
-     "type": "FLARE_LIGHTS",
-     "links": [
-      7
-     ],
-     "slot_index": 0
-    },
-    {
-     "name": "overlay",
-     "type": "IMAGE",
-     "links": [
-      10
-     ],
-     "slot_index": 1
-    },
-    {
-     "name": "report",
-     "type": "STRING",
-     "links": [],
-     "slot_index": 2
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "FlareTrack"
-   },
-   "widgets_values": [
-    0.75,
-    1,
-    0.6,
-    0.05,
-    3,
-    4,
-    0.0,
-    0.5,
-    0.5
-   ],
-   "title": "1. detect the light (Flare Track)"
-  },
-  {
-   "id": 3,
-   "type": "FlareKeyframes",
-   "pos": [
-    -640,
-    140
-   ],
-   "size": [
-    300,
-    300
-   ],
-   "flags": {},
-   "order": 3,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "image",
-     "type": "IMAGE",
-     "link": 4
-    }
-   ],
-   "outputs": [
-    {
-     "name": "lights",
-     "type": "FLARE_LIGHTS",
-     "links": [
-      8
-     ],
-     "slot_index": 0
-    },
-    {
-     "name": "frame_count",
-     "type": "INT",
-     "links": [],
-     "slot_index": 1
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "FlareKeyframes"
-   },
-   "widgets_values": [
-    48,
-    "0: 0.15, 0.35; 47: 0.85, 0.45",
-    "0: 0.5, 0.5; 47: 0.5, 0.5",
-    "smooth",
-    1.0
-   ],
-   "title": "2. or hand-animate light + anchor"
-  },
-  {
-   "id": 4,
-   "type": "FlareLightsSwitch",
-   "pos": [
-    -280,
-    -60
-   ],
-   "size": [
-    300,
-    110
-   ],
-   "flags": {},
-   "order": 4,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "detected",
-     "type": "FLARE_LIGHTS",
-     "link": 7
-    },
-    {
-     "name": "keyframed",
-     "type": "FLARE_LIGHTS",
-     "link": 8
-    }
-   ],
-   "outputs": [
-    {
-     "name": "lights",
-     "type": "FLARE_LIGHTS",
-     "links": [
-      9
-     ],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "FlareLightsSwitch"
-   },
-   "widgets_values": [
-    "detect (tracked)"
-   ],
-   "title": "3. pick which one drives the flare"
-  },
-  {
-   "id": 5,
    "type": "DepthAnythingV2Preprocessor",
    "pos": [
-    -1020,
+    -980,
     340
    ],
    "size": [
-    300,
+    320,
     110
    ],
    "flags": {},
-   "order": 5,
+   "order": 2,
    "mode": 0,
    "inputs": [
     {
@@ -255,7 +99,7 @@
      "name": "IMAGE",
      "type": "IMAGE",
      "links": [
-      5
+      3
      ],
      "slot_index": 0
     }
@@ -269,67 +113,18 @@
    ]
   },
   {
-   "id": 6,
-   "type": "FlareDepthAdapter",
-   "pos": [
-    -640,
-    480
-   ],
-   "size": [
-    290,
-    200
-   ],
-   "flags": {},
-   "order": 6,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "depth",
-     "type": "IMAGE",
-     "link": 5
-    }
-   ],
-   "outputs": [
-    {
-     "name": "depth",
-     "type": "IMAGE",
-     "links": [
-      6
-     ],
-     "slot_index": 0
-    },
-    {
-     "name": "depth_mask",
-     "type": "MASK",
-     "links": [],
-     "slot_index": 1
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "FlareDepthAdapter"
-   },
-   "widgets_values": [
-    "per_batch",
-    false,
-    0.012,
-    0.0,
-    1.0,
-    0.5
-   ]
-  },
-  {
-   "id": 7,
+   "id": 3,
    "type": "FlareRender",
    "pos": [
-    80,
+    -580,
     -560
    ],
    "size": [
     470,
-    820
+    860
    ],
    "flags": {},
-   "order": 7,
+   "order": 3,
    "mode": 0,
    "inputs": [
     {
@@ -340,12 +135,12 @@
     {
      "name": "depth",
      "type": "IMAGE",
-     "link": 6
+     "link": 3
     },
     {
      "name": "lights",
      "type": "FLARE_LIGHTS",
-     "link": 9
+     "link": null
     }
    ],
    "outputs": [
@@ -353,7 +148,7 @@
      "name": "image",
      "type": "IMAGE",
      "links": [
-      11
+      4
      ],
      "slot_index": 0
     },
@@ -361,7 +156,7 @@
      "name": "flare_pass",
      "type": "IMAGE",
      "links": [
-      12
+      5
      ],
      "slot_index": 1
     },
@@ -377,12 +172,12 @@
    },
    "widgets_values": [
     "{\n  \"schema_version\": 1,\n  \"name\": \"Anamorphic Gold\",\n  \"author\": \"flarecore\",\n  \"global\": {\n    \"intensity\": 1.0,\n    \"scale\": 1.0,\n    \"aspect\": 1.6,\n    \"tint\": [\n      1.0,\n      0.98,\n      0.94\n    ],\n    \"seed\": 21,\n    \"fringe\": 0.2,\n    \"edge_fade_start\": 0.15,\n    \"edge_fade_range\": 0.5\n  },\n  \"elements\": [\n    {\n      \"type\": \"glow\",\n      \"label\": \"core\",\n      \"id\": \"ag_core\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.08,\n      \"intensity\": 4.5,\n      \"color\": [\n        1.0,\n        0.98,\n        0.9\n      ],\n      \"params\": {\n        \"softness\": 0.3,\n        \"falloff\": 2.2\n      }\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"gold bloom\",\n      \"id\": \"ag_bloom\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 0.5,\n      \"intensity\": 0.85,\n      \"irregular\": 0.25,\n      \"color\": [\n        1.0,\n        0.82,\n        0.5\n      ],\n      \"params\": {\n        \"softness\": 0.5,\n        \"falloff\": 1.4\n      }\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"anamorphic streak\",\n      \"id\": \"ag_streak\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.55,\n      \"auto_rotate\": false,\n      \"irregular\": 0.3,\n      \"blur\": 0.04,\n      \"color\": [\n        1.0,\n        0.86,\n        0.55\n      ],\n      \"params\": {\n        \"length\": 2.6,\n        \"thickness\": 0.006\n      }\n    },\n    {\n      \"type\": \"streak\",\n      \"label\": \"streak haze\",\n      \"id\": \"ag_streakhaze\",\n      \"slot\": \"streaks\",\n      \"offset\": 0.0,\n      \"scale\": 1.0,\n      \"intensity\": 0.09,\n      \"auto_rotate\": false,\n      \"blur\": 0.3,\n      \"color\": [\n        1.0,\n        0.8,\n        0.5\n      ],\n      \"params\": {\n        \"length\": 1.8,\n        \"thickness\": 0.05\n      }\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"anamorphic bars\",\n      \"id\": \"ag_bars\",\n      \"slot\": \"ghosts\",\n      \"offset\": 0.6,\n      \"count\": 4,\n      \"spread\": 0.35,\n      \"scale\": 0.045,\n      \"count_scale_step\": 1.3,\n      \"count_falloff\": 0.85,\n      \"intensity\": 0.22,\n      \"stretch\": [\n        3.2,\n        0.45\n      ],\n      \"auto_rotate\": false,\n      \"move\": [\n        1.0,\n        0.15\n      ],\n      \"irregular\": 0.35,\n      \"dispersion\": 0.5,\n      \"blur\": 0.03,\n      \"color\": [\n        1.0,\n        0.75,\n        0.45\n      ],\n      \"params\": {\n        \"blades\": 4,\n        \"edge_softness\": 0.35\n      }\n    },\n    {\n      \"type\": \"iris\",\n      \"label\": \"ghost chain\",\n      \"id\": \"ag_ghosts\",\n      \"slot\": \"ghosts\",\n      \"offset\": 1.35,\n      \"count\": 3,\n      \"spread\": 0.28,\n      \"scale\": 0.11,\n      \"count_scale_step\": 1.2,\n      \"count_falloff\": 0.85,\n      \"intensity\": 0.16,\n      \"irregular\": 0.3,\n      \"dispersion\": 0.6,\n      \"blur\": 0.1,\n      \"color\": [\n        1.0,\n        0.8,\n        0.55\n      ],\n      \"params\": {\n        \"blades\": 8,\n        \"edge_softness\": 0.6\n      }\n    },\n    {\n      \"type\": \"glint\",\n      \"label\": \"rays\",\n      \"id\": \"ag_rays\",\n      \"slot\": \"rays\",\n      \"offset\": 0.0,\n      \"scale\": 0.55,\n      \"intensity\": 0.35,\n      \"irregular\": 0.5,\n      \"blur\": 0.05,\n      \"color\": [\n        1.0,\n        0.94,\n        0.8\n      ],\n      \"params\": {\n        \"points\": 36,\n        \"length\": 0.4,\n        \"thickness\": 0.003,\n        \"length_jitter\": 0.75\n      }\n    },\n    {\n      \"type\": \"hoop\",\n      \"label\": \"gold hoop\",\n      \"id\": \"ag_hoop\",\n      \"slot\": \"hoops\",\n      \"offset\": 0.5,\n      \"scale\": 0.9,\n      \"intensity\": 0.06,\n      \"irregular\": 0.4,\n      \"dispersion\": 1.2,\n      \"blur\": 0.06,\n      \"color\": [\n        1.0,\n        0.7,\n        0.4\n      ],\n      \"params\": {\n        \"radius\": 0.9,\n        \"thickness\": 0.2,\n        \"angular_falloff\": 0.85,\n        \"completion\": 220,\n        \"completion_feather\": 0.35\n      }\n    },\n    {\n      \"type\": \"glow\",\n      \"label\": \"edge gleam\",\n      \"id\": \"ag_gleam\",\n      \"slot\": \"glows\",\n      \"offset\": 0.0,\n      \"scale\": 1.8,\n      \"intensity\": 0.0,\n      \"auto_rotate\": false,\n      \"stretch\": [\n        1.0,\n        0.08\n      ],\n      \"blur\": 0.2,\n      \"color\": [\n        1.0,\n        0.7,\n        0.35\n      ],\n      \"trigger\": {\n        \"mode\": \"border\",\n        \"source\": \"light\",\n        \"inner\": -0.1,\n        \"outer\": 0.35,\n        \"falloff\": \"smooth\",\n        \"brightness\": 0.45,\n        \"scale\": 0.3,\n        \"color\": [\n          1.0,\n          0.55,\n          0.25\n        ]\n      },\n      \"params\": {\n        \"softness\": 0.9,\n        \"falloff\": 1.2\n      }\n    },\n    {\n      \"type\": \"orbs\",\n      \"label\": \"lens orbs\",\n      \"id\": \"ag_orbs\",\n      \"slot\": \"ghosts\",\n      \"scale\": 1.0,\n      \"intensity\": 0.07,\n      \"blur\": 0.06,\n      \"color\": [\n        1.0,\n        0.9,\n        0.7\n      ],\n      \"params\": {\n        \"count\": 26,\n        \"size\": 0.045,\n        \"size_jitter\": 0.7,\n        \"spread\": 1.4,\n        \"edge_softness\": 0.35,\n        \"illumination\": 0.55,\n        \"shape\": \"disc\",\n        \"blades\": 6\n      }\n    }\n  ]\n}\n",
-    "manual",
+    "track",
     0.5,
     0.5,
     0.5,
     0.55,
-    0.8,
+    0.75,
     1,
     0.06,
     0.0,
@@ -394,28 +189,34 @@
     0,
     "fixed",
     0.5,
-    0.35
+    0.35,
+    0.6,
+    0.05,
+    "per_batch",
+    0.012,
+    0.5,
+    ""
    ]
   },
   {
-   "id": 8,
+   "id": 4,
    "type": "VHS_VideoCombine",
    "pos": [
-    620,
+    -60,
     -560
    ],
    "size": [
     360,
-    320
+    340
    ],
    "flags": {},
-   "order": 8,
+   "order": 4,
    "mode": 0,
    "inputs": [
     {
      "name": "images",
      "type": "IMAGE",
-     "link": 11
+     "link": 4
     },
     {
      "name": "audio",
@@ -445,7 +246,7 @@
     "Node name for S&R": "VHS_VideoCombine"
    },
    "widgets_values": [
-    16.0,
+    24.0,
     0,
     "flarecore_video",
     "image/gif",
@@ -454,24 +255,24 @@
    ]
   },
   {
-   "id": 9,
+   "id": 5,
    "type": "VHS_VideoCombine",
    "pos": [
-    620,
+    -60,
     -180
    ],
    "size": [
     360,
-    320
+    340
    ],
    "flags": {},
-   "order": 9,
+   "order": 5,
    "mode": 0,
    "inputs": [
     {
      "name": "images",
      "type": "IMAGE",
-     "link": 12
+     "link": 5
     },
     {
      "name": "audio",
@@ -501,7 +302,7 @@
     "Node name for S&R": "VHS_VideoCombine"
    },
    "widgets_values": [
-    16.0,
+    24.0,
     0,
     "flarecore_video_pass",
     "image/gif",
@@ -510,59 +311,24 @@
    ]
   },
   {
-   "id": 10,
-   "type": "PreviewImage",
-   "pos": [
-    620,
-    180
-   ],
-   "size": [
-    360,
-    260
-   ],
-   "flags": {},
-   "order": 10,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "link": 10
-    }
-   ],
-   "outputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "links": [],
-     "slot_index": 0
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "PreviewImage"
-   },
-   "widgets_values": [],
-   "title": "track overlay"
-  },
-  {
-   "id": 11,
+   "id": 6,
    "type": "Note",
    "pos": [
-    -1020,
+    -980,
     -560
    ],
    "size": [
     400,
-    470
+    620
    ],
    "flags": {},
-   "order": 11,
+   "order": 6,
    "mode": 0,
    "inputs": [],
    "outputs": [],
    "properties": {},
    "widgets_values": [
-    "VIDEO LAB\n\nWHERE THE LIGHT COMES FROM - the switch decides:\n  detect (tracked) - Flare Track follows the brightest spot. The\n     picker's light handle greys out, because tracking owns it.\n     detect_max_lights caps how many FLARES exist, not how many\n     candidates are looked at, so a busy shot (dappled light in\n     trees) cannot spawn a second flare across the frame. If it\n     locks onto the wrong light, set search_radius above 0 and put\n     search_u/search_v on the one you want - the overlay draws a\n     cyan ring showing where it is allowed to look.\n  keyframes        - Flare Keyframes drives BOTH points by hand:\n     light_keys and anchor_keys, each 'frame: u,v; frame: u,v'.\n  manual           - nothing is passed on, so Flare Render uses its\n     own picker: drag the light and the anchor where you want them.\nThe anchor (cyan) always follows flare_x/flare_y unless keyframed.\n\n1. Pick a video in Load Video. Frames flow as one batch.\n2. Flare Track gives stable ids, smoothed positions, fade in/out and\n   velocity coasting through moments the detector loses the light.\n   The overlay preview shows the tracked points per frame.\n3. Depth Anything + Flare Depth Adapter (temporal_smooth) drive\n   occlusion; occlusion_smooth on Flare Render (gear panel) spreads\n   any hard occlusion cut into a fade across frames.\n4. The flare animates itself as the light moves - no keyframes:\n   - rows with a RED EDGE in the editor carry a trigger rule.\n     Anamorphic Gold's edge gleam blooms as the light nears the frame\n     border. Twirl a row open and hit 'show' under preview region to\n     paint the trigger area over the picker.\n   - lens (global row): flicker gives every tracked light its own\n     brightness wobble; edge fade cuts a light that leaves frame.\n   - scene_color (gear panel) tints each flare by the plate colour at\n     the light, so a warm street lamp flares warm.\n5. Both video outputs: composite and the flare pass over black for\n   external compositing."
+    "VIDEO LAB - one node does the work\\n\\nLoad Video -> Flare Render -> Combine. Tracking, depth conditioning\nand the light source all live inside Flare Render (open the gear).\n\nposition_mode picks where the light comes from:\n  manual      - drag the light on the picker.\n  detect      - brightest spot, each frame on its own.\n  track       - the same, followed through the clip. This is the one\n                for footage. If the flare wanders between nearby\n                lights, lower track_max_jump.\n  track_dots  - a black plate with white dots: every dot gets its own\n                flare, with its own identity across the clip. Raise\n                detect_max_lights to the number of dots you expect.\n                The threshold is relative to the brightest thing in\n                the clip, so a matte that never reaches pure white\n                still works. Take flare_pass to composite the result\n                over your real footage.\n  path        - draw the light's route: press 'path' at the top right\n                of the picker, click to drop points, drag to move,\n                shift-click to remove. The light travels the whole\n                path across the clip, so put points closer together\n                where you want it to slow down.\n\nDepth is optional: wire a raw depth model straight into depth and set\ndepth_normalize to per_batch. Flare Depth Adapter still exists if you\nwant level remapping or per-frame modes.\n\nThe flare animates itself as the light moves: rows with a RED EDGE in\nthe editor carry a trigger rule, and the lens row has flicker and\nedge fade. Both outputs: composite, and the flare over black.\n"
    ],
    "color": "#432",
    "bgcolor": "#653"
@@ -573,95 +339,39 @@
    1,
    1,
    0,
-   7,
-   0,
-   "IMAGE"
-  ],
-  [
-   2,
-   1,
-   0,
-   5,
-   0,
-   "IMAGE"
-  ],
-  [
-   3,
-   1,
-   0,
-   2,
-   0,
-   "IMAGE"
-  ],
-  [
-   4,
-   1,
-   0,
    3,
    0,
    "IMAGE"
   ],
   [
-   5,
-   5,
+   2,
+   1,
    0,
-   6,
+   2,
    0,
    "IMAGE"
   ],
   [
-   6,
-   6,
+   3,
+   2,
    0,
-   7,
+   3,
    1,
    "IMAGE"
   ],
   [
-   7,
-   2,
-   0,
    4,
-   0,
-   "FLARE_LIGHTS"
-  ],
-  [
-   8,
    3,
    0,
    4,
-   1,
-   "FLARE_LIGHTS"
-  ],
-  [
-   9,
-   4,
-   0,
-   7,
-   2,
-   "FLARE_LIGHTS"
-  ],
-  [
-   10,
-   2,
-   1,
-   10,
    0,
    "IMAGE"
   ],
   [
-   11,
-   7,
-   0,
-   8,
-   0,
-   "IMAGE"
-  ],
-  [
-   12,
-   7,
+   5,
+   3,
    1,
-   9,
+   5,
    0,
    "IMAGE"
   ]
@@ -670,10 +380,10 @@
   {
    "title": "VIDEO LAB",
    "bounding": [
-    -1050,
+    -1010,
     -640,
-    2080,
-    1360
+    1620,
+    1200
    ],
    "color": "#3f4459",
    "font_size": 22,

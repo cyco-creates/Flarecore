@@ -7,7 +7,9 @@ import torch
 
 from ..flare.colorspace import srgb_to_linear, linear_to_srgb
 from ..flare.depth import blur_depth
+from ..flare.depth import condition_depth, temporal_smooth_depth
 from ..flare.detect import detect_lights, linear_luminance
+from ..flare.track import track_lights, parse_path, sample_path
 from ..flare.engine import render_batch, composite
 from ..flare.grid import uv_to_grid
 from ..flare.occlude import occlusion_factor
@@ -59,7 +61,16 @@ class FlareRender:
             "required": {
                 "image": ("IMAGE",),
                 "preset_json": ("STRING", {"multiline": True, "default": DEFAULT_PRESET}),
-                "position_mode": (["manual", "detect", "detect_with_manual_offset"],),
+                "position_mode": ([
+                    "manual", "detect", "detect_with_manual_offset",
+                    "track", "track_dots", "path",
+                ], {
+                    "tooltip": "manual: the picker's light point. detect: the "
+                               "brightest spot, per frame. track: the same but "
+                               "followed through the clip. track_dots: every "
+                               "bright dot on a dark matte gets its own flare. "
+                               "path: follow the path drawn on the picker.",
+                }),
                 "light_x": ("FLOAT", {"default": 0.25, "min": 0.0, "max": 1.0, "step": 0.001}),
                 "light_y": ("FLOAT", {"default": 0.3, "min": 0.0, "max": 1.0, "step": 0.001}),
                 "flare_x": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.001}),
@@ -87,6 +98,40 @@ class FlareRender:
                                "at the light (0 = preset colours only, 1 = "
                                "fully takes the source's colour)",
                 }),
+                "track_smoothing": ("FLOAT", {
+                    "default": 0.6, "min": 0.0, "max": 0.98, "step": 0.01,
+                    "tooltip": "track/track_dots: position smoothing.",
+                }),
+                "track_max_jump": ("FLOAT", {
+                    "default": 0.06, "min": 0.01, "max": 1.0, "step": 0.01,
+                    "tooltip": "track/track_dots: how far a light may travel "
+                               "between frames (fraction of height). Also the "
+                               "gate that stops a flare hopping onto a rival "
+                               "light — lower it if the flare wanders.",
+                }),
+                "depth_normalize": (["as_is", "per_batch", "per_frame"], {
+                    "tooltip": "condition a RAW depth map here instead of "
+                               "wiring a Flare Depth Adapter. Leave as_is for "
+                               "a map that is already conditioned: "
+                               "normalising rescales the map, and light_depth "
+                               "is measured on its scale. per_batch is the "
+                               "one to use for video.",
+                }),
+                "depth_blur": ("FLOAT", {
+                    "default": 0.0, "min": 0.0, "max": 0.2, "step": 0.001,
+                    "tooltip": "softens the connected depth map's edges so "
+                               "occlusion fades instead of stepping.",
+                }),
+                "depth_temporal_smooth": ("FLOAT", {
+                    "default": 0.0, "min": 0.0, "max": 0.95, "step": 0.01,
+                    "tooltip": "stills per-frame depth-model shimmer across "
+                               "the batch (video).",
+                }),
+                "light_path": ("STRING", {
+                    "default": "",
+                    "tooltip": "path mode: 'u,v; u,v; ...' — drawn with the "
+                               "picker's path tool, not typed.",
+                }),
             },
             "optional": {
                 "depth": ("IMAGE",),
@@ -101,7 +146,10 @@ class FlareRender:
                flare_x, flare_y, detect_threshold, detect_max_lights,
                occlusion_radius, light_depth, invert_depth, intensity, scale,
                blend_mode, clamp_output, seed, occlusion_smooth=0.4,
-               scene_color=0.0, depth=None, lights=None):
+               scene_color=0.0, track_smoothing=0.6, track_max_jump=0.06,
+               depth_normalize="as_is", depth_blur=0.0,
+               depth_temporal_smooth=0.0, light_path="",
+               depth=None, lights=None):
         preset = load_preset(preset_json)
 
         # ComfyUI passes IMAGE tensors on the CPU regardless of where they
@@ -126,10 +174,25 @@ class FlareRender:
             lights_per_frame = self._resolve_lights(
                 image_linear, position_mode, light_x, light_y,
                 detect_threshold, detect_max_lights,
+                smoothing=track_smoothing, max_jump=track_max_jump,
+                light_path=light_path,
             )
 
         if depth is not None:
             depth_maps = depth[..., :3].to(device=device, dtype=dtype).mean(dim=-1)  # (Bd, H, W)
+            # Condition the map here so a raw depth-model output can be wired
+            # straight in: normalise over the batch (per-frame normalisation
+            # makes a static object breathe as other content enters shot),
+            # apply the stated near/far convention, soften edges, and still
+            # per-frame shimmer. Flare Depth Adapter still exists for finer
+            # control (level remap, per-frame modes).
+            depth_maps = condition_depth(
+                depth_maps,
+                normalize="none" if depth_normalize == "as_is" else depth_normalize,
+                invert=invert_depth, blur=depth_blur)
+            if depth_temporal_smooth > 0.0 and depth_maps.shape[0] > 1:
+                depth_maps = temporal_smooth_depth(depth_maps,
+                                                   depth_temporal_smooth)
             bd = depth_maps.shape[0]
             if 1 < bd < batch:
                 raise ValueError(
@@ -142,7 +205,7 @@ class FlareRender:
                 for light in frame_lights:
                     light["occlusion"] = occlusion_factor(
                         dmap, light["u"], light["v"],
-                        radius=occlusion_radius, invert=invert_depth,
+                        radius=occlusion_radius, invert=False,
                         light_depth=light_depth,
                     )
             self._smooth_occlusion(lights_per_frame, occlusion_smooth)
@@ -271,11 +334,39 @@ class FlareRender:
                 for i in range(batch)]
 
     def _resolve_lights(self, image_linear, position_mode, light_x, light_y,
-                        detect_threshold, detect_max_lights):
+                        detect_threshold, detect_max_lights,
+                        smoothing=0.6, max_jump=0.06, light_path=""):
         batch = image_linear.shape[0]
         if position_mode == "manual":
             return [[{"u": light_x, "v": light_y, "brightness": 1.0}]
                     for _ in range(batch)]
+
+        if position_mode == "path":
+            points = parse_path(light_path)
+            if not points:
+                raise ValueError(
+                    "position_mode is 'path' but no path is drawn; use the "
+                    "picker's path tool, or switch to manual"
+                )
+            return [[{"u": u, "v": v, "brightness": 1.0}]
+                    for u, v in sample_path(points, batch)]
+
+        if position_mode in ("track", "track_dots"):
+            threshold = detect_threshold
+            if position_mode == "track_dots":
+                # A matte's dots are whatever white the render happened to
+                # produce (this one peaks at 0.92 sRGB, not 1.0) over a
+                # not-quite-black ground, so an absolute threshold is the
+                # wrong tool: take it relative to the brightest thing present.
+                peak = float(image_linear.amax())
+                threshold = max(peak * max(detect_threshold, 0.05), 1e-4)
+            # more candidates than flares: association picks the nearest, so
+            # spares keep a followed light fed through a busy frame
+            pool = max(detect_max_lights * 8, 12)
+            raw = detect_lights(image_linear, threshold=threshold,
+                                max_lights=pool)
+            return track_lights(raw, smoothing=smoothing, max_jump=max_jump,
+                                hold=3, fade=4, max_tracks=detect_max_lights)
 
         detected = detect_lights(
             image_linear, threshold=detect_threshold, max_lights=detect_max_lights,

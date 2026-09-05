@@ -220,6 +220,68 @@ def smooth_series(values: list[float], amount: float) -> list[float]:
     return [(a + b) * 0.5 for a, b in zip(fwd, bwd)]
 
 
+def parse_path(text: str) -> list[tuple[float, float]]:
+    """Parse "u,v; u,v; ..." into a list of points.
+
+    This is what the picker's path tool writes: a shape, with no frame
+    numbers. Timing comes from the batch — the light travels the whole path
+    across the clip — so adding points where you want the light to linger is
+    how you control its speed.
+    """
+    pts = []
+    for chunk in text.split(";"):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        u_str, _, v_str = chunk.partition(",")
+        try:
+            pts.append((float(u_str.strip()), float(v_str.strip())))
+        except ValueError as e:
+            raise ValueError(
+                f"bad path point {chunk!r}; expected 'u,v' like '0.2,0.35'"
+            ) from e
+    return pts
+
+
+def _catmull_rom(p0, p1, p2, p3, t):
+    """Centripetal-ish Catmull-Rom on one segment (uniform parameterisation).
+
+    The editor draws the same curve in JavaScript; test_path_reference_points
+    pins values both must produce.
+    """
+    t2, t3 = t * t, t * t * t
+    return tuple(
+        0.5 * ((2.0 * p1[i])
+               + (-p0[i] + p2[i]) * t
+               + (2.0 * p0[i] - 5.0 * p1[i] + 4.0 * p2[i] - p3[i]) * t2
+               + (-p0[i] + 3.0 * p1[i] - 3.0 * p2[i] + p3[i]) * t3)
+        for i in range(2)
+    )
+
+
+def sample_path(points, frame_count: int) -> list[tuple[float, float]]:
+    """Evaluate a drawn path over frame_count frames.
+
+    One point holds still; two points is a straight line; three or more is a
+    smooth curve through every point.
+    """
+    pts = [tuple(p) for p in points]
+    if not pts:
+        raise ValueError("path has no points; draw one on the picker first")
+    if len(pts) == 1 or frame_count <= 1:
+        return [pts[0]] * max(frame_count, 1)
+    # duplicate the ends so the curve passes through the first and last point
+    ext = [pts[0]] + pts + [pts[-1]]
+    segments = len(pts) - 1
+    out = []
+    for f in range(frame_count):
+        x = (f / (frame_count - 1)) * segments
+        i = min(int(x), segments - 1)
+        out.append(_catmull_rom(ext[i], ext[i + 1], ext[i + 2], ext[i + 3],
+                                x - i))
+    return out
+
+
 def parse_keyframes(text: str) -> list[tuple[int, float, float]]:
     """Parse "frame: u,v; frame: u,v; ..." into sorted (frame, u, v) tuples.
 

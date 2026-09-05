@@ -18,6 +18,7 @@ from flare.engine import render_stack, render_batch, element_seed
 from flare.detect import detect_lights
 from flare.depth import blur_depth, temporal_smooth_depth
 from flare.track import track_lights, parse_keyframes, interpolate_keyframes
+from flare.colorspace import srgb_to_linear
 from flare.texture_prep import center_on_energy
 
 from conftest import load_package, argmax_uv
@@ -815,3 +816,117 @@ class TestTrackerLocksOn:
                             max_lights=12)
         assert all("energy" in c and c["energy"] > 0
                    for frame in det for c in frame)
+
+
+class TestDrawnPath:
+    """The picker's path tool writes 'u,v; u,v; ...' and the light travels it
+    across the batch — no frame numbers to type."""
+
+    def test_parse_and_shape(self):
+        from flare.track import parse_path
+        assert parse_path("0.1,0.2; 0.5,0.6") == [(0.1, 0.2), (0.5, 0.6)]
+        assert parse_path("  ") == []
+        with pytest.raises(ValueError, match="bad path point"):
+            parse_path("0.1")
+
+    def test_single_point_holds_still(self):
+        from flare.track import sample_path
+        out = sample_path([(0.3, 0.4)], 5)
+        assert out == [(0.3, 0.4)] * 5
+
+    def test_endpoints_are_hit_exactly(self):
+        from flare.track import sample_path
+        pts = [(0.1, 0.5), (0.5, 0.2), (0.9, 0.5)]
+        out = sample_path(pts, 21)
+        assert out[0] == pytest.approx(pts[0])
+        assert out[-1] == pytest.approx(pts[-1])
+
+    def test_curve_passes_through_middle_points(self):
+        from flare.track import sample_path
+        pts = [(0.1, 0.5), (0.5, 0.2), (0.9, 0.5)]
+        out = sample_path(pts, 21)
+        assert min(math.hypot(u - 0.5, v - 0.2) for u, v in out) < 1e-6
+
+    def test_travel_is_monotonic_along_a_line(self):
+        from flare.track import sample_path
+        out = sample_path([(0.0, 0.5), (1.0, 0.5)], 11)
+        us = [u for u, _ in out]
+        assert us == sorted(us)
+        assert us[5] == pytest.approx(0.5, abs=1e-6)
+
+    def test_path_reference_points(self):
+        """Pins the curve the editor's JavaScript must draw (samplePath in
+        web/flarecore_ui.js). Change one, change the other."""
+        from flare.track import sample_path
+        pts = [(0.10, 0.50), (0.40, 0.20), (0.70, 0.60), (0.95, 0.35)]
+        got = sample_path(pts, 7)
+        expected = [
+            (0.100000, 0.500000), (0.231250, 0.325000), (0.400000, 0.200000),
+            (0.553125, 0.396875), (0.700000, 0.600000), (0.843750, 0.500000),
+            (0.950000, 0.350000),
+        ]
+        for g, e in zip(got, expected):
+            assert g[0] == pytest.approx(e[0], abs=1e-6)
+            assert g[1] == pytest.approx(e[1], abs=1e-6)
+
+    def test_render_follows_the_path(self):
+        plate = torch.zeros(9, 120, 200, 3)
+        out = run_node(plate, position_mode="path",
+                       light_path="0.1,0.5; 0.5,0.2; 0.9,0.5")[1]
+        us = [argmax_uv(out[f].sum(-1))[0] for f in range(9)]
+        assert us[0] < 0.25 and us[-1] > 0.75
+        assert us == sorted(us)
+
+    def test_path_mode_without_a_path_says_so(self):
+        plate = torch.zeros(2, 64, 64, 3)
+        with pytest.raises(ValueError, match="no path is drawn"):
+            run_node(plate, position_mode="path", light_path="")
+
+
+class TestDotMatte:
+    """track_dots: a black plate with white dots, one flare per dot."""
+
+    def _dots(self, paths, b=24, h=240, w=400, radius=9.0, level=0.92):
+        yy, xx = torch.meshgrid(torch.arange(h, dtype=torch.float32),
+                                torch.arange(w, dtype=torch.float32),
+                                indexing="ij")
+        clip = torch.zeros(b, h, w, 3)
+        for i in range(b):
+            t = i / (b - 1)
+            img = torch.zeros(h, w)
+            for fn in paths:
+                cu, cv = fn(t)
+                d = torch.sqrt((xx - cu * w) ** 2 + (yy - cv * h) ** 2)
+                img = torch.maximum(img, torch.clamp(1.0 - d / radius, 0, 1) * level)
+            clip[i] = img.unsqueeze(-1)
+        return clip
+
+    def test_three_dots_make_three_flares(self):
+        clip = self._dots([
+            lambda t: (0.15 + 0.7 * t, 0.30),
+            lambda t: (0.85 - 0.7 * t, 0.70),
+            lambda t: (0.50, 0.20 + 0.6 * t),
+        ])
+        lights = PKG.NODE_CLASS_MAPPINGS["FlareRender"]()._resolve_lights(
+            srgb_to_linear(clip), "track_dots", 0.5, 0.5, 0.5, 6)
+        assert all(len(f) == 3 for f in lights)
+        assert {l["tid"] for f in lights for l in f} == {0, 1, 2}
+
+    def test_dots_are_found_though_they_never_reach_pure_white(self):
+        # the matte peaks at 0.92 over a lifted black; an absolute threshold
+        # of 0.8 linear would miss it entirely
+        clip = self._dots([lambda t: (0.3 + 0.4 * t, 0.5)], level=0.92)
+        clip = clip + 0.07
+        lights = PKG.NODE_CLASS_MAPPINGS["FlareRender"]()._resolve_lights(
+            srgb_to_linear(clip.clamp(0, 1)), "track_dots", 0.5, 0.5, 0.5, 4)
+        assert all(len(f) == 1 for f in lights)
+        us = [f[0]["u"] for f in lights]
+        assert us[0] < 0.4 and us[-1] > 0.6
+
+    def test_dot_count_is_capped_by_detect_max_lights(self):
+        clip = self._dots([
+            lambda t: (0.2, 0.3), lambda t: (0.5, 0.3), lambda t: (0.8, 0.3),
+        ])
+        lights = PKG.NODE_CLASS_MAPPINGS["FlareRender"]()._resolve_lights(
+            srgb_to_linear(clip), "track_dots", 0.5, 0.5, 0.5, 2)
+        assert max(len(f) for f in lights) == 2

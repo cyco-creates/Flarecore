@@ -95,6 +95,49 @@ function elementThumbUrl(ref) {
   return api.apiURL(`/flarecore/element/${ref.split("/").map(encodeURIComponent).join("/")}`);
 }
 
+// Catmull-Rom, the same curve flare/track.py samples the light along.
+// test_path_reference_points pins values both must produce.
+function catmullRom(p0, p1, p2, p3, t) {
+  const t2 = t * t, t3 = t2 * t;
+  const f = (a, b, c, d) => 0.5 * ((2 * b) + (-a + c) * t
+    + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
+  return [f(p0[0], p1[0], p2[0], p3[0]), f(p0[1], p1[1], p2[1], p3[1])];
+}
+
+function samplePath(pts, n) {
+  if (!pts.length) return [];
+  if (pts.length === 1 || n <= 1) return new Array(Math.max(n, 1)).fill(pts[0]);
+  const ext = [pts[0], ...pts, pts[pts.length - 1]];
+  const segments = pts.length - 1;
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const x = (i / (n - 1)) * segments;
+    const k = Math.min(Math.floor(x), segments - 1);
+    out.push(catmullRom(ext[k], ext[k + 1], ext[k + 2], ext[k + 3], x - k));
+  }
+  return out;
+}
+
+function parsePath(text) {
+  return String(text || "").split(";").map((c) => c.trim()).filter(Boolean)
+    .map((c) => c.split(",").map((n) => parseFloat(n)))
+    .filter((p) => p.length === 2 && p.every(Number.isFinite));
+}
+
+function formatPath(pts) {
+  return pts.map((p) => `${p[0].toFixed(4)},${p[1].toFixed(4)}`).join("; ");
+}
+
+function getStr(node, name) {
+  const w = findWidget(node, name);
+  return w ? String(w.value ?? "") : "";
+}
+
+function setStr(node, name, value) {
+  const w = findWidget(node, name);
+  if (w) w.value = value;
+}
+
 /* ----------------------------------------------------------- point picker */
 
 class PointPicker {
@@ -102,6 +145,8 @@ class PointPicker {
     this.node = node;
     this.backdrop = null;
     this.drag = null;
+    this.pathMode = false;
+    this.dragPoint = -1;
 
     this.el = document.createElement("div");
     this.el.style.cssText =
@@ -248,6 +293,61 @@ class PointPicker {
         r.x + 6, r.y + r.h - 5);
     }
 
+    // the drawn light path, and the button that turns the tool on
+    const pts = parsePath(getStr(this.node, "light_path"));
+    if (pts.length) {
+      const P = (p) => [r.x + p[0] * r.w, r.y + p[1] * r.h];
+      const curve = samplePath(pts, Math.max(pts.length * 24, 48));
+      ctx.strokeStyle = this.pathMode ? "#7ce38b" : "rgba(124,227,139,0.5)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      curve.forEach((p, i) => {
+        const [sx, sy] = P(p);
+        i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy);
+      });
+      ctx.stroke();
+      // travel direction: the light runs start -> end across the batch
+      const [ex, ey] = P(curve[curve.length - 1]);
+      const [bx, by] = P(curve[Math.max(curve.length - 6, 0)]);
+      const ang = Math.atan2(ey - by, ex - bx);
+      ctx.fillStyle = "#7ce38b";
+      ctx.beginPath();
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(ex - 9 * Math.cos(ang - 0.4), ey - 9 * Math.sin(ang - 0.4));
+      ctx.lineTo(ex - 9 * Math.cos(ang + 0.4), ey - 9 * Math.sin(ang + 0.4));
+      ctx.closePath(); ctx.fill();
+      if (this.pathMode) {
+        pts.forEach((p, i) => {
+          const [sx, sy] = P(p);
+          ctx.fillStyle = i === 0 ? "#7ce38b" : "#0d0d11";
+          ctx.strokeStyle = "#7ce38b";
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+          ctx.fill(); ctx.stroke();
+        });
+      }
+    }
+    // path tool chip, top-right
+    const chipW = 66, chipH = 18;
+    this._pathChip = [r.x + r.w - chipW - 6, r.y + 6, chipW, chipH];
+    ctx.fillStyle = this.pathMode ? "#2f5d38" : "rgba(0,0,0,0.55)";
+    ctx.strokeStyle = this.pathMode ? "#7ce38b" : "#4a4a55";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.rect(...this._pathChip);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = this.pathMode ? "#dfffe6" : "#9a9aa6";
+    ctx.font = "10px sans-serif";
+    ctx.fillText(this.pathMode ? "path: on" : "path", this._pathChip[0] + 8,
+      this._pathChip[1] + 13);
+    if (this.pathMode) {
+      ctx.fillStyle = "rgba(0,0,0,0.55)";
+      ctx.fillRect(r.x, r.y + 28, r.w, 15);
+      ctx.fillStyle = "#dfffe6";
+      ctx.fillText("click to add a point · drag to move · shift-click to remove"
+        + " · set position_mode to 'path'", r.x + 6, r.y + 39);
+    }
+
     // light handle: a plain ring and dot — no sun-ray decoration, which
     // read as a rendered sun on the backdrop
     ctx.strokeStyle = driven ? "#8a8a92" : "#ffb648";
@@ -285,13 +385,56 @@ class PointPicker {
     const [x, y] = this.eventPos(e);
     const r = this.imageRect();
 
+    const toUV = () => [Math.min(1, Math.max(0, (x - r.x) / r.w)),
+                        Math.min(1, Math.max(0, (y - r.y) / r.h))];
+
     if (e.type === "pointerdown") {
+      const c = this._pathChip;
+      if (c && x >= c[0] && x <= c[0] + c[2] && y >= c[1] && y <= c[1] + c[3]) {
+        this.pathMode = !this.pathMode;
+        this.draw();
+        e.stopPropagation(); e.preventDefault();
+        return;
+      }
+      if (this.pathMode) {
+        const pts = parsePath(getStr(this.node, "light_path"));
+        const hit = pts.findIndex((p) =>
+          Math.hypot(x - (r.x + p[0] * r.w), y - (r.y + p[1] * r.h)) <= 8);
+        if (e.shiftKey) {                       // shift-click removes a point
+          if (hit >= 0) {
+            pts.splice(hit, 1);
+            setStr(this.node, "light_path", formatPath(pts));
+          }
+        } else if (hit >= 0) {
+          this.drag = "point";
+          this.dragPoint = hit;
+          this.canvas.setPointerCapture(e.pointerId);
+        } else {
+          pts.push(toUV());
+          setStr(this.node, "light_path", formatPath(pts));
+          this.drag = "point";
+          this.dragPoint = pts.length - 1;
+          this.canvas.setPointerCapture(e.pointerId);
+        }
+        this.node.setDirtyCanvas(true, false);
+        this.draw();
+        e.stopPropagation(); e.preventDefault();
+        return;
+      }
       const [lx, ly] = this.point("light_x", "light_y", r);
       const [fx, fy] = this.point("flare_x", "flare_y", r);
       const dl = Math.hypot(x - lx, y - ly);
       const df = Math.hypot(x - fx, y - fy);
       this.drag = dl <= df ? "light" : "flare";
       this.canvas.setPointerCapture(e.pointerId);
+    } else if (e.type === "pointermove" && this.drag === "point") {
+      const pts = parsePath(getStr(this.node, "light_path"));
+      if (this.dragPoint >= 0 && this.dragPoint < pts.length) {
+        pts[this.dragPoint] = toUV();
+        setStr(this.node, "light_path", formatPath(pts));
+        this.node.setDirtyCanvas(true, false);
+        this.draw();
+      }
     } else if (e.type === "pointermove" && this.drag) {
       const u = Math.min(1, Math.max(0, (x - r.x) / r.w));
       const v = Math.min(1, Math.max(0, (y - r.y) / r.h));
@@ -302,6 +445,7 @@ class PointPicker {
     } else if (e.type === "pointerup" || e.type === "pointercancel") {
       if (!this.drag) return;
       this.drag = null;
+      this.dragPoint = -1;
       try { this.canvas.releasePointerCapture(e.pointerId); } catch {}
     } else {
       return;
