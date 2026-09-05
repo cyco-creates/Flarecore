@@ -16,6 +16,8 @@ from ..flare.detect import detect_lights, linear_luminance
 DETECT_REGION_SIGMA = 0.02
 from ..flare.track import (track_lights, parse_path, sample_path,
                            solve_light_path)
+from ..flare.feature_track import track_points as track_points_in
+from ..flare.feature_track import transform_from
 from ..flare.engine import render_batch, composite
 from ..flare.grid import uv_to_grid
 from ..flare.occlude import occlusion_factor
@@ -130,7 +132,7 @@ class FlareRender:
                 "preset_json": ("STRING", {"multiline": True, "default": DEFAULT_PRESET}),
                 "position_mode": ([
                     "manual", "detect", "detect_with_manual_offset",
-                    "track", "track_dots", "path", "lock",
+                    "track", "track_dots", "path", "lock", "point_track",
                 ], {
                     "tooltip": "manual: the picker's light point. detect: the "
                                "brightest spot, per frame. track: the same but "
@@ -138,7 +140,11 @@ class FlareRender:
                                "bright dot on a dark matte gets its own flare. "
                                "path: follow the path drawn on the picker. "
                                "lock: solve the whole clip at once so the "
-                               "light cannot teleport between rival sources.",
+                               "light cannot teleport between rival sources. "
+                               "point_track: follow one or two features you "
+                               "place on the picker, the way a compositor's "
+                               "point tracker does -- with two, the flare "
+                               "axis takes their rotation and scale too.",
                 }),
                 "light_x": ("FLOAT", {"default": 0.25, "min": 0.0, "max": 1.0, "step": 0.001}),
                 "light_y": ("FLOAT", {"default": 0.3, "min": 0.0, "max": 1.0, "step": 0.001}),
@@ -245,6 +251,27 @@ class FlareRender:
                                "scaled down, so a source that should barely "
                                "drift can be calmed without losing its shape.",
                 }),
+                "track_points": ("STRING", {
+                    "default": "",
+                    "tooltip": "point_track: 'u,v' for one point or "
+                               "'u,v; u,v' for two, placed on the picker "
+                               "rather than typed. The first drives the "
+                               "light; a second drives the flare anchor.",
+                }),
+                "track_feature": ("INT", {
+                    "default": 32, "min": 8, "max": 128, "step": 2,
+                    "tooltip": "size of the feature region in pixels — the "
+                               "patch being matched. Big enough to contain "
+                               "something distinctive, small enough that it "
+                               "does not change shape as the shot moves.",
+                }),
+                "track_search": ("INT", {
+                    "default": 48, "min": 8, "max": 256, "step": 2,
+                    "tooltip": "how far from the predicted position to look, "
+                               "in pixels. This is the tracker's speed "
+                               "limit: raise it for fast motion, lower it to "
+                               "stop it finding lookalikes further away.",
+                }),
             },
             "optional": {
                 "depth": ("IMAGE",),
@@ -262,7 +289,8 @@ class FlareRender:
                scene_color=0.0, track_smoothing=0.6, track_max_jump=0.06,
                depth_normalize="as_is", depth_blur=0.0,
                depth_temporal_smooth=0.0, light_path="", mask_falloff=0.35,
-               colorspace="srgb", chunk_frames=0, light_travel=1.0, depth=None, lights=None):
+               colorspace="srgb", chunk_frames=0, light_travel=1.0, track_points="", track_feature=32,
+               track_search=48, depth=None, lights=None):
         preset = load_preset(preset_json)
 
         # ComfyUI passes IMAGE tensors on the CPU regardless of where they
@@ -302,7 +330,8 @@ class FlareRender:
                 linear_chunk, batch, chunk, position_mode, light_x, light_y,
                 detect_threshold, detect_max_lights,
                 smoothing=track_smoothing, max_jump=track_max_jump,
-                light_path=light_path,
+                light_path=light_path, track_points=track_points,
+                track_feature=track_feature, track_search=track_search,
             )
 
         lights_per_frame = _damp_travel(lights_per_frame, light_travel)
@@ -530,7 +559,8 @@ class FlareRender:
 
     def _resolve_lights(self, linear_chunk, batch, chunk, position_mode,
                         light_x, light_y, detect_threshold, detect_max_lights,
-                        smoothing=0.6, max_jump=0.06, light_path=""):
+                        smoothing=0.6, max_jump=0.06, light_path="",
+                        track_points="", track_feature=32, track_search=48):
         """linear_chunk(start, stop) hands back that slice of the clip in
         linear light on the compute device — pixels are only touched a slice
         at a time, matching the streamed render pass."""
@@ -555,6 +585,28 @@ class FlareRender:
                                       threshold=threshold, max_lights=pool,
                                       region_sigma=region_sigma)
             return dets
+
+        if position_mode == "point_track":
+            # Feature tracking needs whole frames, not the light's position,
+            # so the clip is pulled in slices exactly like the detectors.
+            pts = parse_path(track_points)
+            if not pts:
+                raise ValueError(
+                    "point_track needs at least one point: click the picker "
+                    "to place a tracker on the feature to follow"
+                )
+            clip = torch.cat([linear_chunk(s, min(s + chunk, batch))
+                              for s in range(0, batch, chunk)], dim=0)
+            tracked = track_points_in(clip, pts[:2], feature=track_feature,
+                                      search=track_search)
+            if len(tracked) == 1:
+                return [[{"u": p["u"], "v": p["v"], "brightness": 1.0,
+                          "tid": 0}] for p in tracked[0]]
+            # two points: the second becomes the flare's anchor, so the axis
+            # inherits the pair's rotation and scale without any extra maths
+            return [[{"u": f["u"], "v": f["v"], "au": f["au"], "av": f["av"],
+                      "brightness": 1.0, "tid": 0}]
+                    for f in transform_from(tracked[0], tracked[1])]
 
         if position_mode == "lock":
             # Solve the clip as one problem: the trajectory that explains

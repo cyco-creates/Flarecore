@@ -899,6 +899,37 @@ Measured on the owner's shot with lock: travel 1.0 gives 0.0073 mean travel
 and a 0.115 vertical range; 0.5 gives 0.0041 and 0.058; 0.0 gives exactly
 zero movement.
 
+## Point tracking: follow picture, not brightness
+
+Every light mode so far follows the brightest thing in frame. That is the
+right tool for a sun and the wrong one the moment the flare has to sit on
+something dimmer than its surroundings -- a practical lamp, a reflection, a
+light that dips below the sky behind it.
+
+`point_track` follows PICTURE. A feature region is matched into the next
+frame by normalized cross-correlation, the way a compositor's tracker does.
+NCC rather than plain difference because it is invariant to brightness and
+contrast, so a feature survives an exposure ramp and a light blowing out --
+pinned by a test that ramps exposure across the clip and expects the track
+not to move.
+
+One point gives position. Two give position, rotation and scale, because
+the vector between them carries all three: the second point becomes the
+flare's ANCHOR, so the axis inherits the pair's roll and spread without any
+extra maths. Measured on the owner's shot: rotation -19 to +7 degrees,
+scale 1.00 to 1.75 driving into an avenue, which is the trunks separating.
+
+Two failures worth naming, both found by measuring rather than reasoning.
+The correlation denominator vanishes on a flat patch -- blown sky, a black
+bar -- and manufactured scores above 2 where correlation cannot exceed 1;
+it is floored and clamped now. And a lost track coasting on its last
+velocity accelerated off the picture and could never recover, because
+outside the frame there is nothing to match; the coast decays and stays in
+frame.
+
+A blown highlight still cannot be tracked, and should not be: there is no
+detail in it. The mode hint says to track a nearby edge instead.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

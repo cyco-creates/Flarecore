@@ -112,6 +112,7 @@ const POSITION_MODES = [
   ["track_dots", "track dots — one flare per white dot"],
   ["path", "path — draw the route"],
   ["lock", "lock — solve the whole clip, no teleporting"],
+  ["point_track", "point track — follow features you place"],
 ];
 
 const MODE_HINT = {
@@ -131,9 +132,23 @@ const MODE_HINT = {
     + "the least total travel — a sun cannot jump to the far side of frame "
     + "for a few frames and come back. Max jump is how far it may move "
     + "between frames; smoothing irons out the rest.",
+  point_track: "place one tracker on a feature and the light follows it; add "
+    + "a second and it becomes the anchor, so the flare axis takes their "
+    + "rotation and scale too. Pick something with contrast — a blown "
+    + "highlight has no detail to match, so track a nearby edge instead.",
   path: "click the picker to drop a point, drag to move one, shift-click to "
     + "remove. The light travels the whole path across the clip.",
 };
+
+// Which widget the picker's click-to-place tool edits, and how many points
+// it accepts. Path mode draws a route; point_track places one or two
+// trackers on features. Same gesture, different destination.
+function pointTool(node) {
+  const mode = getStr(node, "position_mode") || "manual";
+  if (mode === "path") return { widget: "light_path", max: Infinity };
+  if (mode === "point_track") return { widget: "track_points", max: 2 };
+  return null;
+}
 
 // Catmull-Rom, the same curve flare/track.py samples the light along.
 // test_path_reference_points pins values both must produce.
@@ -341,6 +356,46 @@ class PointPicker {
     // The path is only live in path mode: drawing a route that nothing
     // follows is the confusing half of a mode-less tool.
     this.pathMode = posMode === "path";
+    const tool = pointTool(this.node);
+    if (tool && tool.widget === "track_points") {
+      // A tracker is a feature region inside a search region, drawn at the
+      // sizes actually being used so the boxes mean something: you can see
+      // whether the patch holds anything distinctive and whether the search
+      // is wide enough for the motion.
+      const marks = parsePath(getStr(this.node, "track_points")).slice(0, 2);
+      const fpx = getVal(this.node, "track_feature", 32);
+      const spx = getVal(this.node, "track_search", 48);
+      // feature/search are in FRAME pixels; the backdrop tells us how many
+      // of those fit across the picker so the boxes are drawn true to size
+      const scale = r.w / Math.max(this.backdrop?.width || r.w, 1);
+      marks.forEach((p, i) => {
+        const sx = r.x + p[0] * r.w, sy = r.y + p[1] * r.h;
+        const f = Math.max(6, fpx * scale) / 2;
+        const q = Math.max(10, (fpx / 2 + spx) * scale);
+        ctx.strokeStyle = i === 0 ? "#ffb454" : "#66d9ff";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(sx - f, sy - f, f * 2, f * 2);
+        ctx.setLineDash([3, 3]);
+        ctx.globalAlpha = 0.6;
+        ctx.strokeRect(sx - q, sy - q, q * 2, q * 2);
+        ctx.globalAlpha = 1;
+        ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(sx - f - 4, sy); ctx.lineTo(sx + f + 4, sy);
+        ctx.moveTo(sx, sy - f - 4); ctx.lineTo(sx, sy + f + 4); ctx.stroke();
+        ctx.fillStyle = ctx.strokeStyle;
+        ctx.font = "10px sans-serif";
+        ctx.fillText(i === 0 ? "light" : "anchor", sx + f + 6, sy - f - 2);
+      });
+      ctx.fillStyle = "rgba(0,0,0,0.55)";
+      ctx.fillRect(r.x, r.y + 6, r.w, 15);
+      ctx.fillStyle = "#ffe9cf";
+      ctx.font = "10px sans-serif";
+      ctx.fillText(marks.length === 0
+        ? "click a feature with contrast to place the light tracker"
+        : marks.length === 1
+          ? "click again to add an anchor tracker (rotation + scale), or leave it at one"
+          : "drag a tracker to move it · shift-click to remove", r.x + 6, r.y + 17);
+    }
     const pts = this.pathMode ? parsePath(getStr(this.node, "light_path")) : [];
     if (pts.length) {
       const P = (p) => [r.x + p[0] * r.w, r.y + p[1] * r.h];
@@ -426,7 +481,9 @@ class PointPicker {
                         Math.min(1, Math.max(0, (y - r.y) / r.h))];
     // read the mode rather than the flag draw() caches, so a click that
     // lands before the first repaint still does the right thing
-    const pathMode = (getStr(this.node, "position_mode") || "manual") === "path";
+    const tool = pointTool(this.node);
+    const pathMode = !!tool;
+    const TARGET = tool ? tool.widget : "light_path";
 
     if (e.type === "pointerdown") {
       if (pathMode) {
@@ -439,21 +496,22 @@ class PointPicker {
           e.stopPropagation(); e.preventDefault();
           return;
         }
-        const pts = parsePath(getStr(this.node, "light_path"));
+        const pts = parsePath(getStr(this.node, TARGET));
         const hit = pts.findIndex((p) =>
           Math.hypot(x - (r.x + p[0] * r.w), y - (r.y + p[1] * r.h)) <= 8);
         if (e.shiftKey) {                       // shift-click removes a point
           if (hit >= 0) {
             pts.splice(hit, 1);
-            setStr(this.node, "light_path", formatPath(pts));
+            setStr(this.node, TARGET, formatPath(pts));
           }
         } else if (hit >= 0) {
           this.drag = "point";
           this.dragPoint = hit;
           this.canvas.setPointerCapture(e.pointerId);
         } else {
+          if (pts.length >= tool.max) pts.pop();   // a tracker pair is full
           pts.push(toUV());
-          setStr(this.node, "light_path", formatPath(pts));
+          setStr(this.node, TARGET, formatPath(pts));
           this.drag = "point";
           this.dragPoint = pts.length - 1;
           this.canvas.setPointerCapture(e.pointerId);
@@ -470,10 +528,10 @@ class PointPicker {
       this.drag = dl <= df ? "light" : "flare";
       this.canvas.setPointerCapture(e.pointerId);
     } else if (e.type === "pointermove" && this.drag === "point") {
-      const pts = parsePath(getStr(this.node, "light_path"));
+      const pts = parsePath(getStr(this.node, TARGET));
       if (this.dragPoint >= 0 && this.dragPoint < pts.length) {
         pts[this.dragPoint] = toUV();
-        setStr(this.node, "light_path", formatPath(pts));
+        setStr(this.node, TARGET, formatPath(pts));
         this.node.setDirtyCanvas(true, false);
         this.draw();
       }
@@ -1501,6 +1559,28 @@ class FlareEditor {
         "detect_max_lights", [1, 16, 1]);
       nodeSlider("smoothing", "track_smoothing", [0, 0.98, 0.01]);
       nodeSlider("max jump", "track_max_jump", [0.01, 0.5, 0.01]);
+      nodeSlider("travel", "light_travel", [0, 1, 0.01]);
+    } else if (mode === "point_track") {
+      const marks = parsePath(getStr(this.node, "track_points"));
+      const count = document.createElement("label");
+      count.textContent = marks.length === 0 ? "no tracker placed"
+        : marks.length === 1 ? "1 tracker — position only"
+        : "2 trackers — position, rotation, scale";
+      const clear = document.createElement("button");
+      clear.className = "fcore-btn";
+      clear.textContent = "clear";
+      clear.disabled = !marks.length;
+      clear.onclick = () => {
+        setStr(this.node, "track_points", "");
+        this.node.setDirtyCanvas(true, false);
+        this.build();
+      };
+      const col = document.createElement("div");
+      col.className = "fcore-col";
+      col.append(count, clear);
+      row.appendChild(col);
+      nodeSlider("feature px", "track_feature", [8, 128, 2]);
+      nodeSlider("search px", "track_search", [8, 256, 2]);
       nodeSlider("travel", "light_travel", [0, 1, 0.01]);
     } else if (mode === "path") {
       const pts = parsePath(getStr(this.node, "light_path"));
