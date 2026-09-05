@@ -172,3 +172,94 @@ picked texture with its filename. And one real bug found by driving the DOM:
 adding a lens_dirt texture via **+ add → library** skipped the lens-plate
 defaults (the gallery pick had them) — the full-frame wash again. Fixed on
 both paths.
+
+
+---
+
+# Round three: the tracking rewrite
+
+Commit `b9c88ac`, 331 tests, server restarted, one instance. **Reload the
+browser** and then read the first section below before anything else.
+
+## What was actually wrong — and why my numbers missed it
+
+I rendered contact sheets of every mode over your driving shot and looked at
+them the way you do. One glance:
+
+**The sun is above the top edge of the frame.** Every detector was placing the
+light on the visible *sky patch* below it — the wrong place — and because the
+flare's anchor sits at frame centre, every wobble of that patch as branches
+crossed it swept the ghost chain across the picture. My metrics said the
+light was "steady to 0.007". It was steadily in the wrong place, and the
+ghosts were doing the moving. No brightness detector can find a light that
+isn't in the picture.
+
+What *is* in the picture is how everything moves. A sun is at infinity: it
+moves only with camera rotation, and camera rotation is exactly what the far
+features in the frame reveal. So the fix is the one compositors use — **track
+the camera, not the sun** — and a research agent's survey of Nuke/AE practice
+came back saying the same thing independently.
+
+## `follow` — the mode for this shot
+
+1. Set position mode to **`follow`**.
+2. **Drag the light to where the sun really is — above the frame.** The
+   picker now has room around the picture; put it at roughly (0.88, −0.08)
+   for this clip.
+3. Render.
+
+The camera carries the light. Nothing is detected, so an off-frame sun, a
+clipped sky and a canopy of branches cannot touch it. On your shot: max step
+**0.0035**, the light above the frame in every tile, the ghost bars holding
+one spot across the whole clip.
+
+Under the hood: Shi-Tomasi corners chosen *per grid cell* (sharp trunks and
+road otherwise take every slot and the sky is never tracked at all — I
+measured all 48 corners landing on the foreground), batched pyramidal
+Lucas–Kanade at 35 ms/frame, and a **rigid** fit — rotation and shift, scale
+fixed — because a free scale reads driving forward as a zoom and pushes an
+off-frame light out a little more every frame (drift 0.56 of the frame in
+60 frames with scale free, 0.02 with it fixed).
+
+## Every other mode, anchored to the scene
+
+`detect`, `track`, `track_dots` and `lock` now carry the light from its most
+confident frame by the camera's motion, and only the detector's
+*disagreement* with that is smoothed — median-filtered, clipped to a few
+percent of frame so a hop to a rival source cannot drag it, then low-passed.
+Measured on your shot, mean step per frame / worst step:
+
+| mode | before tonight | now |
+|---|---|---|
+| detect | 0.26 / 0.93, teleports | **0.0016 / 0.0041** |
+| track | 0.0099 / 0.048 | **0.0018 / 0.0047** |
+| lock | 0.0073 / 0.059 | **0.0014 / 0.0053** |
+| follow | — | **0.0017 / 0.0035** |
+
+A new **`scene lock`** control sets the strength: **1** for a sun (it moves
+only with the camera), **0** for a light that moves on its own — headlights
+crossing frame, a torch. A matte with no scene in it is left alone
+automatically, so your dot matte keeps its full travel (verified: unchanged).
+
+## Settings applied when you pick a mode
+
+Choosing a mode now sets it up with the values that measured best —
+threshold 0.6, smoothing 0.85–0.9, scene lock 1 for the sun modes; scene
+lock 0 and max lights 4 for dots. You can still change anything afterwards.
+
+## Your saved workflow
+
+I set `light_depth` to 0.1 and `occlusion_radius` to 0.03 on both render
+nodes (backup `.bak3`). Those were the blank frames. Everything else in your
+file is untouched.
+
+## Also in this round
+
+- The **point tracker** was rebuilt: pyramidal LK frame-to-frame with a
+  forward–backward confidence check, drift correction and NCC re-acquisition.
+  A feature that zooms ×1.6 now tracks to 1 px; the old one died at frame 12.
+  Two of the "failures" I chased turned out to be features leaving the frame.
+- The **element hover preview** you asked for is back, and better: every
+  element — procedural ones included — renders **solo, as configured**
+  (colour, scale, count, blur) into a 260 px popover, via a small CPU render
+  cached by content. ~10–17 ms.
