@@ -316,6 +316,40 @@ showing where the tracker may look, and the report says how many candidates
 the region rejected. Distances are in units of frame height, matching
 `max_jump`.
 
+## 3q. max_jump is a gate, and its default was far too loose (2026-09-05)
+
+Follow-up to 3p: with the flare no longer duplicating, the remaining
+complaint was the light wandering around the sun. Reproduced with five
+similar-sized blown-out blobs clustered within ~0.15 of frame height, taking
+turns being brightest (what a canopy does to a sun): the tracked point roamed
+the cluster, worst frame-to-frame move 0.048, spread 0.078.
+
+Two causes, one of them the real one:
+
+- **Association anchored on the smoothed state.** The EMA position sits
+  BETWEEN rival blobs, so "nearest candidate" flips between them. It now
+  measures from the track's predicted position — the last actual observation
+  carried forward by a velocity computed from observations rather than from
+  the damped state. Fixing this alone only moved 0.055 to 0.047.
+- **`max_jump` was sized like a tolerance, not like a gate.** It is the only
+  thing deciding whether a candidate may continue a track, so at the old
+  default of 0.12 (0.15 in the shipped workflow) every rival within 12% of
+  frame height was a legal match. Sweeping it showed a cliff: 0.15 -> 0.048
+  worst move, 0.10 -> 0.042, and at 0.06 and below 0.0003, locked for the
+  whole clip. Default is now 0.06 (0.05 in the video lab).
+
+A light in real footage moves well under 0.03 of frame height per frame, so
+the tighter gate costs nothing — and because association measures from the
+PREDICTION, a genuinely fast light keeps its track once moving; a test pins a
+source crossing at 0.055 of frame width per frame staying a single track.
+
+The detector now also reports `energy` (above-floor luminance summed over the
+peak's neighbourhood) and association penalises a candidate carrying much
+less of it than the light being followed. Brightness cannot discriminate in
+this footage because every bright thing has clipped to pure white; size
+still can. It is a secondary effect next to the gate, kept because it is the
+part that generalises to a sun beside a small specular glint.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

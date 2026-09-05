@@ -741,3 +741,77 @@ class TestBusySceneTracking:
         ringed = self._track(clip, search_radius=0.3, search_u=0.5,
                              search_v=0.5)[1]
         assert not torch.allclose(plain, ringed)
+
+class TestTrackerLocksOn:
+    """A canopy breaks a sun into several rivals of similar size that take
+    turns being brightest. The tracker must pick one and hold it, not roam
+    the cluster — and must still follow a genuinely fast light."""
+
+    def _cluster(self, b=14, h=270, w=480):
+        spots = [(0.60, 0.25), (0.68, 0.31), (0.53, 0.30), (0.63, 0.17),
+                 (0.72, 0.22)]
+        yy, xx = torch.meshgrid(torch.arange(h, dtype=torch.float32),
+                                torch.arange(w, dtype=torch.float32),
+                                indexing="ij")
+        clip = torch.zeros(b, h, w, 3)
+        for i in range(b):
+            img = torch.zeros(h, w)
+            for k, (gu, gv) in enumerate(spots):
+                amp = 0.88 + 0.16 * math.sin(i * 1.15 + k * 1.7)
+                gd = torch.sqrt((xx - gu * w) ** 2 + (yy - gv * h) ** 2)
+                img = torch.maximum(img, torch.clamp(1.5 - gd / 17.0, 0, 1) * amp)
+            clip[i] = (img.unsqueeze(-1).clamp(0, 1)
+                       * torch.tensor([1.0, 0.98, 0.94])) + 0.06
+        return clip.clamp(0, 1)
+
+    def _travel(self, lights):
+        pts = [(f[0]["u"], f[0]["v"]) for f in lights if f]
+        return max(math.hypot(b[0] - a[0], b[1] - a[1])
+                   for a, b in zip(pts, pts[1:]))
+
+    def test_locks_onto_one_source_in_a_cluster(self):
+        lights, _, _ = PKG.NODE_CLASS_MAPPINGS["FlareTrack"]().track(
+            self._cluster(), detect_threshold=0.75, detect_max_lights=1,
+            smoothing=0.6, max_jump=0.06, hold_frames=3, fade_frames=4)
+        assert all(len(f) == 1 for f in lights)
+        us = [f[0]["u"] for f in lights]
+        assert max(us) - min(us) < 0.01, f"flare roamed the cluster: {us}"
+        assert self._travel(lights) < 0.01
+
+    def test_a_loose_gate_is_what_lets_it_roam(self):
+        # the same clip with the old permissive gate: this is the behaviour
+        # the default change fixes, pinned so the reason stays visible
+        lights, _, _ = PKG.NODE_CLASS_MAPPINGS["FlareTrack"]().track(
+            self._cluster(), detect_threshold=0.75, detect_max_lights=1,
+            smoothing=0.6, max_jump=0.15, hold_frames=3, fade_frames=4)
+        us = [f[0]["u"] for f in lights]
+        assert max(us) - min(us) > 0.03
+
+    def test_fast_light_still_keeps_one_track(self):
+        # a light crossing at 0.04 of frame height per frame — well beyond a
+        # naive reading of max_jump=0.06 once you include its own motion
+        b, h, w = 14, 270, 480
+        yy, xx = torch.meshgrid(torch.arange(h, dtype=torch.float32),
+                                torch.arange(w, dtype=torch.float32),
+                                indexing="ij")
+        clip = torch.zeros(b, h, w, 3)
+        for i in range(b):
+            cx = (0.12 + 0.055 * i) * w
+            d = torch.sqrt((xx - cx) ** 2 + (yy - 0.4 * h) ** 2)
+            clip[i] = (torch.clamp(1.5 - d / 16.0, 0, 1).unsqueeze(-1)
+                       * torch.tensor([1.0, 0.98, 0.94])) + 0.05
+        lights, _, report = PKG.NODE_CLASS_MAPPINGS["FlareTrack"]().track(
+            clip.clamp(0, 1), detect_threshold=0.75, detect_max_lights=1,
+            smoothing=0.6, max_jump=0.06, hold_frames=3, fade_frames=4)
+        tids = {lg["tid"] for f in lights for lg in f}
+        assert tids == {0}, f"fast light fragmented into tracks {tids}"
+        us = [f[0]["u"] for f in lights if f]
+        assert us[-1] - us[0] > 0.5           # it really did cross the frame
+
+    def test_detector_reports_energy(self):
+        from flare.detect import detect_lights
+        from flare.colorspace import srgb_to_linear
+        det = detect_lights(srgb_to_linear(self._cluster()), threshold=0.75,
+                            max_lights=12)
+        assert all("energy" in c and c["energy"] > 0
+                   for frame in det for c in frame)

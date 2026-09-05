@@ -31,7 +31,7 @@ def _smooth01(r: float) -> float:
 
 
 def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
-                 max_jump: float = 0.12, hold: int = 3,
+                 max_jump: float = 0.06, hold: int = 3,
                  fade: int = 4, max_tracks: int | None = None) -> list[list[dict]]:
     """Stabilize per-frame detections into temporally coherent lights.
 
@@ -44,6 +44,13 @@ def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
     smoothing: 0 = raw positions, ->1 = heavier position/brightness EMA.
     max_jump: maximum per-frame travel (fraction of frame height) for a
         detection to continue an existing track; beyond it a new track opens.
+        Size it to how fast the light actually MOVES between frames, not to
+        how far away other lights are: it doubles as the gate that stops a
+        track hopping onto a rival source. A sun in a driving shot travels
+        well under 0.03 of frame height per frame, so the default is small
+        on purpose. Because association measures from the track's PREDICTED
+        position, a genuinely fast light still keeps its track once its
+        velocity is established.
     hold: frames a track survives unmatched at full strength-decay grace.
     fade: frames over which a track ramps in when born and out when lost.
     max_tracks: cap on how many lights may exist at once. Without it every
@@ -55,6 +62,13 @@ def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
     brightness already multiplied by the fade ramp, ordered by track id so
     a light keeps its slot from frame to frame.
     """
+    # How much a candidate's size mismatch counts against it, relative to
+    # distance. 1.0 means "half the energy" costs as much as being a full
+    # max_jump away: enough for a bright sun to hold its track against a
+    # small gap in the leaves that happens to be nearer, without stopping a
+    # genuinely dimming light from being followed.
+    energy_bias = 1.0
+
     smoothing = min(max(smoothing, 0.0), 0.98)
     blend = 1.0 - smoothing
     fade = max(fade, 1)
@@ -67,31 +81,49 @@ def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
         dets = sorted(frame, key=lambda d: (-d.get("brightness", 1.0),
                                             d["v"], d["u"]))
 
-        # greedy association: nearest pairs first, deterministic tie-break
+        # Greedy association, best pairs first. Two details matter when a
+        # cluster of rival blobs surrounds the light (canopy gaps around a
+        # sun):
+        #  - distance is measured from where the track is PREDICTED to be
+        #    (last observation carried forward by its velocity), not from
+        #    its smoothed state. The smoothed state sits between rivals, so
+        #    "nearest" flips between them and the flare wanders the cluster.
+        #  - a candidate carrying much less energy than the light being
+        #    followed pays for it, so a small gap does not steal the track
+        #    from a big source just by being marginally closer.
         pairs = []
         for di, det in enumerate(dets):
             for tid, tr in tracks.items():
-                dist = math.hypot(det["u"] - tr["u"], det["v"] - tr["v"])
-                if dist <= max_jump:
-                    pairs.append((dist, tid, di))
-        pairs.sort(key=lambda p: (p[0], p[1], p[2]))
+                pu = tr["out_u"] + tr["vu"]
+                pv = tr["out_v"] + tr["vv"]
+                dist = math.hypot(det["u"] - pu, det["v"] - pv)
+                if dist > max_jump:
+                    continue
+                deficit = 0.0
+                if tr["e"] > 0.0:
+                    deficit = max(0.0, (tr["e"] - det.get("energy", 0.0)) / tr["e"])
+                cost = dist / max_jump + energy_bias * deficit
+                pairs.append((cost, dist, tid, di))
+        pairs.sort(key=lambda p: (p[0], p[2], p[3]))
 
         matched_tracks: set[int] = set()
         matched_dets: set[int] = set()
-        for dist, tid, di in pairs:
+        for cost, dist, tid, di in pairs:
             if tid in matched_tracks or di in matched_dets:
                 continue
             matched_tracks.add(tid)
             matched_dets.add(di)
             tr = tracks[tid]
             det = dets[di]
-            pu, pv = tr["u"], tr["v"]
             tr["u"] += (det["u"] - tr["u"]) * blend
             tr["v"] += (det["v"] - tr["v"]) * blend
-            tr["vu"] = tr["vu"] * 0.7 + (tr["u"] - pu) * 0.3
-            tr["vv"] = tr["vv"] * 0.7 + (tr["v"] - pv) * 0.3
+            # velocity from the OBSERVATIONS, so the prediction that drives
+            # association is not damped by the smoothing factor
+            tr["vu"] = tr["vu"] * 0.7 + (det["u"] - tr["out_u"]) * 0.3
+            tr["vv"] = tr["vv"] * 0.7 + (det["v"] - tr["out_v"]) * 0.3
             b = det.get("brightness", 1.0)
             tr["b"] += (b - tr["b"]) * blend
+            tr["e"] += (det.get("energy", 0.0) - tr["e"]) * blend
             tr["missed"] = 0
             tr["ramp"] = min(tr["ramp"] + 1.0 / fade, 1.0)
             # the OUTPUT position is the raw detection; the EMA above exists
@@ -121,6 +153,7 @@ def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
                 "u": det["u"], "v": det["v"], "vu": 0.0, "vv": 0.0,
                 "out_u": det["u"], "out_v": det["v"],
                 "b": det.get("brightness", 1.0),
+                "e": det.get("energy", 0.0),
                 "missed": 0, "ramp": 1.0 / fade,
             }
             born.add(next_tid)

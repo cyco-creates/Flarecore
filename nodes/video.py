@@ -51,8 +51,13 @@ class FlareTrack:
                     "tooltip": "position/brightness EMA: 0 = raw detections, higher = stiller",
                 }),
                 "max_jump": ("FLOAT", {
-                    "default": 0.12, "min": 0.01, "max": 1.0, "step": 0.01,
-                    "tooltip": "max per-frame travel (fraction of height) that still continues a track",
+                    "default": 0.06, "min": 0.01, "max": 1.0, "step": 0.01,
+                    "tooltip": "how far the light may travel between frames "
+                               "(fraction of height). This is also the gate "
+                               "that stops the flare hopping onto a rival "
+                               "light: if it wanders between nearby sources, "
+                               "lower it. Raise it only for genuinely fast "
+                               "motion.",
                 }),
                 "hold_frames": ("INT", {
                     "default": 3, "min": 0, "max": 30,

@@ -43,8 +43,11 @@ def detect_lights(image_linear: torch.Tensor, threshold: float = 0.8,
     window: local-maximum window size in pixels (odd).
 
     Returns a list of length B; each entry is a list of dicts
-    {"u", "v", "brightness"} with u/v in [0, 1], subpixel, ordered
-    brightest first.
+    {"u", "v", "brightness", "energy"} with u/v in [0, 1], subpixel, ordered
+    brightest first. `energy` is the above-floor luminance summed over the
+    peak's neighbourhood — a stand-in for how big the source is, and the
+    only thing that still tells a sun from a small gap in the leaves once
+    both have clipped to pure white.
     """
     if image_linear.dim() != 4:
         raise ValueError(f"expected (B, H, W, C) tensor, got shape {tuple(image_linear.shape)}")
@@ -89,11 +92,12 @@ def detect_lights(image_linear: torch.Tensor, threshold: float = 0.8,
         radius = max(2, min(int(min_sep_px / 2), 15))
         lights = []
         for py, px, brightness in kept:
-            cy, cx = _meanshift_centroid(lum[i], py, px, threshold, radius)
+            cy, cx, energy = _meanshift_centroid(lum[i], py, px, threshold, radius)
             lights.append({
                 "u": (cx + 0.5) / width,
                 "v": (cy + 0.5) / height,
                 "brightness": brightness,
+                "energy": energy,
             })
         results.append(lights)
     return results
@@ -101,11 +105,12 @@ def detect_lights(image_linear: torch.Tensor, threshold: float = 0.8,
 
 def _meanshift_centroid(lum: torch.Tensor, py: int, px: int,
                         threshold: float, radius: int,
-                        iterations: int = 3) -> tuple[float, float]:
+                        iterations: int = 3) -> tuple[float, float, float]:
     """Above-threshold-weighted centroid, re-centred a few times.
 
     The seed pixel of a saturated plateau is its top-left rim; iterating the
-    windowed centroid walks the estimate into the blob's centre.
+    windowed centroid walks the estimate into the blob's centre. Also returns
+    the window's above-floor luminance sum as the peak's energy.
     """
     height, width = lum.shape
     floor = threshold * 0.5
@@ -117,7 +122,8 @@ def _meanshift_centroid(lum: torch.Tensor, py: int, px: int,
         patch = (lum[y0:y1, x0:x1] - floor).clamp(min=0.0)
         total = patch.sum()
         if total <= 0:
-            return float(py), float(px)
+            return float(py), float(px), 0.0
+        energy = float(total)
         ys = torch.arange(y0, y1, device=lum.device, dtype=patch.dtype)
         xs = torch.arange(x0, x1, device=lum.device, dtype=patch.dtype)
         ny = ((patch.sum(dim=1) * ys).sum() / total).item()
@@ -126,4 +132,4 @@ def _meanshift_centroid(lum: torch.Tensor, py: int, px: int,
             cy, cx = ny, nx
             break
         cy, cx = ny, nx
-    return cy, cx
+    return cy, cx, energy

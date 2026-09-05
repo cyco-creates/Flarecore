@@ -115,6 +115,12 @@ The parts that make flares hold together across frames:
   If it locks onto the wrong light, set `search_radius` above 0 and put
   `search_u`/`search_v` on the one you want — only that region is searched,
   and the overlay draws a dashed ring showing where.
+  **If the flare wanders between nearby sources, lower `max_jump`.** It is
+  the gate deciding what may continue a track, so size it to how far the
+  light actually travels between frames (usually well under 0.03 of frame
+  height) rather than to how far apart the lights are. Association measures
+  from where the track is predicted to be, so a small gate still follows fast
+  motion.
 - **FlareKeyframes** hand-animates instead: `frame: u,v` paths for the light
   and optionally the flare anchor, linear or eased.
 - **FlareLightsSwitch** decides which one drives the flare, so a graph can
