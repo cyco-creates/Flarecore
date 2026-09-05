@@ -132,6 +132,14 @@ class FlareRender:
                     "tooltip": "path mode: 'u,v; u,v; ...' — drawn with the "
                                "picker's path tool, not typed.",
                 }),
+                "mask_falloff": ("FLOAT", {
+                    "default": 0.35, "min": 0.02, "max": 2.0, "step": 0.01,
+                    "tooltip": "how far a light's glow reaches when it lights "
+                               "elements that use light_mask (lens dirt, "
+                               "bloom). Fraction of frame height; smaller "
+                               "means the dirt only shows in a tight pool "
+                               "around the source.",
+                }),
             },
             "optional": {
                 "depth": ("IMAGE",),
@@ -148,7 +156,7 @@ class FlareRender:
                blend_mode, clamp_output, seed, occlusion_smooth=0.4,
                scene_color=0.0, track_smoothing=0.6, track_max_jump=0.06,
                depth_normalize="as_is", depth_blur=0.0,
-               depth_temporal_smooth=0.0, light_path="",
+               depth_temporal_smooth=0.0, light_path="", mask_falloff=0.35,
                depth=None, lights=None):
         preset = load_preset(preset_json)
 
@@ -248,7 +256,7 @@ class FlareRender:
             xx = torch.linspace(0.0, 1.0, width, device=device, dtype=dtype)
             gy, gx = torch.meshgrid(yy, xx, indexing="ij")
             aspect_px = width / height
-            falloff_r = 0.35  # of frame height
+            falloff_r = max(mask_falloff, 1e-3)  # of frame height
             for i, frame_lights in enumerate(lights_per_frame):
                 for light in frame_lights:
                     w = light.get("brightness", 1.0) * \

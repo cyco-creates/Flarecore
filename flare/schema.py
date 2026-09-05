@@ -67,6 +67,9 @@ ELEMENT_COMMON_DEFAULTS = {
     "blur": 0.0,            # 0..1 gaussian soften of the rendered element
     "irregular": 0.0,       # 0..1 seeded organic unevenness in the shape math
     "light_mask": 0.0,      # 0..1: modulate by scene brightness
+    "fill_frame": False,    # map this element across the whole frame, at the
+                            # frame's own aspect: a lens-surface plate covers
+                            # the front element, it is not a shape on black
     "screen_space": False,  # lock to the lens (frame), not the flare axis —
                             # rendered once per frame, scaled by the
                             # brightest light; lens-dirt behaviour
@@ -260,6 +263,7 @@ def _validate_element(raw: dict, index: int) -> dict:
                                         lo=0.0, hi=1.0)
     elem["light_mask"] = _require_number(elem["light_mask"], f"{where}.light_mask",
                                          lo=0.0, hi=1.0)
+    elem["fill_frame"] = bool(elem["fill_frame"])
     elem["screen_space"] = bool(elem["screen_space"])
     # dispersion scales coordinates by 1 - d*0.05*w; past 8 the look is junk
     # and at 20 the red sample collapses to a full-frame constant

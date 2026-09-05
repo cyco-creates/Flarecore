@@ -114,17 +114,24 @@ class FlareTexturePrepare:
                     "tooltip": "Black breathing room on every side; 0.25 keeps "
                                "the content in the middle half so it never crops.",
                 }),
+                "frame": (["square", "wide_16_9"], {
+                    "tooltip": "square: an element on black (ghosts, rays, "
+                               "glows). wide_16_9: a lens-surface plate "
+                               "(dirt, orbs, droplets) that must fill the "
+                               "frame — no crop, no centring, no feather.",
+                }),
             },
         }
 
     def prepare(self, image, mode, black_point, autocenter, feather, size,
-                margin=0.25):
+                margin=0.25, frame="square"):
         dtype = image.dtype if image.dtype.is_floating_point else torch.float32
         frames = [
-            prepare_element(frame[..., :3].to(dtype), mode=mode,
+            prepare_element(f[..., :3].to(dtype), mode=mode,
                             black_point=black_point, autocenter=autocenter,
-                            feather=feather, size=size, margin=margin)
-            for frame in image
+                            feather=feather, size=size, margin=margin,
+                            frame=frame)
+            for f in image
         ]
         out = torch.stack(frames, dim=0)
         return (out, luminance(out).clamp(0.0, 1.0))

@@ -422,6 +422,51 @@ initialization" on every repaint, which silently stopped the panel
 rebuilding — the dropdown changed the widget but the row never updated. The
 console was what found it; the symptom looked like a rebuild bug.
 
+## 3u. Lens-surface plates fill the frame (2026-09-05)
+
+Owner: dirt, orbs and droplets "must be rendered in 16:9 and cover the whole
+frame, no feather, visible only where the light is with controlled fall off."
+
+A plate that lives ON the front element is not a subject on a black field, so
+the square-crop/centre/feather pipeline is wrong for it in every particular —
+the feather alone paints a dark vignette across the frame it is meant to fill.
+
+- `FlareTexturePrepare` gained `frame`: `wide_16_9` skips the square crop,
+  the energy centring and the feather, and resizes to 16:9 (2048x1152). The
+  lens_dirt library was re-forged at 16:9 through it; the category is now
+  uniformly full-frame.
+- New element key `fill_frame`: the element's local coordinates span the
+  frame exactly at scale 1, at the FOOTAGE's aspect rather than the file's,
+  and the anamorphic squeeze does not apply to it — the plate is on the lens,
+  not seen through it. Verified on a 2.39:1 render with a 16:9 plate.
+- `mask_falloff` on FlareRender replaces the hard-coded 0.35: how far a
+  light's glow reaches when it reveals light_mask elements. Measured on the
+  demo, flare energy goes 1251 / 2566 / 4330 at 0.15 / 0.35 / 0.8.
+
+Where the plate SHOWS is decided at render time by `light_mask` and this
+falloff, never by baking a shape into the file.
+
+## 3v. Everything but the panels hides behind the gear (2026-09-05)
+
+Owner found track_smoothing, track_max_jump and the rest sitting on the node
+face. They were: the hide list named the widgets to hide, so every input
+appended since (scene_color, the track and depth controls, light_path,
+mask_falloff) stayed visible until someone remembered to add it. Inverted to
+name what STAYS — the two DOM panels — so anything appended later is hidden
+automatically.
+
+Fixing it introduced a duplicate `const PANEL_WIDGETS`, which is a module
+evaluation error: the extension silently did not register at all, and the
+node fell back to bare widgets with no picker or editor. `node --check`
+parses as a script and did NOT catch it. The reliable check is to strip the
+imports and parse as a module:
+
+    sed 's|^import .*|//|' web/flarecore_ui.js > mod.mjs && node --check mod.mjs
+
+which does catch a duplicate declaration. Console errors alone were
+misleading here — the browser had cached the previous module, so old stack
+traces kept surfacing after the source was already fixed.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

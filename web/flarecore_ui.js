@@ -18,14 +18,13 @@ const PANEL_WIDGETS = new Set(["flare_layout", "flare_editor"]);
 
 // Everything else on the node hides behind the ⚙ button — the picker and
 // the editor are the interface; the widgets are the escape hatch.
-const NODE_WIDGETS = [
-  "preset_json", "position_mode",
-  "light_x", "light_y", "flare_x", "flare_y",
-  "detect_threshold", "detect_max_lights",
-  "occlusion_radius", "light_depth", "invert_depth",
-  "intensity", "scale", "blend_mode", "clamp_output",
-  "seed", "control_after_generate", "occlusion_smooth",
-];
+// The two DOM panels ARE the interface and always show; everything else is
+// the escape hatch. Listing what stays rather than what hides means an input
+// appended later is hidden automatically instead of sitting on the node face
+// until someone remembers to add it here.
+function nodeWidgets(node) {
+  return (node.widgets || []).filter((w) => !PANEL_WIDGETS.has(w.name));
+}
 
 function hideWidget(w) {
   if (w._fcHidden) return;
@@ -62,9 +61,8 @@ function setAdvanced(node, visible) {
   // properties are serialized with the workflow, so the toggle survives
   // save/load — a plain JS field would silently reset to closed
   if (node.properties) node.properties.fc_advanced = visible;
-  for (const name of NODE_WIDGETS) {
-    const w = node.widgets?.find((x) => x.name === name);
-    if (w) (visible ? showWidget : hideWidget)(w);
+  for (const w of nodeWidgets(node)) {
+    (visible ? showWidget : hideWidget)(w);
   }
   // grow when the widgets need more room, but never shrink a node the user
   // deliberately made taller
@@ -532,7 +530,7 @@ const ADD_MENU = [
 const ADD_DEFAULTS = {
   glow: { type: "glow", label: "glow", offset: 0, scale: 0.4, intensity: 1, color: [1, 0.95, 0.85], params: { softness: 0.35, falloff: 1.3 } },
   bloom: { type: "glow", label: "bloom", offset: 0, scale: 2.2, intensity: 0.5, auto_rotate: false, light_mask: 1, color: [1, 0.97, 0.9], params: { softness: 1.1, falloff: 0.7 } },
-  lens_dirt: { type: "texture", label: "lens dirt", offset: 0, scale: 1.3, intensity: 0.7, auto_rotate: false, screen_space: true, light_mask: 1, params: { file: "", channel: "auto" } },
+  lens_dirt: { type: "texture", label: "lens dirt", offset: 0, scale: 1.0, intensity: 0.7, auto_rotate: false, screen_space: true, fill_frame: true, light_mask: 1, params: { file: "", channel: "auto" } },
   fog: { type: "glow", label: "fog", offset: 0, scale: 1.6, intensity: 0.25, color: [1, 0.97, 0.9], params: { softness: 0.8, falloff: 0.8 } },
   disc: { type: "iris", label: "disc", offset: 0.5, scale: 0.16, intensity: 0.3, color: [0.8, 0.9, 1], params: { blades: 24, edge_softness: 0.55 } },
   iris: { type: "iris", label: "iris", offset: 0.7, scale: 0.12, intensity: 0.25, color: [0.85, 0.93, 1], dispersion: 0.4, params: { blades: 8, edge_softness: 0.3 } },
@@ -1651,6 +1649,8 @@ class FlareEditor {
       (v) => set("auto_rotate", v)));
     adv.appendChild(checkbox("screen space (lens)", elem.screen_space === true,
       (v) => set("screen_space", v)));
+    adv.appendChild(checkbox("fill frame (lens plate)", elem.fill_frame === true,
+      (v) => set("fill_frame", v)));
 
     for (const [key, spec] of Object.entries(COMMON_SPECS)) {
       adv.appendChild(sliderCol(key.replace(/_/g, " "),

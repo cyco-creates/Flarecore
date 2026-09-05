@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for the movable flare anchor and texture elements."""
+import json
 import sys
 from pathlib import Path
 
 import pytest
+import numpy as np
 import torch
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -264,3 +267,88 @@ class TestMarginAndLegacyRefs:
         # the library was reorganised; old presets may still say iris_ghosts/
         t = lib.load_texture("iris_ghosts/hex_soft.png", "luminance")
         assert t.shape[0] > 0
+
+
+def _lib():
+    from test_nodes import PKG
+    return PKG.nodes.library
+
+
+class TestLensPlates:
+    """Dirt, orbs and droplets sit ON the front element: they cover the whole
+    frame, carry no feathered border, and are revealed by the light rather
+    than by their own shape."""
+
+    def test_wide_frame_keeps_the_full_image(self):
+        from flare.texture_prep import prepare_element
+        img = torch.ones(720, 1280, 3) * 0.8
+        out = prepare_element(img, black_point=0.0, feather=0.4, size=256,
+                              margin=0.25, frame="wide_16_9")
+        assert out.shape == (144, 256, 3)          # 16:9, not square
+        # no feather and no margin: the corners are as bright as the middle
+        for corner in (out[0, 0], out[0, -1], out[-1, 0], out[-1, -1]):
+            assert float(corner.mean()) == pytest.approx(0.8, abs=0.02)
+
+    def test_wide_frame_does_not_recentre(self):
+        from flare.texture_prep import prepare_element
+        img = torch.zeros(720, 1280, 3)
+        img[100:160, 100:160] = 1.0                # a mark up in the corner
+        out = prepare_element(img, black_point=0.0, autocenter=True,
+                              feather=0.0, size=256, frame="wide_16_9")
+        ys, xs = torch.nonzero(out.mean(-1) > 0.5, as_tuple=True)
+        assert xs.float().mean() < 128 * 0.5       # still off to the left
+        assert ys.float().mean() < 144 * 0.5
+
+    def test_square_frame_is_unchanged(self):
+        from flare.texture_prep import prepare_element
+        img = torch.rand(300, 300, 3)
+        a = prepare_element(img, size=96)
+        b = prepare_element(img, size=96, frame="square")
+        assert torch.allclose(a, b)
+
+    def test_fill_frame_covers_a_wide_frame_corner_to_corner(self):
+        lib = _lib()
+        # a plate that is solid everywhere: with fill_frame it must reach
+        # every corner of a 16:9 render, where a normal element would not
+        plate = torch.ones(1, 64, 114, 3)
+        ref = "lens_dirt/_test_fill.png"
+        path = lib.ELEMENTS_DIR / "lens_dirt" / "_test_fill.png"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        Image.fromarray((plate[0].numpy() * 255).astype(np.uint8)).save(path)
+        try:
+            preset = {"schema_version": 1, "elements": [{
+                "type": "texture", "offset": 0.0, "scale": 1.0,
+                "intensity": 1.0, "auto_rotate": False, "screen_space": True,
+                "fill_frame": True,
+                "params": {"file": ref, "channel": "luminance"}}]}
+            v = validate_preset(preset)
+            lib.resolve_preset_textures(v, device="cpu", dtype=torch.float32)
+            out = render_stack(v, [{"x": 0.0, "y": 0.0}], 90, 160, "cpu",
+                               torch.float32).sum(-1)
+            for corner in (out[0, 0], out[0, -1], out[-1, 0], out[-1, -1]):
+                assert float(corner) > 0.5, "fill_frame left a corner empty"
+
+            v2 = validate_preset({"schema_version": 1, "elements": [{
+                "type": "texture", "offset": 0.0, "scale": 1.0,
+                "intensity": 1.0, "auto_rotate": False, "screen_space": True,
+                "params": {"file": ref, "channel": "luminance"}}]})
+            lib.resolve_preset_textures(v2, device="cpu", dtype=torch.float32)
+            plain = render_stack(v2, [{"x": 0.0, "y": 0.0}], 90, 160, "cpu",
+                                 torch.float32).sum(-1)
+            # without it the square element cannot reach the wide frame's sides
+            assert float(plain[45, 0]) < 0.5
+        finally:
+            path.unlink(missing_ok=True)
+
+    def test_mask_falloff_controls_how_far_the_dirt_shows(self):
+        from test_nodes import run_node
+        preset = json.dumps({"schema_version": 1, "elements": [{
+            "type": "glow", "offset": 0.0, "scale": 2.5, "intensity": 1.0,
+            "auto_rotate": False, "light_mask": 1.0,
+            "params": {"softness": 1.2, "falloff": 0.4}}]})
+        plate = torch.zeros(1, 90, 160, 3)
+        tight = run_node(plate, preset_json=preset, light_x=0.5, light_y=0.5,
+                         mask_falloff=0.1)[1]
+        wide = run_node(plate, preset_json=preset, light_x=0.5, light_y=0.5,
+                        mask_falloff=0.9)[1]
+        assert wide.sum() > tight.sum() * 2

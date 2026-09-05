@@ -89,6 +89,11 @@ Elements can react to where the light is without keyframes:
 - **Lens orbs** — procedural out-of-focus specks locked to the lens, each lit
   by its distance to the light (`illumination`). Duplicate with a new seed and
   a different size for layered grime.
+- **Lens plates** (dirt, droplets, grime) sit on the front element: forge them
+  with `frame = wide_16_9` (no crop, no centring, no feather) and give the
+  element `fill_frame`, which spans the footage's own aspect whatever that is.
+  They are revealed only where the light reaches — `light_mask` on the element
+  decides how much, `mask_falloff` on the node decides how far.
 - `scene_color` on FlareRender tints each light's flare by the plate colour
   at the source, so a sunset sun flares warm and a sodium lamp flares orange.
 - Thin rays and rings are anti-aliased at sub-pixel widths with their energy

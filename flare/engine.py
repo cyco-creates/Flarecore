@@ -222,6 +222,7 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
     # always stretches along the screen's horizontal axis, so it is applied
     # to the screen-space x coordinate BEFORE the element's local rotation
     # (multiplying stretch_x instead would follow auto_rotate's axis angle).
+    x_frame = x                      # untouched grid, for fill_frame elements
     if global_aspect != 1.0:
         x = x / global_aspect
 
@@ -291,11 +292,22 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
             inst_weight = [(sc, w * light_rgb) for sc, w in inst_weight]
 
         params["_px"] = px_grid / scale_i
-        u0 = x - cx / global_aspect
-        v0 = y - cy
-        # rotate by -rot so the element's local frame is axis-aligned
-        u = (u0 * cos_i + v0 * sin_i) / (scale_i * stretch_x)
-        v = (-u0 * sin_i + v0 * cos_i) / (scale_i * stretch_y)
+        if elem.get("fill_frame"):
+            # spans the frame exactly at scale 1: u,v reach +-1 at the frame
+            # edges whatever the footage's aspect, and the anamorphic squeeze
+            # does not apply — the plate is ON the lens, not through it
+            u0 = x_frame - cx
+            v0 = y - cy
+            sx = scale_i * stretch_x * frame_aspect
+            sy = scale_i * stretch_y
+            u = (u0 * cos_i + v0 * sin_i) / sx
+            v = (-u0 * sin_i + v0 * cos_i) / sy
+        else:
+            u0 = x - cx / global_aspect
+            v0 = y - cy
+            # rotate by -rot so the element's local frame is axis-aligned
+            u = (u0 * cos_i + v0 * sin_i) / (scale_i * stretch_x)
+            v = (-u0 * sin_i + v0 * cos_i) / (scale_i * stretch_y)
         if elem["type"] == "orbs":
             lu0 = real_lx / global_aspect - cx / global_aspect
             lv0 = real_ly - cy

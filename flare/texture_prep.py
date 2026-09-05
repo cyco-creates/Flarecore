@@ -115,10 +115,20 @@ def resize_square(img: torch.Tensor, size: int) -> torch.Tensor:
     return x[0].permute(1, 2, 0)
 
 
+def resize_to(img: torch.Tensor, height: int, width: int) -> torch.Tensor:
+    """Resize (H, W, C) to exactly (height, width, C), antialiased."""
+    if img.shape[0] == height and img.shape[1] == width:
+        return img
+    x = img.permute(2, 0, 1).unsqueeze(0)
+    x = F.interpolate(x, size=(height, width), mode="bilinear",
+                      align_corners=False, antialias=True)
+    return x[0].permute(1, 2, 0)
+
+
 def prepare_element(img: torch.Tensor, mode: str = "rgb",
                     black_point: float = 0.06, autocenter: bool = True,
                     feather: float = 0.12, size: int = 512,
-                    margin: float = 0.0) -> torch.Tensor:
+                    margin: float = 0.0, frame: str = "square") -> torch.Tensor:
     """Full pipeline: (H, W, 3) in [0, 1] -> (size, size, 3) element texture.
 
     mode 'luminance' collapses to a neutral intensity element (returned as
@@ -128,10 +138,19 @@ def prepare_element(img: torch.Tensor, mode: str = "rgb",
     """
     if mode not in ("rgb", "luminance"):
         raise ValueError(f"mode must be 'rgb' or 'luminance', got {mode!r}")
+    if frame not in ("square", "wide_16_9"):
+        raise ValueError(f"frame must be 'square' or 'wide_16_9', got {frame!r}")
     out = img.clamp(0.0, 1.0)
     if mode == "luminance":
         out = _luminance(out).unsqueeze(-1).expand(-1, -1, 3).contiguous()
     out = subtract_floor(out, black_point)
+    if frame == "wide_16_9":
+        # A lens-surface plate (dirt, orbs, droplets) is not a subject on a
+        # black field: it covers the whole front element. So no square crop,
+        # no centring on energy, and no feathered border — a feather would
+        # paint a dark vignette across the frame it is meant to fill. Where
+        # it SHOWS is decided at render time by light_mask, not by the file.
+        return resize_to(out, int(round(size * 9 / 16)), size).clamp(0.0, 1.0)
     out = center_crop_square(out)
     if autocenter:
         out = center_on_energy(out)
