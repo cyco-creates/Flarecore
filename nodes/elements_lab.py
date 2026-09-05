@@ -23,6 +23,11 @@ from .library import ELEMENTS_DIR, list_elements
 
 PROMPTS_FILE = Path(__file__).resolve().parents[1] / "prompts" / "element_prompts.json"
 
+# Categories whose elements sit ON the front element rather than being a
+# shape in the image: they have to cover the frame, so they are prepared
+# wide and un-feathered. `frame: auto` reads the category and picks.
+LENS_PLATE_CATEGORIES = {"lens_dirt"}
+
 
 def _load_prompt_bank() -> dict:
     try:
@@ -114,17 +119,31 @@ class FlareTexturePrepare:
                     "tooltip": "Black breathing room on every side; 0.25 keeps "
                                "the content in the middle half so it never crops.",
                 }),
-                "frame": (["square", "wide_16_9"], {
-                    "tooltip": "square: an element on black (ghosts, rays, "
-                               "glows). wide_16_9: a lens-surface plate "
-                               "(dirt, orbs, droplets) that must fill the "
-                               "frame — no crop, no centring, no feather.",
+                "frame": (["auto", "square", "wide_16_9"], {
+                    "tooltip": "auto follows the category: lens_dirt is "
+                               "prepared as a full-frame 16:9 plate (no crop, "
+                               "no centring, no feather, no margin), anything "
+                               "else as a square element on black. Connect "
+                               "the prompt node's category output for auto to "
+                               "see it.",
+                }),
+            },
+            "optional": {
+                "category": ("STRING", {
+                    "forceInput": True,
+                    "tooltip": "from the prompt node; only used by frame=auto",
                 }),
             },
         }
 
     def prepare(self, image, mode, black_point, autocenter, feather, size,
-                margin=0.25, frame="square"):
+                margin=0.25, frame="square", category=""):
+        if frame == "auto":
+            # a lens plate covers the whole front element; everything else is
+            # a shape on black that needs room to breathe
+            frame = ("wide_16_9"
+                     if str(category).strip().lower() in LENS_PLATE_CATEGORIES
+                     else "square")
         dtype = image.dtype if image.dtype.is_floating_point else torch.float32
         frames = [
             prepare_element(f[..., :3].to(dtype), mode=mode,

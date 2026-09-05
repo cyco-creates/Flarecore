@@ -715,9 +715,11 @@ const CSS = `
   padding: 8px; resize: vertical; min-height: 150px; }
 .fcore-forge textarea:focus { outline: none; border-color: #e8a33d; }
 .fcore-forge .rowline { display: flex; gap: 8px; align-items: center; }
-.fcore-forge input[type=text] { background: #101014; color: #ddd; flex: 1;
-  border: 1px solid #34343e; border-radius: 6px; font-size: 11px;
-  height: 24px; padding: 0 8px; }
+.fcore-forge .styletext { background: #101014; color: #ddd;
+  border: 1px solid #34343e; border-radius: 8px; font: 11px/1.4 sans-serif;
+  padding: 6px 8px; resize: vertical; min-height: 52px; flex: 0 0 auto;
+  width: 100%; box-sizing: border-box; }
+.fcore-forge .styletext:focus { outline: none; border-color: #e8a33d; }
 /* the hint carries flex-basis:100% so it wraps onto its own line inside the
    horizontal source row; in this COLUMN panel that reads as 100% of the
    HEIGHT and it swallows every spare pixel meant for the prompt box. */
@@ -1153,10 +1155,14 @@ class FlareEditor {
         ? this.libraryFiles.filter((f) => f.startsWith(cat + "/")).length : 0;
       // never a dead end: an empty family opens the whole library with a note
       const empty = cat && inCat === 0;
+      // Name the ROW, not just its family: "veil" living in the glows
+      // family is correct but reads as a mismatch unless the header says so.
+      const rowName = elem.label || elem.type;
       openGallery(this.libraryFiles, {
         title: empty
-          ? `no ${cat.replace(/_/g, " ")} elements yet — showing everything`
-          : cat ? `${cat.replace(/_/g, " ")} — pick one` : "All elements",
+          ? `${rowName} — no ${cat.replace(/_/g, " ")} elements yet, showing everything`
+          : cat ? `${rowName} — pick a ${cat.replace(/_/g, " ")} element`
+                : `${rowName} — all elements`,
         selected: elem.type === "texture" ? (elem.params?.file || null) : null,
         category: empty ? null : cat,
         onShowAll: (cat && !empty)
@@ -1192,6 +1198,10 @@ class FlareEditor {
   }
 
   build() {
+    // Every edit rebuilds the list, which would otherwise throw the view back
+    // to the top — press solo on the tenth element and you lose your place.
+    // The scroller is .fcore-list; carry its offset across the rebuild.
+    const keptScroll = this.root.querySelector(".fcore-list")?.scrollTop ?? 0;
     this.root.textContent = "";
     const preset = this.read();
 
@@ -1402,6 +1412,12 @@ class FlareEditor {
       list.appendChild(empty);
     }
     this.root.appendChild(list);
+    // only now: a detached element has no scroll height, so assigning
+    // scrollTop before the append silently clamps to 0
+    if (keptScroll) {
+      list.scrollTop = keptScroll;
+      requestAnimationFrame(() => { list.scrollTop = keptScroll; });
+    }
   }
 
   // The light-source row: one dropdown, and only the controls that mode
@@ -1843,14 +1859,16 @@ function setupForgePanel(nodeType) {
     const styleLab = document.createElement("label");
     styleLab.textContent = "extra style";
     styleLab.style.cssText = "color:#aaa;font-size:11px;";
-    const styleText = document.createElement("input");
-    styleText.type = "text";
+    styleRow.append(styleToggle, styleLab);
+    // its own multi-line box: a style tail is a sentence, not a word
+    const styleText = document.createElement("textarea");
+    styleText.className = "styletext";
+    styleText.spellcheck = false;
     styleText.value = EXTRA_STYLE_SUGGESTION;
-    styleRow.append(styleToggle, styleLab, styleText);
 
     const hint = document.createElement("div");
     hint.className = "fcore-hint";
-    root.append(selRow, prompt, styleRow, hint);
+    root.append(selRow, prompt, styleRow, styleText, hint);
 
     for (const el of [catSel, elemSel, prompt, styleToggle, styleText]) {
       el.addEventListener("pointerdown", (e) => e.stopPropagation());

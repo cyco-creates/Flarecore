@@ -352,3 +352,41 @@ class TestLensPlates:
         wide = run_node(plate, preset_json=preset, light_x=0.5, light_y=0.5,
                         mask_falloff=0.9)[1]
         assert wide.sum() > tight.sum() * 2
+
+
+class TestAutoFramePicksTheTreatment:
+    """A lens_dirt element must come out of the forge as a full-frame 16:9
+    plate without anyone remembering to flip a switch."""
+
+    def _node(self):
+        from test_nodes import PKG
+        return PKG.NODE_CLASS_MAPPINGS["FlareTexturePrepare"]()
+
+    def _run(self, category, frame="auto"):
+        img = torch.rand(1, 720, 1280, 3) * 0.8 + 0.1
+        out, _ = self._node().prepare(
+            img, mode="rgb", black_point=0.0, autocenter=True, feather=0.2,
+            size=512, margin=0.25, frame=frame, category=category)
+        return out
+
+    def test_lens_dirt_is_wide_and_unfeathered(self):
+        out = self._run("lens_dirt")
+        assert out.shape[1:3] == (288, 512), "expected 16:9, got %s" % (out.shape,)
+        # no feather and no margin: the corners carry image, not black
+        for corner in (out[0, 0, 0], out[0, 0, -1], out[0, -1, 0], out[0, -1, -1]):
+            assert float(corner.mean()) > 0.02
+
+    def test_other_categories_stay_square_with_margin(self):
+        out = self._run("glows")
+        assert out.shape[1:3] == (512, 512)
+        assert float(out[0, :40].sum()) == 0.0        # the breathing margin
+
+    def test_auto_is_case_and_space_tolerant(self):
+        assert self._run(" Lens_Dirt ").shape[1:3] == (288, 512)
+
+    def test_explicit_frame_still_wins(self):
+        assert self._run("lens_dirt", frame="square").shape[1:3] == (512, 512)
+        assert self._run("glows", frame="wide_16_9").shape[1:3] == (288, 512)
+
+    def test_missing_category_falls_back_to_square(self):
+        assert self._run("").shape[1:3] == (512, 512)

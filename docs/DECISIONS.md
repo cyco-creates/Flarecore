@@ -601,6 +601,28 @@ size and 649px at 800.
 The prompt box also carries `resize: vertical` so it can be dragged on its
 own, and the shipped prompt node is 460x520 rather than 431x359.
 
+## 3ab. Auto lens-plate framing, scroll retention, gallery naming (2026-09-05)
+
+Owner forged a lens_dirt element and got a square 2K with margins: the 16:9
+treatment from 3u was a manual switch on FlareTexturePrepare, and a default
+that needs remembering is a default that fails. `frame` gained `auto` (the
+default for new nodes; saved workflows keep their stored value) and an
+optional `category` input, wired from the prompt node in the shipped studio.
+auto resolves lens_dirt to wide_16_9 and everything else to square. Explicit
+square/wide_16_9 still win.
+
+Editing a row scrolled the stack back to the top: every edit rebuilds the
+list. The offset is now carried across the rebuild — assigned AFTER the new
+list is attached, because a detached element has no scroll height and the
+first attempt silently clamped to 0.
+
+Owner read "veil opens the glows library" as the library being out of sync.
+It is in sync (veil is a glow; glows holds veiling_fog and hazy_veil), but
+the gallery header named only the family. It now names the row: "veil —
+pick a glows element".
+
+The extra-style field is a multi-line box (52px minimum, drag-resizable).
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning
