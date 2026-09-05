@@ -132,3 +132,55 @@ class FlareKeyframes:
                 light["au"], light["av"] = anchors[f]
             lights.append([light])
         return (lights, frame_count)
+
+
+class FlareLightsSwitch:
+    """Choose what drives Flare Render's light: tracking, keyframes, or the
+    render node's own light/anchor points.
+
+    Flare Render's `lights` input overrides its light_x/light_y whenever it
+    carries data, which makes a connected tracker feel like the picker is
+    broken. Rather than rewiring the graph to switch approach, keep both
+    sources connected here and pick one; "manual" passes nothing through, so
+    Flare Render falls back to its own position_mode and picker points.
+    """
+
+    CATEGORY = "flare"
+    FUNCTION = "pick"
+    RETURN_TYPES = ("FLARE_LIGHTS",)
+    RETURN_NAMES = ("lights",)
+
+    MODES = ["detect (tracked)", "keyframes", "manual (render node's points)"]
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "source": (cls.MODES, {
+                    "tooltip": "which input drives the light; 'manual' passes "
+                               "nothing so Flare Render uses its own "
+                               "position_mode and picker points",
+                }),
+            },
+            "optional": {
+                "detected": ("FLARE_LIGHTS", {
+                    "tooltip": "from Flare Track (auto-detected light)",
+                }),
+                "keyframed": ("FLARE_LIGHTS", {
+                    "tooltip": "from Flare Keyframes (hand-animated light "
+                               "and anchor)",
+                }),
+            },
+        }
+
+    def pick(self, source, detected=None, keyframed=None):
+        if source.startswith("manual"):
+            return (None,)
+        wanted, got = ("detected", detected) if source.startswith("detect") \
+            else ("keyframed", keyframed)
+        if got is None:
+            raise ValueError(
+                f"Flare Lights Switch is set to '{source}' but its "
+                f"'{wanted}' input is not connected"
+            )
+        return (got,)

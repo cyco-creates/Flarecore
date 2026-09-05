@@ -16,6 +16,7 @@ if __package__:
         FlareDepthAdapter,
         FlareTrack,
         FlareKeyframes,
+        FlareLightsSwitch,
         FlareElementPrompts,
         FlareTexturePrepare,
         FlareElementSave,
@@ -52,6 +53,7 @@ else:
     FlareDepthAdapter = _pkg.FlareDepthAdapter
     FlareTrack = _pkg.FlareTrack
     FlareKeyframes = _pkg.FlareKeyframes
+    FlareLightsSwitch = _pkg.FlareLightsSwitch
     FlareElementPrompts = _pkg.FlareElementPrompts
     FlareTexturePrepare = _pkg.FlareTexturePrepare
     FlareElementSave = _pkg.FlareElementSave
@@ -71,6 +73,7 @@ NODE_CLASS_MAPPINGS = {
     "FlareDepthAdapter": FlareDepthAdapter,
     "FlareTrack": FlareTrack,
     "FlareKeyframes": FlareKeyframes,
+    "FlareLightsSwitch": FlareLightsSwitch,
     "FlareElementPrompts": FlareElementPrompts,
     "FlareTexturePrepare": FlareTexturePrepare,
     "FlareElementSave": FlareElementSave,
@@ -83,6 +86,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "FlareDepthAdapter": "Flare Depth Adapter",
     "FlareTrack": "Flare Track",
     "FlareKeyframes": "Flare Keyframes",
+    "FlareLightsSwitch": "Flare Lights Switch",
     "FlareElementPrompts": "Flare Element Prompts",
     "FlareTexturePrepare": "Flare Texture Prepare",
     "FlareElementSave": "Flare Element Save",

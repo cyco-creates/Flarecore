@@ -231,13 +231,30 @@ class PointPicker {
       ctx.fill();
     }
 
+    // The lights input (tracking, keyframes) overrides light_x/light_y
+    // entirely. Say so instead of leaving a handle that moves nothing: the
+    // last render reports what actually placed the light.
+    const lightSrc = this.node._fcLightSrc;
+    const driven = lightSrc && lightSrc !== "manual";
+    if (driven) {
+      ctx.fillStyle = "rgba(0,0,0,0.55)";
+      ctx.fillRect(r.x, r.y + r.h - 17, r.w, 17);
+      ctx.fillStyle = "#ffc98a";
+      ctx.font = "10px sans-serif";
+      ctx.fillText(
+        lightSrc === "lights input"
+          ? "light driven by the lights input — set the switch to manual to drag it"
+          : `light placed by ${lightSrc} — anchor still drags`,
+        r.x + 6, r.y + r.h - 5);
+    }
+
     // light handle: a plain ring and dot — no sun-ray decoration, which
     // read as a rendered sun on the backdrop
-    ctx.strokeStyle = "#ffb648";
-    ctx.fillStyle = "rgba(255,182,72,0.18)";
+    ctx.strokeStyle = driven ? "#8a8a92" : "#ffb648";
+    ctx.fillStyle = driven ? "rgba(138,138,146,0.16)" : "rgba(255,182,72,0.18)";
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(lx, ly, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = "#ffb648";
+    ctx.fillStyle = driven ? "#8a8a92" : "#ffb648";
     ctx.beginPath(); ctx.arc(lx, ly, 2.5, 0, Math.PI * 2); ctx.fill();
 
     ctx.strokeStyle = "#5fd7ff";
@@ -1605,6 +1622,11 @@ app.registerExtension({
       // fc_preview is the clean input plate for the picker backdrop; it is
       // NOT sent as ui.images so ComfyUI does not also paint a preview
       // image under the node
+      const src = message?.fc_light_src?.[0];
+      if (src) {
+        this._fcLightSrc = src;
+        this._fcPicker?.draw();
+      }
       const imgs = message?.fc_preview ?? message?.images;
       if (imgs?.length && this._fcPicker) {
         const im = imgs[0];

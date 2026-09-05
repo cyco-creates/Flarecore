@@ -55,7 +55,7 @@ class TestFlareRender:
     def test_registration_contract(self):
         assert set(PKG.NODE_CLASS_MAPPINGS) == {
             "FlareRender", "FlarePresetLoader", "FlareDepthAdapter",
-            "FlareTrack", "FlareKeyframes",
+            "FlareTrack", "FlareKeyframes", "FlareLightsSwitch",
             "FlareElementPrompts", "FlareTexturePrepare",
             "FlareElementSave", "FlareElementPicker",
         }

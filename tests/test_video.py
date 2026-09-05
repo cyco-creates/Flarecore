@@ -608,3 +608,74 @@ class TestIrregular:
         with pytest.raises(ValueError):
             vp({"schema_version": 1, "elements": [
                 {"type": "glow", "irregular": 1.5, "params": {}}]})
+
+
+class TestLightsSwitch:
+    """The switch picks which source drives Flare Render's light, so a graph
+    can keep tracking and keyframes wired at once and choose between them —
+    including 'manual', which passes nothing so the render node's own picker
+    points take over."""
+
+    def _switch(self):
+        return PKG.NODE_CLASS_MAPPINGS["FlareLightsSwitch"]()
+
+    def _clip(self, b=4, h=120, w=200):
+        clip = torch.zeros(b, h, w, 3)
+        for i in range(b):
+            cx = 30 + i * 40
+            clip[i, 45:60, cx:cx + 14] = 1.0
+        return clip
+
+    def test_modes_select_the_right_input(self):
+        sw = self._switch()
+        tracked = [[{"u": 0.1, "v": 0.2, "brightness": 1.0}]]
+        keyed = [[{"u": 0.8, "v": 0.9, "brightness": 1.0}]]
+        assert sw.pick(sw.MODES[0], tracked, keyed)[0] is tracked
+        assert sw.pick(sw.MODES[1], tracked, keyed)[0] is keyed
+        assert sw.pick(sw.MODES[2], tracked, keyed)[0] is None
+
+    def test_missing_input_names_the_problem(self):
+        sw = self._switch()
+        with pytest.raises(ValueError, match="detected"):
+            sw.pick(sw.MODES[0], None, [[{"u": 0.5, "v": 0.5}]])
+        with pytest.raises(ValueError, match="keyframed"):
+            sw.pick(sw.MODES[1], [[{"u": 0.5, "v": 0.5}]], None)
+
+    def test_manual_mode_hands_the_light_back_to_the_picker(self):
+        # the whole point: with the switch on manual, light_x/light_y move
+        # the flare again even though the lights chain is still wired up
+        clip = self._clip()
+        sw = self._switch()
+        none_lights = sw.pick(sw.MODES[2], [[{"u": 0.1, "v": 0.1}]], None)[0]
+        a = run_node(clip, lights=none_lights, light_x=0.2, light_y=0.3)[1]
+        b = run_node(clip, lights=none_lights, light_x=0.8, light_y=0.7)[1]
+        assert not torch.allclose(a, b)
+        ua, va = argmax_uv(a[0].sum(-1))
+        ub, vb = argmax_uv(b[0].sum(-1))
+        assert ua < ub and va < vb
+
+    def test_tracked_mode_still_overrides_the_light(self):
+        clip = self._clip()
+        tracked = PKG.NODE_CLASS_MAPPINGS["FlareTrack"]().track(
+            clip, detect_threshold=0.75, detect_max_lights=1, smoothing=0.5,
+            max_jump=0.4, hold_frames=3, fade_frames=1)[0]
+        sw = self._switch()
+        lights = sw.pick(sw.MODES[0], tracked, None)[0]
+        a = run_node(clip, lights=lights, light_x=0.2, light_y=0.3)[1]
+        b = run_node(clip, lights=lights, light_x=0.8, light_y=0.7)[1]
+        assert torch.allclose(a, b)          # the tracker owns the light
+
+    def test_keyframed_anchor_animates(self):
+        """anchor_keys drives the flare anchor per frame, so the ghost chain
+        can be aimed independently of the light."""
+        kf = PKG.NODE_CLASS_MAPPINGS["FlareKeyframes"]()
+        lights = kf.make(frame_count=4, light_keys="0: 0.2,0.5; 3: 0.2,0.5",
+                         anchor_keys="0: 0.3,0.5; 3: 0.95,0.5",
+                         easing="linear", brightness=1.0)[0]
+        aus = [f[0]["au"] for f in lights]
+        assert aus[0] == pytest.approx(0.3) and aus[-1] == pytest.approx(0.95)
+        assert aus[1] < aus[2]
+        clip = torch.zeros(4, 120, 200, 3)
+        fp = run_node(clip, lights=lights)[1]
+        # the light is static, so any frame-to-frame change is the anchor
+        assert not torch.allclose(fp[0], fp[-1])

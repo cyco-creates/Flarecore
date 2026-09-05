@@ -109,9 +109,20 @@ The parts that make flares hold together across frames:
   colour-coded overlay for checking the track.
 - **FlareKeyframes** hand-animates instead: `frame: u,v` paths for the light
   and optionally the flare anchor, linear or eased.
-- **FlareRender**'s optional `lights` input consumes either. Its
-  `occlusion_smooth` spreads occlusion changes for tracked lights across
-  frames — a thin occluder becomes a fade, never a one-frame cut.
+- **FlareLightsSwitch** decides which one drives the flare, so a graph can
+  keep both wired and switch with a dropdown:
+  - `detect (tracked)` — Flare Track owns the light; the picker's light
+    handle greys out and says so.
+  - `keyframes` — Flare Keyframes drives **both** points by hand:
+    `light_keys` and `anchor_keys`, each `frame: u,v; frame: u,v`.
+  - `manual (render node's points)` — nothing is passed through, so Flare
+    Render uses its own `position_mode` and you drag the light and the
+    anchor on the picker as usual.
+- **FlareRender**'s optional `lights` input consumes any of them, and reports
+  back which control actually placed the light so the picker never shows a
+  handle that moves nothing. Its `occlusion_smooth` spreads occlusion changes
+  for tracked lights across frames — a thin occluder becomes a fade, never a
+  one-frame cut.
 - **FlareDepthAdapter**'s `temporal_smooth` stills per-frame depth-model
   shimmer (zero-phase along the batch); keep `normalize` on `per_batch`.
 
@@ -126,6 +137,8 @@ Shipped workflows (ComfyUI → Workflow → Browse Templates → flarecore):
   editor, and all outputs.
 - **flarecore_video_lab** — video in, tracked/occluded flare video out, with
   the flare reacting to the light's travel (triggers, flicker, edge fade).
+  Tracking, keyframes and manual placement are all wired; the Lights Switch
+  picks one.
 - **flarecore_trigger_lab** — rule-based animation with nothing to load:
   a keyframed light sweeps across a dark plate and the Trigger Showcase
   preset lights up on the border, at the centre, and near the light. Queue it

@@ -1,15 +1,15 @@
 {
  "id": "flarecore_video_lab",
  "revision": 0,
- "last_node_id": 9,
- "last_link_id": 9,
+ "last_node_id": 11,
+ "last_link_id": 12,
  "nodes": [
   {
    "id": 1,
    "type": "VHS_LoadVideo",
    "pos": [
-    -980,
-    0
+    -1020,
+    -60
    ],
    "size": [
     320,
@@ -37,7 +37,8 @@
      "links": [
       1,
       2,
-      3
+      3,
+      4
      ],
      "slot_index": 0
     },
@@ -64,7 +65,7 @@
     "Node name for S&R": "VHS_LoadVideo"
    },
    "widgets_values": [
-    "",
+    "test.mp4",
     0.0,
     0,
     0,
@@ -76,9 +77,160 @@
   },
   {
    "id": 2,
+   "type": "FlareTrack",
+   "pos": [
+    -640,
+    -160
+   ],
+   "size": [
+    300,
+    240
+   ],
+   "flags": {},
+   "order": 2,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "image",
+     "type": "IMAGE",
+     "link": 3
+    }
+   ],
+   "outputs": [
+    {
+     "name": "lights",
+     "type": "FLARE_LIGHTS",
+     "links": [
+      7
+     ],
+     "slot_index": 0
+    },
+    {
+     "name": "overlay",
+     "type": "IMAGE",
+     "links": [
+      10
+     ],
+     "slot_index": 1
+    },
+    {
+     "name": "report",
+     "type": "STRING",
+     "links": [],
+     "slot_index": 2
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "FlareTrack"
+   },
+   "widgets_values": [
+    0.75,
+    1,
+    0.6,
+    0.15,
+    3,
+    4
+   ],
+   "title": "1. detect the light (Flare Track)"
+  },
+  {
+   "id": 3,
+   "type": "FlareKeyframes",
+   "pos": [
+    -640,
+    140
+   ],
+   "size": [
+    300,
+    300
+   ],
+   "flags": {},
+   "order": 3,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "image",
+     "type": "IMAGE",
+     "link": 4
+    }
+   ],
+   "outputs": [
+    {
+     "name": "lights",
+     "type": "FLARE_LIGHTS",
+     "links": [
+      8
+     ],
+     "slot_index": 0
+    },
+    {
+     "name": "frame_count",
+     "type": "INT",
+     "links": [],
+     "slot_index": 1
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "FlareKeyframes"
+   },
+   "widgets_values": [
+    48,
+    "0: 0.15, 0.35; 47: 0.85, 0.45",
+    "0: 0.5, 0.5; 47: 0.5, 0.5",
+    "smooth",
+    1.0
+   ],
+   "title": "2. or hand-animate light + anchor"
+  },
+  {
+   "id": 4,
+   "type": "FlareLightsSwitch",
+   "pos": [
+    -280,
+    -60
+   ],
+   "size": [
+    300,
+    110
+   ],
+   "flags": {},
+   "order": 4,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "detected",
+     "type": "FLARE_LIGHTS",
+     "link": 7
+    },
+    {
+     "name": "keyframed",
+     "type": "FLARE_LIGHTS",
+     "link": 8
+    }
+   ],
+   "outputs": [
+    {
+     "name": "lights",
+     "type": "FLARE_LIGHTS",
+     "links": [
+      9
+     ],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "FlareLightsSwitch"
+   },
+   "widgets_values": [
+    "detect (tracked)"
+   ],
+   "title": "3. pick which one drives the flare"
+  },
+  {
+   "id": 5,
    "type": "DepthAnythingV2Preprocessor",
    "pos": [
-    -600,
+    -1020,
     340
    ],
    "size": [
@@ -86,7 +238,7 @@
     110
    ],
    "flags": {},
-   "order": 2,
+   "order": 5,
    "mode": 0,
    "inputs": [
     {
@@ -100,7 +252,7 @@
      "name": "IMAGE",
      "type": "IMAGE",
      "links": [
-      4
+      5
      ],
      "slot_index": 0
     }
@@ -114,24 +266,24 @@
    ]
   },
   {
-   "id": 3,
+   "id": 6,
    "type": "FlareDepthAdapter",
    "pos": [
-    -260,
-    340
+    -640,
+    480
    ],
    "size": [
     290,
     200
    ],
    "flags": {},
-   "order": 3,
+   "order": 6,
    "mode": 0,
    "inputs": [
     {
      "name": "depth",
      "type": "IMAGE",
-     "link": 4
+     "link": 5
     }
    ],
    "outputs": [
@@ -139,7 +291,7 @@
      "name": "depth",
      "type": "IMAGE",
      "links": [
-      5
+      6
      ],
      "slot_index": 0
     },
@@ -163,67 +315,10 @@
    ]
   },
   {
-   "id": 4,
-   "type": "FlareTrack",
-   "pos": [
-    -600,
-    40
-   ],
-   "size": [
-    300,
-    240
-   ],
-   "flags": {},
-   "order": 4,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "image",
-     "type": "IMAGE",
-     "link": 3
-    }
-   ],
-   "outputs": [
-    {
-     "name": "lights",
-     "type": "FLARE_LIGHTS",
-     "links": [
-      6
-     ],
-     "slot_index": 0
-    },
-    {
-     "name": "overlay",
-     "type": "IMAGE",
-     "links": [
-      7
-     ],
-     "slot_index": 1
-    },
-    {
-     "name": "report",
-     "type": "STRING",
-     "links": [],
-     "slot_index": 2
-    }
-   ],
-   "properties": {
-    "Node name for S&R": "FlareTrack"
-   },
-   "widgets_values": [
-    0.75,
-    1,
-    0.6,
-    0.15,
-    3,
-    4
-   ]
-  },
-  {
-   "id": 5,
+   "id": 7,
    "type": "FlareRender",
    "pos": [
-    -240,
+    80,
     -560
    ],
    "size": [
@@ -231,7 +326,7 @@
     820
    ],
    "flags": {},
-   "order": 5,
+   "order": 7,
    "mode": 0,
    "inputs": [
     {
@@ -242,12 +337,12 @@
     {
      "name": "depth",
      "type": "IMAGE",
-     "link": 5
+     "link": 6
     },
     {
      "name": "lights",
      "type": "FLARE_LIGHTS",
-     "link": 6
+     "link": 9
     }
    ],
    "outputs": [
@@ -255,7 +350,7 @@
      "name": "image",
      "type": "IMAGE",
      "links": [
-      8
+      11
      ],
      "slot_index": 0
     },
@@ -263,7 +358,7 @@
      "name": "flare_pass",
      "type": "IMAGE",
      "links": [
-      9
+      12
      ],
      "slot_index": 1
     },
@@ -300,10 +395,10 @@
    ]
   },
   {
-   "id": 6,
+   "id": 8,
    "type": "VHS_VideoCombine",
    "pos": [
-    300,
+    620,
     -560
    ],
    "size": [
@@ -311,13 +406,13 @@
     320
    ],
    "flags": {},
-   "order": 6,
+   "order": 8,
    "mode": 0,
    "inputs": [
     {
      "name": "images",
      "type": "IMAGE",
-     "link": 8
+     "link": 11
     },
     {
      "name": "audio",
@@ -356,10 +451,10 @@
    ]
   },
   {
-   "id": 7,
+   "id": 9,
    "type": "VHS_VideoCombine",
    "pos": [
-    300,
+    620,
     -180
    ],
    "size": [
@@ -367,13 +462,13 @@
     320
    ],
    "flags": {},
-   "order": 7,
+   "order": 9,
    "mode": 0,
    "inputs": [
     {
      "name": "images",
      "type": "IMAGE",
-     "link": 9
+     "link": 12
     },
     {
      "name": "audio",
@@ -412,10 +507,10 @@
    ]
   },
   {
-   "id": 8,
+   "id": 10,
    "type": "PreviewImage",
    "pos": [
-    300,
+    620,
     180
    ],
    "size": [
@@ -423,13 +518,13 @@
     260
    ],
    "flags": {},
-   "order": 8,
+   "order": 10,
    "mode": 0,
    "inputs": [
     {
      "name": "images",
      "type": "IMAGE",
-     "link": 7
+     "link": 10
     }
    ],
    "outputs": [
@@ -447,24 +542,24 @@
    "title": "track overlay"
   },
   {
-   "id": 9,
+   "id": 11,
    "type": "Note",
    "pos": [
-    -980,
-    -420
+    -1020,
+    -560
    ],
    "size": [
-    360,
-    400
+    400,
+    470
    ],
    "flags": {},
-   "order": 9,
+   "order": 11,
    "mode": 0,
    "inputs": [],
    "outputs": [],
    "properties": {},
    "widgets_values": [
-    "VIDEO LAB\n\n1. Pick a video in Load Video. Frames flow as one batch.\n2. Flare Track finds and follows the brightest light(s): stable ids,\n   smoothed positions, fade in/out, and velocity coasting through\n   moments the detector loses the light. The overlay preview shows\n   the tracked points per frame.\n3. Depth Anything + Flare Depth Adapter (temporal_smooth) drive\n   occlusion; occlusion_smooth on Flare Render (gear panel) spreads\n   any hard occlusion cut into a fade across frames.\n4. The flare animates itself as the light moves - no keyframes:\n   - rows with a RED EDGE in the editor carry a trigger rule. Anamorphic\n     Gold's edge gleam blooms as the light nears the frame border.\n     Twirl a row open, set mode/inner/outer, and hit 'show' next to\n     preview region to paint the trigger area over the picker.\n   - lens (global row): flicker gives every tracked light its own\n     brightness wobble; edge fade cuts a light that leaves frame.\n   - scene_color (gear panel) tints each flare by the plate colour at\n     the light, so a warm street lamp flares warm.\n5. For hand-animated motion instead of tracking, see the TRIGGER LAB\n   workflow: Flare Keyframes drives the light along a path.\n6. Both video outputs: composite and the flare pass over black for\n   external compositing."
+    "VIDEO LAB\n\nWHERE THE LIGHT COMES FROM - the switch decides:\n  detect (tracked) - Flare Track follows the brightest spot. The\n     picker's light handle greys out, because tracking owns it.\n  keyframes        - Flare Keyframes drives BOTH points by hand:\n     light_keys and anchor_keys, each 'frame: u,v; frame: u,v'.\n  manual           - nothing is passed on, so Flare Render uses its\n     own picker: drag the light and the anchor where you want them.\nThe anchor (cyan) always follows flare_x/flare_y unless keyframed.\n\n1. Pick a video in Load Video. Frames flow as one batch.\n2. Flare Track gives stable ids, smoothed positions, fade in/out and\n   velocity coasting through moments the detector loses the light.\n   The overlay preview shows the tracked points per frame.\n3. Depth Anything + Flare Depth Adapter (temporal_smooth) drive\n   occlusion; occlusion_smooth on Flare Render (gear panel) spreads\n   any hard occlusion cut into a fade across frames.\n4. The flare animates itself as the light moves - no keyframes:\n   - rows with a RED EDGE in the editor carry a trigger rule.\n     Anamorphic Gold's edge gleam blooms as the light nears the frame\n     border. Twirl a row open and hit 'show' under preview region to\n     paint the trigger area over the picker.\n   - lens (global row): flicker gives every tracked light its own\n     brightness wobble; edge fade cuts a light that leaves frame.\n   - scene_color (gear panel) tints each flare by the plate colour at\n     the light, so a warm street lamp flares warm.\n5. Both video outputs: composite and the flare pass over black for\n   external compositing."
    ],
    "color": "#432",
    "bgcolor": "#653"
@@ -475,7 +570,7 @@
    1,
    1,
    0,
-   5,
+   7,
    0,
    "IMAGE"
   ],
@@ -483,7 +578,7 @@
    2,
    1,
    0,
-   2,
+   5,
    0,
    "IMAGE"
   ],
@@ -491,55 +586,79 @@
    3,
    1,
    0,
+   2,
+   0,
+   "IMAGE"
+  ],
+  [
    4,
-   0,
-   "IMAGE"
-  ],
-  [
-   4,
-   2,
-   0,
-   3,
-   0,
-   "IMAGE"
-  ],
-  [
-   5,
-   3,
-   0,
-   5,
    1,
+   0,
+   3,
+   0,
+   "IMAGE"
+  ],
+  [
+   5,
+   5,
+   0,
+   6,
+   0,
    "IMAGE"
   ],
   [
    6,
+   6,
+   0,
+   7,
+   1,
+   "IMAGE"
+  ],
+  [
+   7,
+   2,
+   0,
    4,
    0,
-   5,
+   "FLARE_LIGHTS"
+  ],
+  [
+   8,
+   3,
+   0,
+   4,
+   1,
+   "FLARE_LIGHTS"
+  ],
+  [
+   9,
+   4,
+   0,
+   7,
    2,
    "FLARE_LIGHTS"
   ],
   [
-   7,
-   4,
+   10,
+   2,
    1,
+   10,
+   0,
+   "IMAGE"
+  ],
+  [
+   11,
+   7,
+   0,
    8,
    0,
    "IMAGE"
   ],
   [
-   8,
-   5,
-   0,
-   6,
-   0,
-   "IMAGE"
-  ],
-  [
+   12,
+   7,
+   1,
    9,
-   5,
-   1,
-   7,
    0,
    "IMAGE"
   ]
@@ -548,10 +667,10 @@
   {
    "title": "VIDEO LAB",
    "bounding": [
-    -1010,
+    -1050,
     -640,
-    1720,
-    1080
+    2080,
+    1360
    ],
    "color": "#3f4459",
    "font_size": 22,

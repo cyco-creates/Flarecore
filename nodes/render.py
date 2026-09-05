@@ -119,8 +119,10 @@ class FlareRender:
         image_linear = srgb_to_linear(rgb)
 
         if lights is not None:
+            light_source = "lights input"
             lights_per_frame = self._lights_from_input(lights, batch)
         else:
+            light_source = position_mode
             lights_per_frame = self._resolve_lights(
                 image_linear, position_mode, light_x, light_y,
                 detect_threshold, detect_max_lights,
@@ -219,7 +221,11 @@ class FlareRender:
         # The picker backdrop is the COMPOSITE — the point of the panel is
         # previewing the flare while positioning it. It rides a custom ui
         # key so ComfyUI does not also paint a preview image under the node.
-        return {"ui": {"fc_preview": _save_preview(out[0])["images"]},
+        # fc_light_src tells the editor which control actually placed the
+        # light this run: a connected lights input silently overrides
+        # light_x/light_y, and without this the picker looks broken.
+        return {"ui": {"fc_preview": _save_preview(out[0])["images"],
+                       "fc_light_src": [light_source]},
                 "result": result}
 
     def _smooth_occlusion(self, lights_per_frame, amount):

@@ -2,7 +2,7 @@
 from .render import FlareRender
 from .preset import FlarePresetLoader
 from .depth import FlareDepthAdapter
-from .video import FlareTrack, FlareKeyframes
+from .video import FlareTrack, FlareKeyframes, FlareLightsSwitch
 from .elements_lab import (
     FlareElementPrompts,
     FlareTexturePrepare,
@@ -16,6 +16,7 @@ __all__ = [
     "FlareDepthAdapter",
     "FlareTrack",
     "FlareKeyframes",
+    "FlareLightsSwitch",
     "FlareElementPrompts",
     "FlareTexturePrepare",
     "FlareElementSave",

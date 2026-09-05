@@ -254,6 +254,33 @@ they use. 64 frames at 960x540 render in ~6 s. The video lab now bakes its
 preset into the widget instead of taking it from a FlarePresetLoader link,
 because a linked preset_json leaves the editor with nothing to edit.
 
+## 3o. Choosing what drives the light (2026-09-05)
+
+Owner reported the video lab ignoring the picker. Measured: with the `lights`
+input connected, `light_x`/`light_y` are overridden completely (max pixel
+delta 0.0000 between light_x 0.2 and 0.8), while `flare_x`/`flare_y` still
+place the anchor (delta 0.78) because FlareTrack emits no per-frame anchor.
+So half the picker was live and half was dead, with nothing saying which.
+
+Two fixes:
+
+- **FlareLightsSwitch** node: one `source` combo picking between a connected
+  tracker, connected keyframes, and "manual", which returns `None` so
+  FlareRender falls back to its own position_mode and picker points. Both
+  sources stay wired, so switching approach is a dropdown rather than a
+  rewire. Verified through a live graph that a None FLARE_LIGHTS output
+  passes down a connected link without error and hands the light back.
+- **The picker says what actually placed the light.** FlareRender reports the
+  source it used in its ui payload (`fc_light_src`), and the editor greys the
+  light handle and captions it when something else owns it. Reporting the
+  runtime source beats inspecting links in the frontend: with the switch on
+  "manual" the link is still connected but the light is the picker's again,
+  and only the node knows that.
+
+Keyframing both points already existed (FlareKeyframes `anchor_keys`); it was
+simply not wired into any shipped workflow. The video lab now carries Track,
+Keyframes and the Switch together.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning
