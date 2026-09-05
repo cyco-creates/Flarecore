@@ -95,6 +95,31 @@ function elementThumbUrl(ref) {
   return api.apiURL(`/flarecore/element/${ref.split("/").map(encodeURIComponent).join("/")}`);
 }
 
+// Where the light comes from. Each mode shows only its own controls, so the
+// panel says what this flare is actually doing instead of listing every
+// knob the node owns.
+const POSITION_MODES = [
+  ["manual", "manual — drag it on the picker"],
+  ["detect", "detect — brightest spot, per frame"],
+  ["detect_with_manual_offset", "detect + offset"],
+  ["track", "track — follow it through the clip"],
+  ["track_dots", "track dots — one flare per white dot"],
+  ["path", "path — draw the route"],
+];
+
+const MODE_HINT = {
+  manual: "drag the light and the anchor on the picker above.",
+  detect: "the brightest spot in each frame, judged on its own.",
+  detect_with_manual_offset:
+    "detection, shifted by how far the picker's light sits from centre.",
+  track: "detected once, then followed. If the flare wanders between nearby "
+    + "lights, lower max jump.",
+  track_dots: "white dots on a dark plate, one flare each, each keeping its "
+    + "identity. The threshold is relative to the brightest dot in the clip.",
+  path: "click the picker to drop a point, drag to move one, shift-click to "
+    + "remove. The light travels the whole path across the clip.",
+};
+
 // Catmull-Rom, the same curve flare/track.py samples the light along.
 // test_path_reference_points pins values both must produce.
 function catmullRom(p0, p1, p2, p3, t) {
@@ -279,22 +304,29 @@ class PointPicker {
     // The lights input (tracking, keyframes) overrides light_x/light_y
     // entirely. Say so instead of leaving a handle that moves nothing: the
     // last render reports what actually placed the light.
-    const lightSrc = this.node._fcLightSrc;
-    const driven = lightSrc && lightSrc !== "manual";
+    const posMode = getStr(this.node, "position_mode") || "manual";
+    const li = this.node.inputs?.find((i) => i.name === "lights");
+    const linked = !!(li && li.link != null);
+    const driven = linked || posMode !== "manual";
+    const lightSrc = linked ? "lights input" : posMode;
     if (driven) {
       ctx.fillStyle = "rgba(0,0,0,0.55)";
       ctx.fillRect(r.x, r.y + r.h - 17, r.w, 17);
       ctx.fillStyle = "#ffc98a";
       ctx.font = "10px sans-serif";
       ctx.fillText(
-        lightSrc === "lights input"
+        linked
           ? "light driven by the lights input — set the switch to manual to drag it"
-          : `light placed by ${lightSrc} — anchor still drags`,
+          : (posMode === "path"
+            ? "light follows the drawn path — the anchor still drags"
+            : `light placed by ${lightSrc} — the anchor still drags`),
         r.x + 6, r.y + r.h - 5);
     }
 
-    // the drawn light path, and the button that turns the tool on
-    const pts = parsePath(getStr(this.node, "light_path"));
+    // The path is only live in path mode: drawing a route that nothing
+    // follows is the confusing half of a mode-less tool.
+    this.pathMode = posMode === "path";
+    const pts = this.pathMode ? parsePath(getStr(this.node, "light_path")) : [];
     if (pts.length) {
       const P = (p) => [r.x + p[0] * r.w, r.y + p[1] * r.h];
       const curve = samplePath(pts, Math.max(pts.length * 24, 48));
@@ -327,25 +359,15 @@ class PointPicker {
         });
       }
     }
-    // path tool chip, top-right
-    const chipW = 66, chipH = 18;
-    this._pathChip = [r.x + r.w - chipW - 6, r.y + 6, chipW, chipH];
-    ctx.fillStyle = this.pathMode ? "#2f5d38" : "rgba(0,0,0,0.55)";
-    ctx.strokeStyle = this.pathMode ? "#7ce38b" : "#4a4a55";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.rect(...this._pathChip);
-    ctx.fill(); ctx.stroke();
-    ctx.fillStyle = this.pathMode ? "#dfffe6" : "#9a9aa6";
-    ctx.font = "10px sans-serif";
-    ctx.fillText(this.pathMode ? "path: on" : "path", this._pathChip[0] + 8,
-      this._pathChip[1] + 13);
+    this._pathChip = null;
     if (this.pathMode) {
       ctx.fillStyle = "rgba(0,0,0,0.55)";
-      ctx.fillRect(r.x, r.y + 28, r.w, 15);
+      ctx.fillRect(r.x, r.y + 6, r.w, 15);
       ctx.fillStyle = "#dfffe6";
-      ctx.fillText("click to add a point · drag to move · shift-click to remove"
-        + " · set position_mode to 'path'", r.x + 6, r.y + 39);
+      ctx.font = "10px sans-serif";
+      ctx.fillText(pts.length
+        ? "drag a point to move it · shift-click to remove"
+        : "click to start drawing the light's path", r.x + 6, r.y + 17);
     }
 
     // light handle: a plain ring and dot — no sun-ray decoration, which
@@ -387,16 +409,21 @@ class PointPicker {
 
     const toUV = () => [Math.min(1, Math.max(0, (x - r.x) / r.w)),
                         Math.min(1, Math.max(0, (y - r.y) / r.h))];
+    // read the mode rather than the flag draw() caches, so a click that
+    // lands before the first repaint still does the right thing
+    const pathMode = (getStr(this.node, "position_mode") || "manual") === "path";
 
     if (e.type === "pointerdown") {
-      const c = this._pathChip;
-      if (c && x >= c[0] && x <= c[0] + c[2] && y >= c[1] && y <= c[1] + c[3]) {
-        this.pathMode = !this.pathMode;
-        this.draw();
-        e.stopPropagation(); e.preventDefault();
-        return;
-      }
-      if (this.pathMode) {
+      if (pathMode) {
+        // the anchor is still a real control in path mode, so it wins a
+        // click near it; everywhere else edits the path
+        const [ax, ay] = this.point("flare_x", "flare_y", r);
+        if (Math.hypot(x - ax, y - ay) <= 11) {
+          this.drag = "flare";
+          this.canvas.setPointerCapture(e.pointerId);
+          e.stopPropagation(); e.preventDefault();
+          return;
+        }
         const pts = parsePath(getStr(this.node, "light_path"));
         const hit = pts.findIndex((p) =>
           Math.hypot(x - (r.x + p[0] * r.w), y - (r.y + p[1] * r.h)) <= 8);
@@ -670,6 +697,11 @@ const CSS = `
   letter-spacing: .04em; text-transform: uppercase; margin-top: 4px;
   border-top: 1px solid #2b2b33; padding-top: 5px; }
 .fcore-global.lens { margin-top: 4px; }
+.fcore-global.src { flex-wrap: wrap; }
+.fcore-src-sel { background: #1e1e25; color: #ddd; border: 1px solid #34343e;
+  border-radius: 6px; font-size: 12px; height: 24px; padding: 0 6px; }
+.fcore-hint { color: #7f8496; font-size: 11px; flex-basis: 100%;
+  line-height: 1.35; }
 .fcore-adv { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px 10px;
   padding: 8px 2px 2px 40px; border-top: 1px dashed #2b2b33; margin-top: 7px; }
 .fcore-adv select { background: #1e1e25; color: #ddd; border: 1px solid #34343e;
@@ -1260,6 +1292,7 @@ class FlareEditor {
       bar.appendChild(badge);
     }
     this.root.appendChild(bar);
+    this.root.appendChild(this.buildSourceRow());
     if (!preset) return;
 
     /* global row: master slider + value + tint swatch */
@@ -1348,6 +1381,77 @@ class FlareEditor {
       list.appendChild(empty);
     }
     this.root.appendChild(list);
+  }
+
+  // The light-source row: one dropdown, and only the controls that mode
+  // actually uses. Bound to the NODE's widgets, not the preset.
+  buildSourceRow() {
+    const row = document.createElement("div");
+    row.className = "fcore-global src";
+    const mode = getStr(this.node, "position_mode") || "manual";
+
+    const lab = document.createElement("label");
+    lab.textContent = "light source";
+    const sel = document.createElement("select");
+    sel.className = "fcore-src-sel";
+    for (const [value, text] of POSITION_MODES) {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = text;
+      sel.appendChild(opt);
+    }
+    sel.value = mode;
+    sel.addEventListener("pointerdown", (e) => e.stopPropagation());
+    sel.onchange = () => {
+      setStr(this.node, "position_mode", sel.value);
+      this.node.setDirtyCanvas(true, false);
+      this.node._fcPicker?.draw();
+      this.build();
+    };
+    row.append(lab, sel);
+
+    const nodeSlider = (label, widget, spec) => {
+      const col = sliderCol(label, getVal(this.node, widget, spec[0]), spec,
+        (v) => {
+          setVal(this.node, widget, v);
+          this.node.setDirtyCanvas(true, false);
+        });
+      col.style.flex = "1";
+      row.appendChild(col);
+    };
+
+    if (mode === "detect" || mode === "detect_with_manual_offset") {
+      nodeSlider("threshold", "detect_threshold", [0, 1, 0.01]);
+      nodeSlider("max lights", "detect_max_lights", [1, 16, 1]);
+    } else if (mode === "track" || mode === "track_dots") {
+      nodeSlider(mode === "track_dots" ? "dot threshold" : "threshold",
+        "detect_threshold", [0, 1, 0.01]);
+      nodeSlider(mode === "track_dots" ? "max dots" : "max lights",
+        "detect_max_lights", [1, 16, 1]);
+      nodeSlider("smoothing", "track_smoothing", [0, 0.98, 0.01]);
+      nodeSlider("max jump", "track_max_jump", [0.01, 0.5, 0.01]);
+    } else if (mode === "path") {
+      const pts = parsePath(getStr(this.node, "light_path"));
+      const count = document.createElement("label");
+      count.textContent = `${pts.length} point${pts.length === 1 ? "" : "s"}`;
+      const clear = document.createElement("button");
+      clear.className = "fcore-btn";
+      clear.textContent = "clear path";
+      clear.disabled = !pts.length;
+      clear.onclick = () => {
+        setStr(this.node, "light_path", "");
+        this.node.setDirtyCanvas(true, false);
+        this.node._fcPicker?.draw();
+        this.build();
+      };
+      row.append(count, clear);
+    }
+
+    const hint = document.createElement("div");
+    hint.className = "fcore-hint";
+    hint.textContent = MODE_HINT[mode] || "";
+    row.appendChild(hint);
+    return row;
   }
 
   chipFor(elem) {

@@ -396,6 +396,32 @@ every point; `sample_path` in flare/track.py evaluates it and the editor
 draws the same curve in JavaScript, with `test_path_reference_points` pinning
 values both must produce.
 
+## 3t. The light source is a mode, and the UI follows it (2026-09-05)
+
+Owner: "I want position mode as a drop down in UI, and options appear in UI
+node when I chose an option. So if I chose path, I can draw path otherwise
+I'm not able to."
+
+`position_mode` now sits in a dropdown at the top of the editor panel rather
+than behind the gear, and the row below it shows only the controls that mode
+uses: threshold and count for detect, plus smoothing and max jump for the
+track modes (relabelled "dot threshold" and "max dots" under track_dots), a
+point count and a clear button for path, and nothing but a sentence for
+manual. The controls bind to the NODE's widgets, not to the preset.
+
+The picker is gated on the same value instead of carrying its own toggle: a
+click only edits the path in path mode, and the light handle greys out in
+every mode except manual — read from the widget rather than from the last
+render, so it is right before anything has been queued. The anchor keeps
+working everywhere, including path mode, where a click near it drags it
+instead of dropping a point.
+
+One bug worth recording: reading the mode in the light-handle block while
+declaring it further down in draw() threw "Cannot access 'posMode' before
+initialization" on every repaint, which silently stopped the panel
+rebuilding — the dropdown changed the widget but the row never updated. The
+console was what found it; the symptom looked like a rebuild bug.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

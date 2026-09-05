@@ -112,10 +112,17 @@ Combine. `position_mode` chooses:
   never reaches pure white still works. Raise `detect_max_lights` to the
   number of dots you expect and take `flare_pass` to composite over your
   real footage.
-- `path` — **draw the light's route**. Press `path` at the top right of the
-  picker, click to drop points, drag to move, shift-click to remove. The
-  light travels the whole path across the clip, so put points closer together
-  where you want it to slow down.
+- `path` — **draw the light's route**. Choosing this mode arms the picker:
+  click to drop a point, drag to move one, shift-click to remove. The light
+  travels the whole path across the clip, so put points closer together where
+  you want it to slow down. The anchor still drags as usual.
+
+The mode lives in a **light source** dropdown at the top of the editor
+panel, and each mode shows only its own controls — thresholds and tracking
+for the detect/track modes, a point count and `clear path` for path, nothing
+but a hint for manual. The picker follows: the light handle greys out
+whenever something other than you is placing it, and clicking only draws a
+path when path mode is selected.
 
 Wire a raw depth model straight into `depth` and set `depth_normalize` to
 `per_batch`; `depth_blur` and `depth_temporal_smooth` replace the adapter for
