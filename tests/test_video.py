@@ -659,6 +659,63 @@ class TestLightSourcePrecedence:
         assert not torch.allclose(fp[0], fp[-1])
 
 
+class TestOneLightOneFlare:
+    """max lights is a CAP, not a quota. One dot on screen must produce one
+    flare no matter how high the cap is set."""
+
+    def _moving_dot(self, b=14, h=540, w=960, speed=0.06, radius=5.0):
+        """A single dot travelling faster than the default max_jump gate."""
+        clip = torch.zeros(b, h, w, 3)
+        ys, xs = torch.meshgrid(torch.arange(h).float(),
+                                torch.arange(w).float(), indexing="ij")
+        for i in range(b):
+            cx = (0.2 + speed * i) * w
+            cy = 0.45 * h
+            clip[i] = torch.exp(-((xs - cx) ** 2 + (ys - cy) ** 2)
+                                / (2 * radius ** 2)).unsqueeze(-1)
+        return clip.clamp(0, 1)
+
+    def _flares_per_frame(self, clip, max_lights, max_jump=0.05):
+        from flare.colorspace import srgb_to_linear
+        from flare.detect import detect_lights
+        from flare.track import track_lights
+        lin = srgb_to_linear(clip)
+        det = detect_lights(lin, threshold=0.75 * float(lin.amax()),
+                            max_lights=max(max_lights * 8, 12))
+        tracks = track_lights(det, smoothing=0.6, max_jump=max_jump,
+                              max_tracks=max_lights)
+        return [len(d) for d in det], [len(f) for f in tracks]
+
+    def test_one_fast_dot_does_not_spawn_ghost_flares(self):
+        """The dot outruns max_jump, so its track cannot match it and coasts
+        while a NEW track opens on the same dot. The old one keeps emitting
+        through hold+fade, so a single dot showed up to `max lights` flares —
+        the extra ones sitting on nothing."""
+        clip = self._moving_dot()
+        dets, flares = self._flares_per_frame(clip, max_lights=3)
+        assert max(dets) == 1, f"the clip really does have one dot: {dets}"
+        assert max(flares) == 1, (
+            f"one dot produced up to {max(flares)} flares per frame: {flares}")
+
+    def test_a_high_cap_is_harmless_when_the_scene_is_simple(self):
+        clip = self._moving_dot()
+        _, flares = self._flares_per_frame(clip, max_lights=8)
+        assert max(flares) == 1, f"cap of 8 invented flares: {flares}"
+
+    def test_real_extra_lights_still_get_their_own_flares(self):
+        """The guard must not stop genuinely separate lights from tracking."""
+        clip = self._moving_dot()
+        h, w = clip.shape[1], clip.shape[2]
+        ys, xs = torch.meshgrid(torch.arange(h).float(),
+                                torch.arange(w).float(), indexing="ij")
+        for i in range(clip.shape[0]):          # a second, static light
+            clip[i] += torch.exp(-((xs - 0.85 * w) ** 2 + (ys - 0.2 * h) ** 2)
+                                 / (2 * 5.0 ** 2)).unsqueeze(-1)
+        clip = clip.clamp(0, 1)
+        _, flares = self._flares_per_frame(clip, max_lights=3)
+        assert max(flares) == 2, f"expected two flares for two lights: {flares}"
+
+
 class TestBusySceneTracking:
     """Dappled light (an avenue of trees, a row of lamps) puts several blobs
     of near-equal brightness on screen and the per-frame argmax hops between

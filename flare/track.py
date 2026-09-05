@@ -108,9 +108,8 @@ def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
 
         matched_tracks: set[int] = set()
         matched_dets: set[int] = set()
-        for cost, dist, tid, di in pairs:
-            if tid in matched_tracks or di in matched_dets:
-                continue
+
+        def attach(tid: int, di: int) -> None:
             matched_tracks.add(tid)
             matched_dets.add(di)
             tr = tracks[tid]
@@ -132,7 +131,56 @@ def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
             # moving light by lag proportional to its speed
             tr["out_u"], tr["out_v"] = det["u"], det["v"]
 
+        for cost, dist, tid, di in pairs:
+            if tid in matched_tracks or di in matched_dets:
+                continue
+            attach(tid, di)
+
+        # Recovery. A track that matched nothing may simply be following a
+        # light moving faster than one gate's worth; the strict gate above
+        # can never re-acquire it, so the track dies while a NEW track opens
+        # on the very same light and both emit -- one dot wearing three
+        # flares. Reaching further is only safe when the answer is
+        # unambiguous: exactly one spare detection inside this track's
+        # reach, and that detection inside no other track's. A dappled
+        # canopy always offers rivals, so this never fires there and the
+        # track coasts, which is what keeps it pinned to one source.
+        if len(matched_tracks) < len(tracks):
+            spare = [di for di in range(len(dets)) if di not in matched_dets]
+            reach_of: dict[int, list[int]] = {}
+            claims: dict[int, list[int]] = {}
+            for tid, tr in tracks.items():
+                if tid in matched_tracks:
+                    continue
+                pu = tr["out_u"] + tr["vu"]
+                pv = tr["out_v"] + tr["vv"]
+                reach = max_jump * (2 + tr["missed"])
+                near = [di for di in spare
+                        if math.hypot(dets[di]["u"] - pu,
+                                      dets[di]["v"] - pv) <= reach]
+                reach_of[tid] = near
+                for di in near:
+                    claims.setdefault(di, []).append(tid)
+            for tid, near in reach_of.items():
+                if len(near) != 1:
+                    continue
+                di = near[0]
+                if di not in matched_dets and len(claims.get(di, ())) == 1:
+                    attach(tid, di)
+
         born: set[int] = set()
+        # Where each unmatched track's light could be by now. A detection
+        # inside that reach is that track's own light after it outran the
+        # gate, not a new one; opening a track on it duplicates the flare.
+        # Waiting a frame costs nothing -- the widened gate above picks it
+        # up next frame -- while a wrong birth lasts hold + fade frames.
+        # Measured from the PREDICTED position, and one frame more generous
+        # than the match gate, because a false birth is the worse error.
+        coasting = [
+            (tr["out_u"] + tr["vu"], tr["out_v"] + tr["vv"],
+             max_jump * (2 + tr["missed"]))
+            for tid, tr in tracks.items() if tid not in matched_tracks
+        ]
         # A track that is still matched holds its slot; only genuinely spare
         # capacity opens a new one, so the brightest rival blob cannot start
         # a competing flare while the light we are following is still visible.
@@ -144,6 +192,9 @@ def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
         room = None if max_tracks is None else max(max_tracks, 1) - len(tracks)
         for di, det in enumerate(dets):
             if di in matched_dets:
+                continue
+            if any(math.hypot(det["u"] - cu, det["v"] - cv) <= reach
+                   for cu, cv, reach in coasting):
                 continue
             if room is not None:
                 if room <= 0:

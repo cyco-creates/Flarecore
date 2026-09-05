@@ -118,10 +118,12 @@ const MODE_HINT = {
   detect: "the brightest spot in each frame, judged on its own.",
   detect_with_manual_offset:
     "detection, shifted by how far the picker's light sits from centre.",
-  track: "detected once, then followed. If the flare wanders between nearby "
-    + "lights, lower max jump.",
+  track: "detected once, then followed. Max jump is how far the light may "
+    + "travel per frame: lower it if the flare wanders between nearby "
+    + "lights, raise it if the flare duplicates or drops out on fast moves.",
   track_dots: "white dots on a dark plate, one flare each, each keeping its "
-    + "identity. The threshold is relative to the brightest dot in the clip.",
+    + "identity. The threshold is relative to the brightest dot in the clip. "
+    + "Max lights is a cap, not a quota — a higher cap never invents flares.",
   path: "click the picker to drop a point, drag to move one, shift-click to "
     + "remove. The light travels the whole path across the clip.",
 };

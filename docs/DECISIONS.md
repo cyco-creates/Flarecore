@@ -726,6 +726,33 @@ size as the image, so nothing caught it. The buffer is now shaped from the
 depth, and a test feeds a deliberately mismatched map through all three
 normalise modes and both chunked and unchunked paths.
 
+## max lights is a cap, not a quota
+
+One dot on screen with max lights at 3 rendered three flares, two of them
+sitting on nothing. Detection was right -- exactly one dot per frame -- and
+tracking invented the rest.
+
+The association gate was a fixed max_jump regardless of how long a track had
+been coasting. A dot that outran the gate for a single frame could never be
+re-acquired: the detection went unmatched, a NEW track opened on the very
+same dot, and the old one kept emitting through hold + fade. Repeat and one
+dot wears as many flares as the cap allows.
+
+Widening the gate by the coasting time fixes that and breaks something more
+important: in a dappled canopy the widened gate lets a rival blob steal the
+track, which is the roaming the tight gate exists to prevent. So the strict
+gate stays, and recovery is a second pass that only fires when the answer is
+unambiguous -- exactly one spare detection inside the track's reach, claimed
+by no other track. A cluster always offers rivals, so recovery never fires
+there and the track coasts, still pinned to its source. A birth is also
+suppressed when the detection sits inside a coasting track's reach: waiting
+one frame costs nothing, a wrong birth lasts hold + fade frames.
+
+The limit is honest and stated in the UI: a light moving more than about
+3.5x max_jump per frame cannot be followed, because that is what the control
+means. The hint now reads in both directions -- lower it when the flare
+wanders, raise it when the flare duplicates or drops out.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning
