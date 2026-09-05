@@ -125,6 +125,28 @@ def resize_to(img: torch.Tensor, height: int, width: int) -> torch.Tensor:
     return x[0].permute(1, 2, 0)
 
 
+def resize_cover(img: torch.Tensor, height: int, width: int) -> torch.Tensor:
+    """Fill (height, width) without distorting: scale to cover, centre-crop.
+
+    A plate has to reach every edge, so it cannot be letterboxed, and it has
+    to keep its shapes, so it cannot be squashed. Scaling by the LARGER of
+    the two ratios satisfies both -- droplets stay round, scratches keep
+    their angle -- and the overflow on the long axis is trimmed evenly from
+    both sides. A source already at the target aspect is scaled and nothing
+    is cropped.
+    """
+    h, w = int(img.shape[0]), int(img.shape[1])
+    if (h, w) == (height, width):
+        return img
+    scale = max(height / h, width / w)
+    nh = max(height, int(round(h * scale)))
+    nw = max(width, int(round(w * scale)))
+    out = resize_to(img, nh, nw)
+    top = (nh - height) // 2
+    left = (nw - width) // 2
+    return out[top:top + height, left:left + width]
+
+
 def prepare_element(img: torch.Tensor, mode: str = "rgb",
                     black_point: float = 0.06, autocenter: bool = True,
                     feather: float = 0.12, size: int = 512,
@@ -150,7 +172,9 @@ def prepare_element(img: torch.Tensor, mode: str = "rgb",
         # no centring on energy, and no feathered border — a feather would
         # paint a dark vignette across the frame it is meant to fill. Where
         # it SHOWS is decided at render time by light_mask, not by the file.
-        return resize_to(out, int(round(size * 9 / 16)), size).clamp(0.0, 1.0)
+        # Cover rather than resize: the generator can hand us a square image,
+        # and squashing that to 16:9 stretches every feature by 1.78.
+        return resize_cover(out, int(round(size * 9 / 16)), size).clamp(0.0, 1.0)
     out = center_crop_square(out)
     if autocenter:
         out = center_on_energy(out)

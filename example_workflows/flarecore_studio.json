@@ -2,7 +2,7 @@
   "id": "flarecore_studio",
   "revision": 0,
   "last_node_id": 33,
-  "last_link_id": 29,
+  "last_link_id": 31,
   "nodes": [
     {
       "id": 29,
@@ -1867,6 +1867,24 @@
           "links": [
             3
           ]
+        },
+        {
+          "localized_name": "gen_width",
+          "name": "gen_width",
+          "type": "INT",
+          "slot_index": 3,
+          "links": [
+            30
+          ]
+        },
+        {
+          "localized_name": "gen_height",
+          "name": "gen_height",
+          "type": "INT",
+          "slot_index": 4,
+          "links": [
+            31
+          ]
         }
       ],
       "title": "element prompt",
@@ -1924,6 +1942,24 @@
             "name": "seed"
           },
           "link": null
+        },
+        {
+          "localized_name": "gen_width",
+          "name": "gen_width",
+          "type": "INT",
+          "widget": {
+            "name": "gen_width"
+          },
+          "link": 30
+        },
+        {
+          "localized_name": "gen_height",
+          "name": "gen_height",
+          "type": "INT",
+          "widget": {
+            "name": "gen_height"
+          },
+          "link": 31
         }
       ],
       "outputs": [
@@ -2377,6 +2413,22 @@
       10,
       8,
       "STRING"
+    ],
+    [
+      30,
+      1,
+      3,
+      30,
+      2,
+      "INT"
+    ],
+    [
+      31,
+      1,
+      4,
+      30,
+      3,
+      "INT"
     ]
   ],
   "groups": [
@@ -2425,7 +2477,7 @@
         "state": {
           "lastGroupId": 3,
           "lastNodeId": 33,
-          "lastLinkId": 29,
+          "lastLinkId": 31,
           "lastRerouteId": 0
         },
         "revision": 0,
@@ -2474,6 +2526,32 @@
             "pos": [
               -2554,
               -45
+            ]
+          },
+          {
+            "id": "4888c344-c3ff-418f-857d-c2e219e3e1d6",
+            "name": "gen_width",
+            "type": "INT",
+            "linkIds": [
+              30
+            ],
+            "localized_name": "gen_width",
+            "pos": [
+              -2554,
+              -25
+            ]
+          },
+          {
+            "id": "a36a8045-3957-45cc-9812-b089cf571de5",
+            "name": "gen_height",
+            "type": "INT",
+            "linkIds": [
+              31
+            ],
+            "localized_name": "gen_height",
+            "pos": [
+              -2554,
+              -5
             ]
           }
         ],
@@ -2835,7 +2913,7 @@
                 "widget": {
                   "name": "width"
                 },
-                "link": null
+                "link": 30
               },
               {
                 "localized_name": "height",
@@ -2844,7 +2922,7 @@
                 "widget": {
                   "name": "height"
                 },
-                "link": null
+                "link": 31
               },
               {
                 "localized_name": "batch_size",
@@ -3164,6 +3242,22 @@
             "origin_slot": 1,
             "target_id": 8,
             "target_slot": 4,
+            "type": "INT"
+          },
+          {
+            "id": 30,
+            "origin_id": -10,
+            "origin_slot": 2,
+            "target_id": 7,
+            "target_slot": 0,
+            "type": "INT"
+          },
+          {
+            "id": 31,
+            "origin_id": -10,
+            "origin_slot": 3,
+            "target_id": 7,
+            "target_slot": 1,
             "type": "INT"
           }
         ],

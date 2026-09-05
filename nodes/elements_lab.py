@@ -28,6 +28,15 @@ PROMPTS_FILE = Path(__file__).resolve().parents[1] / "prompts" / "element_prompt
 # wide and un-feathered. `frame: auto` reads the category and picks.
 LENS_PLATE_CATEGORIES = {"lens_dirt"}
 
+# The generator has to make a plate at the shape it will be used at. Prepare
+# can cover-crop a square generation into 16:9 without distorting it, but
+# cropping throws away nearly half of what the sampler just made, so the
+# shape belongs upstream of the sampler. These drive the latent through the
+# prompt node's gen_width/gen_height outputs; leave them unwired and nothing
+# changes. 1536x864 is exactly 16:9 with both sides a multiple of 16.
+GEN_SIZE_SQUARE = (1328, 1328)
+GEN_SIZE_WIDE = (1536, 864)
+
 
 def _load_prompt_bank() -> dict:
     try:
@@ -51,8 +60,9 @@ def _sanitize(name: str, fallback: str) -> str:
 class FlareElementPrompts:
     CATEGORY = "flare"
     FUNCTION = "pick"
-    RETURN_TYPES = ("STRING", "STRING", "STRING")
-    RETURN_NAMES = ("prompt", "category", "element_name")
+    RETURN_TYPES = ("STRING", "STRING", "STRING", "INT", "INT")
+    RETURN_NAMES = ("prompt", "category", "element_name",
+                    "gen_width", "gen_height")
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -94,7 +104,9 @@ class FlareElementPrompts:
                 )
         if extra_style.strip():
             prompt = f"{prompt} {extra_style.strip()}"
-        return (prompt, category or "custom", name or "element")
+        wide = str(category).strip().lower() in LENS_PLATE_CATEGORIES
+        gen_w, gen_h = GEN_SIZE_WIDE if wide else GEN_SIZE_SQUARE
+        return (prompt, category or "custom", name or "element", gen_w, gen_h)
 
 
 class FlareTexturePrepare:

@@ -671,6 +671,28 @@ when it activates a bench: that state is never a deliberate setup (it is
 just an expensive way to mute the instance), whereas SOME nodes bypassed
 is a real choice and is left alone.
 
+## A 16:9 plate is generated wide, not squashed into shape
+
+Forging lens dirt produced a stretched image. Two things were wrong and only
+one of them was visible.
+
+The visible one: prepare's wide_16_9 branch called resize_to, a straight
+non-uniform resize. The generator makes 1328x1328, the plate is 2048x1152,
+so every feature came out stretched by exactly 16/9 -- droplets into
+ellipses, scratches skewed. wide_16_9 now covers instead: scale by the
+LARGER of the two ratios and centre-crop the overflow, so shapes survive and
+the frame is still filled edge to edge. Letterboxing was never an option --
+a plate with margins is not a plate.
+
+The one underneath: cover-cropping a square generation throws away 44% of
+what the sampler just made. A plate should be GENERATED at the shape it
+will be used at, so FlareElementPrompts gained gen_width/gen_height outputs
+(appended -- existing links keep their slots) that read the same category
+map as frame: auto. lens_dirt generates 1536x864 (exactly 16:9, both sides
+a multiple of 16); everything else stays 1328x1328. The studio wires them
+into the generator's latent. Unwired, nothing changes -- the cover-crop
+still protects any square source that reaches prepare.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

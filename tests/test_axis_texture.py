@@ -206,11 +206,11 @@ class TestLibraryAndNodes:
         options = pkg.NODE_CLASS_MAPPINGS["FlareElementPrompts"].INPUT_TYPES()
         entries = options["required"]["element"][0]
         assert any(e.startswith("glows/") for e in entries)
-        prompt, cat, name = node.pick(entries[0], "", "")
+        prompt, cat, name = node.pick(entries[0], "", "")[:3]
         assert "black background" in prompt
-        prompt2, _, _ = node.pick(entries[0], "cold teal colour", "")
+        prompt2, _, _ = node.pick(entries[0], "cold teal colour", "")[:3]
         assert prompt2.endswith("cold teal colour")
-        prompt3, _, _ = node.pick(entries[0], "", "my own prompt")
+        prompt3, _, _ = node.pick(entries[0], "", "my own prompt")[:3]
         assert prompt3 == "my own prompt"
 
     def test_prepare_and_save_roundtrip(self, tmp_path, monkeypatch):
@@ -299,6 +299,36 @@ class TestLensPlates:
         assert xs.float().mean() < 128 * 0.5       # still off to the left
         assert ys.float().mean() < 144 * 0.5
 
+    def test_wide_frame_does_not_distort_a_square_source(self):
+        """The generator makes square images; the plate is 16:9. Squashing one
+        into the other stretches every droplet into an ellipse and skews every
+        scratch. Fill the frame by scaling to cover and cropping the overflow,
+        which keeps circles circular."""
+        from flare.texture_prep import prepare_element
+        img = torch.zeros(512, 512, 3)
+        img[192:320, 192:320] = 1.0               # a centred SQUARE mark
+        out = prepare_element(img, black_point=0.0, autocenter=False,
+                              feather=0.0, size=256, frame="wide_16_9")
+        assert out.shape == (144, 256, 3)
+        ys, xs = torch.nonzero(out.mean(-1) > 0.5, as_tuple=True)
+        h = float(ys.max() - ys.min() + 1)
+        w = float(xs.max() - xs.min() + 1)
+        assert w / h == pytest.approx(1.0, abs=0.06), (
+            f"square mark came out {w:.0f}x{h:.0f} — the source was stretched")
+
+    def test_wide_frame_leaves_a_native_16_9_source_alone(self):
+        """A plate generated at 16:9 must survive untouched: cover-scaling an
+        image that already matches the target crops nothing."""
+        from flare.texture_prep import prepare_element
+        img = torch.zeros(576, 1024, 3)
+        img[100:160, 100:160] = 1.0
+        out = prepare_element(img, black_point=0.0, autocenter=False,
+                              feather=0.0, size=256, frame="wide_16_9")
+        ref = torch.nn.functional.interpolate(
+            img.permute(2, 0, 1).unsqueeze(0), size=(144, 256),
+            mode="bilinear", align_corners=False, antialias=True)[0].permute(1, 2, 0)
+        assert torch.allclose(out, ref.clamp(0.0, 1.0), atol=1e-5)
+
     def test_square_frame_is_unchanged(self):
         from flare.texture_prep import prepare_element
         img = torch.rand(300, 300, 3)
@@ -352,6 +382,36 @@ class TestLensPlates:
         wide = run_node(plate, preset_json=preset, light_x=0.5, light_y=0.5,
                         mask_falloff=0.9)[1]
         assert wide.sum() > tight.sum() * 2
+
+
+class TestGenerationShape:
+    """The plate is made 16:9, not squashed into it afterwards."""
+
+    def _pick(self, element):
+        from test_nodes import PKG
+        node = PKG.NODE_CLASS_MAPPINGS["FlareElementPrompts"]()
+        entries = node.INPUT_TYPES()["required"]["element"][0]
+        match = next((e for e in entries if e.startswith(element + "/")), None)
+        if match is None:
+            pytest.skip(f"no {element} entries in the prompt bank")
+        return node.pick(match, "", "")
+
+    def test_lens_dirt_generates_wide(self):
+        out = self._pick("lens_dirt")
+        w, h = out[3], out[4]
+        assert w / h == pytest.approx(16 / 9, abs=1e-6), f"{w}x{h} is not 16:9"
+        assert w % 16 == 0 and h % 16 == 0, "latent sides must be a multiple of 16"
+
+    def test_other_categories_generate_square(self):
+        out = self._pick("glows")
+        assert out[3] == out[4]
+
+    def test_existing_outputs_keep_their_positions(self):
+        """widgets and links are positional: gen_width/gen_height are appended,
+        so a saved workflow's prompt/category/element_name links still land."""
+        from test_nodes import PKG
+        cls = PKG.NODE_CLASS_MAPPINGS["FlareElementPrompts"]
+        assert cls.RETURN_NAMES[:3] == ("prompt", "category", "element_name")
 
 
 class TestAutoFramePicksTheTreatment:
