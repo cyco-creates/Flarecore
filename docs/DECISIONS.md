@@ -712,6 +712,20 @@ and hold/fade controls that Render does not expose, and the Adapter still
 owns depth black/white point. Preset Loader stays as the file-driven route
 for API runs.
 
+## Depth does not have to match the image
+
+The chunked render crashed on a real clip: "expanded size of the tensor
+(1280) must match the existing size (910)". Depth Anything hands back
+512x910 for a 720x1280 clip, and the per-chunk depth buffer was allocated
+at the IMAGE resolution.
+
+The pre-chunking code never made that assumption -- occlusion_factor samples
+the map in normalised u,v, so the two resolutions never had to agree. The
+refactor invented the constraint, and every test fed a depth map the same
+size as the image, so nothing caught it. The buffer is now shaped from the
+depth, and a test feeds a deliberately mismatched map through all three
+normalise modes and both chunked and unchunked paths.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

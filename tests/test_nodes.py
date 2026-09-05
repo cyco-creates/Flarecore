@@ -277,6 +277,23 @@ class TestChunkedRendering:
             clip[i] += 0.05
         return clip.clamp(0, 1)
 
+    def test_depth_need_not_match_the_image_resolution(self):
+        """Depth models return their own resolution -- Depth Anything hands
+        back 512x910 for a 720x1280 clip. Occlusion samples the map in
+        normalised u,v, so the two never had to agree; the per-chunk buffer
+        must be shaped from the DEPTH, not from the image."""
+        clip = self._clip(6)
+        h, w = clip.shape[1], clip.shape[2]
+        depth = torch.rand(6, h * 512 // 720, w * 910 // 1280, 3)
+        assert depth.shape[1:3] != clip.shape[1:3]      # genuinely mismatched
+        for chunk_frames, norm in ((2, "per_batch"), (0, "per_frame"),
+                                   (64, "as_is")):
+            out, fp, alpha = run_node(
+                clip, depth=depth, depth_normalize=norm,
+                depth_temporal_smooth=0.4, chunk_frames=chunk_frames)
+            assert out.shape == clip.shape
+            assert torch.isfinite(fp).all()
+
     def test_chunked_equals_unchunked_with_tracking_and_flicker(self):
         import json as _json
         p = {"schema_version": 1,

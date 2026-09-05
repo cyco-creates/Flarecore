@@ -238,7 +238,12 @@ class FlareRender:
                                                         dtype=dtype).mean(dim=-1)
                     lo = torch.minimum(lo, dm.amin().cpu())
                     hi = torch.maximum(hi, dm.amax().cpu())
-            depth_cpu = torch.empty(bd, height, width, dtype=dtype)
+            # Shaped from the DEPTH, not the image: depth models return
+            # their own resolution (Depth Anything gives 512x910 for a
+            # 720x1280 clip) and occlusion samples the map in normalised
+            # u,v, so the two never have to agree.
+            depth_cpu = torch.empty(bd, int(depth.shape[1]), int(depth.shape[2]),
+                                    dtype=dtype)
             for s in range(0, bd, chunk):
                 dm = depth[s:s + chunk, ..., :3].to(device=device,
                                                     dtype=dtype).mean(dim=-1)
