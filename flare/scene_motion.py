@@ -234,6 +234,10 @@ def estimate_motion(clip: torch.Tensor | None = None,
         if len(src) < MIN_INLIERS:
             motions.append(last)
             pts = good_features(cur, feature_count)
+            # the reseeded features live on `cur`, so the reference pyramid
+            # must move on with them: left behind, every later frame is
+            # matched against the pre-cut frame, fails, and replays `last`
+            pyr_prev = pyr_cur
             continue
         # distance weighting toward the light, then robust reweighting
         if anchor_uv is not None:

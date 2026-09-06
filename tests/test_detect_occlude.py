@@ -152,6 +152,30 @@ class TestOcclude:
         assert isinstance(occ, float)
 
 
+class TestOffFrameOcclude:
+    """A light outside the frame -- follow mode's sun above the top edge, or
+    a light the camera has panned off -- has no depth under it. The sample
+    disk must not be clamped into the map, or the light is judged by
+    whatever lines the nearest edge."""
+
+    def test_a_light_outside_the_map_is_not_occluded(self):
+        near_everywhere = torch.full((120, 160), 0.9)
+        assert occlusion_factor(near_everywhere, 0.5, -0.08, radius=0.03,
+                                light_depth=0.1) == 0.0
+
+    def test_foliage_along_the_top_edge_does_not_block_a_sun_above_it(self):
+        depth = torch.zeros(120, 160)
+        depth[:8, :] = 0.9                       # canopy in the top rows only
+        assert occlusion_factor(depth, 0.5, -0.08, radius=0.03,
+                                light_depth=0.1) == 0.0
+
+    def test_in_frame_samples_of_a_straddling_light_still_count(self):
+        near_everywhere = torch.full((120, 160), 0.9)
+        # the disk is half above the frame; what IS in the map is all near
+        assert occlusion_factor(near_everywhere, 0.5, 0.0, radius=0.05,
+                                light_depth=0.1) == 1.0
+
+
 class TestClippedSky:
     """A blown-out sky is a plateau thousands of pixels wide, all at exactly
     1.0. The brightest PIXEL there is an arbitrary tie-break that moves with

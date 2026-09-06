@@ -90,9 +90,14 @@ def occlusion_factor(depth: torch.Tensor, u: float, v: float,
     offs = _offsets_on(depth.device)
     su = u + offs[:, 0] * radius / aspect
     sv = v + offs[:, 1] * radius
+    # A sample outside the map is unknown, not occluding. Clamping it into
+    # the map judged a light above the frame by whatever lined the top edge
+    # -- a canopy of branches blacked out an off-frame sun entirely.
+    inside = ((su >= 0.0) & (su < 1.0) & (sv >= 0.0) & (sv < 1.0)).to(torch.float32)
     px = (su * width).long().clamp(0, width - 1)
     py = (sv * height).long().clamp(0, height - 1)
     samples = depth[py, px]
 
-    nearer = (samples > (light_depth + margin)).to(torch.float32).mean()
-    return _smoothstep(_FRACTION_LO, _FRACTION_HI, nearer).item()
+    nearer = (samples > (light_depth + margin)).to(torch.float32)
+    fraction = (nearer * inside).sum() / inside.sum().clamp(min=1.0)
+    return _smoothstep(_FRACTION_LO, _FRACTION_HI, fraction).item()

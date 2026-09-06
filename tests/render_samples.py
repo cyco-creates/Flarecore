@@ -117,7 +117,7 @@ def sample_renders(photo_path, device):
         print(f"rendered {stem}")
 
 
-def sweep(device, preset_name="clean_35mm.json", frames=12):
+def sweep(device, preset_name="cine_blue.json", frames=12):
     """12-frame light sweep to verify the ghost chain tracks the axis."""
     (text,) = FlarePresetLoader().load(preset_name)
     height, width = 288, 512

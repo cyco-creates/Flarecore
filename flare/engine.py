@@ -182,6 +182,19 @@ def edge_fade(x: float, y: float, frame_aspect: float, start: float, rng: float)
     return 1.0 - _ramp01((outside - start) / rng, "smooth")
 
 
+def _shade_field(field: torch.Tensor, ramp):
+    """Ramp an element's brightness across its own axis.
+
+    A ghost reflected off a curved surface is lit only on the edge facing
+    the source: bright cusp on one side fading to nothing on the other,
+    which reads as a comet and as a pointed crescent once the frame cuts
+    it. `ramp` is None for the ordinary case and costs nothing.
+    """
+    if ramp is None:
+        return field
+    return field * (ramp.unsqueeze(-1) if field.dim() == 3 else ramp)
+
+
 def _apply_weight(field: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
     """Colour a field: (H, W) intensity fields broadcast against the RGB
     weight; (H, W, 3) fields (colour textures) multiply per channel."""
@@ -248,6 +261,9 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
     real_ly = light.get("ly", py)
     stretch_x, stretch_y = elem["stretch"]
     move_x, move_y = elem.get("move", (1.0, 1.0))
+    shift_x, shift_y = elem.get("shift", (0.0, 0.0))
+    pin_x, pin_y = elem.get("pin", (None, None))
+    shade = elem.get("shade", 0.0)
     trig = elem.get("trigger")
     # pixel size in grid units: the y axis spans [-1, 1] over the height
     px_grid = 2.0 / max(out.shape[0], 1)
@@ -303,6 +319,15 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
         if move_x != 1.0 or move_y != 1.0:
             cx = ax + (cx - ax) * move_x
             cy = ay + (cy - ay) * move_y
+        # a screen-space nudge, applied after the axis so it does not swing
+        # with the flare angle, then an optional lock to the frame itself
+        if shift_x != 0.0 or shift_y != 0.0:
+            cx += shift_x
+            cy += shift_y
+        if pin_x is not None:
+            cx = pin_x
+        if pin_y is not None:
+            cy = pin_y
 
         inst_weight = passes
         cos_i, sin_i = cos_r, sin_r
@@ -352,11 +377,15 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
                 (-lu0 * sin_i + lv0 * cos_i) / (scale_i * stretch_y),
             )
 
+        # the lit-edge ramp is the same for every dispersion sample, so it
+        # is built once from the undispersed local coordinates
+        ramp = (1.0 + shade * u).clamp(min=0.0) if shade != 0.0 else None
+
         if heavy:
             inst = torch.zeros_like(out)
             for s, weight in inst_weight:
                 field = fn(u * s, v * s, params) if s != 1.0 else fn(u, v, params)
-                inst.add_(_apply_weight(field, weight))
+                inst.add_(_apply_weight(_shade_field(field, ramp), weight))
             if blur > 0.0:
                 inst = _blur_rgb(inst, blur * BLUR_SIGMA_MAX)
             if lmask > 0.0 and scene_mask is not None:
@@ -368,7 +397,8 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
         else:
             for s, weight in inst_weight:
                 field = fn(u * s, v * s, params) if s != 1.0 else fn(u, v, params)
-                out.add_(_apply_weight(field, weight), alpha=intensity_i * light_weight)
+                out.add_(_apply_weight(_shade_field(field, ramp), weight),
+                         alpha=intensity_i * light_weight)
 
 
 def render_stack(preset, lights, height, width, device, dtype,

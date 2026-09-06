@@ -915,6 +915,36 @@ class TestDrawnPath:
         with pytest.raises(ValueError, match="no path is drawn"):
             run_node(plate, position_mode="path", light_path="")
 
+    def test_one_knot_per_frame_reproduces_a_track_exactly(self):
+        """What "bake to path" relies on: a path with one point per frame is
+        sampled at t = 0 of every segment, so a baked track comes back bit
+        for bit. Subsampling to a couple of dozen knots is what distorted
+        it -- measured 5.9 px off on a 1280-wide track that paused and then
+        moved."""
+        from flare.track import sample_path
+        track = [(0.2 + 0.003 * f + 0.001 * (f % 3), 0.5 - 0.002 * f)
+                 for f in range(60)]
+        got = sample_path(track, 60)
+        for (u, v), (gu, gv) in zip(track, got):
+            assert abs(gu - u) < 1e-12 and abs(gv - v) < 1e-12
+
+    def test_anchor_path_carries_the_flare_anchor(self):
+        """A two-tracker solve baked to a path keeps its second point: the
+        anchor travels its own drawn path, so the axis keeps the pair's
+        rotation and scale instead of snapping to the static anchor."""
+        from flare.track import sample_path
+        node = PKG.FlareRender()
+        lights = node._resolve_lights(None, 5, 5, "path", 0.5, 0.5, 0.8, 1,
+                                      light_path="0.1,0.5; 0.9,0.5",
+                                      anchor_path="0.5,0.1; 0.5,0.9")
+        want = sample_path([(0.5, 0.1), (0.5, 0.9)], 5)
+        for frame, (au, av) in zip(lights, want):
+            assert abs(frame[0]["au"] - au) < 1e-9
+            assert abs(frame[0]["av"] - av) < 1e-9
+        plain = node._resolve_lights(None, 5, 5, "path", 0.5, 0.5, 0.8, 1,
+                                     light_path="0.1,0.5; 0.9,0.5")
+        assert "au" not in plain[0][0]
+
 
 class TestDotMatte:
     """track_dots: a black plate with white dots, one flare per dot."""

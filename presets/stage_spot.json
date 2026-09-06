@@ -2,6 +2,7 @@
   "schema_version": 1,
   "name": "Stage Spot",
   "author": "flarecore",
+  "category": "Scenario",
   "global": {
     "intensity": 1.0,
     "scale": 1.0,

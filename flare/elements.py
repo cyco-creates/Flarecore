@@ -70,6 +70,35 @@ def _completion_mask(phi: torch.Tensor, p: dict):
     return _smoothstep(half, half - feather, a)
 
 
+# A streak's bow at `curve` 1, as a fraction of the local coordinate
+# squared: real anamorphic lines sag, they are not ruled.
+CURVE_MAX = 0.05
+
+# Dash cycles per unit of local length. Fixed in element space, so the
+# segments scale with the element instead of drifting with its length.
+DASH_FREQ = 4.0
+
+
+def _crescent_mask(u: torch.Tensor, v: torch.Tensor, p: dict):
+    """The bite a barrel takes out of a round ghost.
+
+    A clipping disc of the element's own radius slides across it as
+    `crescent` rises: 0 leaves the ghost whole, 0.5 takes a third of it,
+    and 0.9 leaves a thin arc bulging toward local +u. `rotation` aims it,
+    so with auto_rotate on the crescent opens along the flare axis.
+    Returns None when there is nothing to clip, so the common case costs
+    nothing.
+    """
+    crescent = float(p.get("crescent", 0.0))
+    if crescent <= 0.0:
+        return None
+    offset = -2.0 * (1.0 - crescent)
+    feather = max(float(p.get("crescent_feather", 0.1)), 1e-3)
+    du = u - offset
+    d = torch.sqrt(du * du + v * v)
+    return _smoothstep(1.0 - feather, 1.0 + feather, d)
+
+
 def _aa_thickness(thickness: float, p: dict) -> tuple[float, float]:
     """Sub-pixel thin features alias and shimmer frame to frame. The engine
     passes the local size of one pixel as params['_px']; a feature thinner
@@ -137,7 +166,8 @@ def iris(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     if irr > 0.0:
         shade = 1.0 + irr * 0.45 * _harmonic_noise(phi, seed, 3) * d.clamp(0.0, 1.0)
         field = field * shade.clamp(min=0.0)
-    return field
+    mask = _crescent_mask(u, v, p)
+    return field * mask if mask is not None else field
 
 
 def streak(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
@@ -151,6 +181,9 @@ def streak(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     length = p["length"]
     thickness, gain = _aa_thickness(p["thickness"], p)
     count = max(int(p["count"]), 1)
+    curve = float(p.get("curve", 0.0))
+    dash = float(p.get("dash", 0.0))
+    seed = int(p.get("seed", 0))
 
     irr = _irregular(p)
     field = torch.zeros_like(u)
@@ -162,11 +195,22 @@ def streak(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
             ca, sa = math.cos(a), math.sin(a)
             uu = u * ca + v * sa
             vv = -u * sa + v * ca
+        if curve != 0.0:
+            # a shallow parabolic arc: straight at the source, sagging
+            # toward the ends, which is how a real anamorphic line runs.
+            # Subtracted so a POSITIVE curve sags down the screen.
+            vv = vv - curve * CURVE_MAX * uu * uu
         line = torch.exp(-torch.abs(uu) / length) * torch.exp(-((vv / thickness) ** 2))
+        if dash > 0.0:
+            # gaps along the line: threshold the same harmonic noise the
+            # irregularity uses, so the segments are seeded and hold still
+            n = _harmonic_noise(uu * DASH_FREQ, seed, 20 + i)
+            thr = 2.0 * dash - 1.0
+            line = line * _smoothstep(thr - 0.15, thr + 0.15, n)
         if irr > 0.0:
             # brightness waver along the streak's length
             wav = 1.0 + irr * 0.45 * _harmonic_noise(
-                uu * (2.5 / max(length, 1e-4)), int(p.get("seed", 0)), 4 + i)
+                uu * (2.5 / max(length, 1e-4)), seed, 4 + i)
             line = line * wav.clamp(min=0.0)
         field = field + line
     return field * gain if gain != 1.0 else field
@@ -188,7 +232,10 @@ def ring(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
         gain = gain * (1.0 + irr * 0.6 * _harmonic_noise(phi, seed, 6)).clamp(min=0.0)
     field = torch.exp(-(((r - radius) / thickness) ** 2)) * gain
     mask = _completion_mask(phi, p) if phi is not None else None
-    return field * mask if mask is not None else field
+    if mask is not None:
+        field = field * mask
+    crescent = _crescent_mask(u, v, p)
+    return field * crescent if crescent is not None else field
 
 
 def hoop(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
@@ -214,6 +261,9 @@ def hoop(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     mask = _completion_mask(phi, p)
     if mask is not None:
         angular = angular * mask
+    crescent = _crescent_mask(u, v, p)
+    if crescent is not None:
+        angular = angular * crescent
     return radial * angular
 
 
@@ -322,6 +372,13 @@ def orbs(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     gen.manual_seed(seed & 0x7FFFFFFFFFFFFFFF)
     rnd = torch.rand(count, 5, generator=gen)
     radii = spread * torch.sqrt(rnd[:, 0])          # uniform over the disc
+    ring = float(p.get("ring", 0.0))
+    if ring > 0.0:
+        # gather the specks onto an annulus instead: the dusty rim of a
+        # front-element reflection, where the grime catches the light
+        rw = float(p.get("ring_width", 0.3))
+        on_rim = spread * (1.0 - rw * 0.5 + rw * rnd[:, 0])
+        radii = radii * (1.0 - ring) + on_rim * ring
     angles = rnd[:, 1] * 2.0 * math.pi
     ox = radii * torch.cos(angles)
     oy = radii * torch.sin(angles)
@@ -329,11 +386,24 @@ def orbs(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     gains = 0.6 + 0.8 * rnd[:, 3]
     rots = rnd[:, 4] * 2.0 * math.pi
 
+    # Each speck diffracts its own colour. The hue column is drawn AFTER
+    # the five above so switching it on does not re-roll an existing
+    # preset's layout.
+    spectral = float(p.get("spectral", 0.0))
+    tints = None
+    if spectral > 0.0:
+        from .engine import _spectrum_color      # lazy: engine imports us
+        hue = torch.rand(count, generator=gen)
+        tints = [tuple(1.0 + spectral * (c - 1.0)
+                       for c in _spectrum_color(float(hue[i])))
+                 for i in range(count)]
+
     polygon = p.get("shape") == "polygon"
     blades = max(int(p.get("blades", 6)), 3)
     sector = 2.0 * math.pi / blades
 
-    field = torch.zeros_like(u)
+    field = (torch.zeros(u.shape + (3,), device=u.device, dtype=u.dtype)
+             if tints is not None else torch.zeros_like(u))
     for i in range(count):
         cx, cy, sz = float(ox[i]), float(oy[i]), float(sizes[i])
         du = (u - cx) / sz
@@ -346,7 +416,14 @@ def orbs(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
         disc = _smoothstep(1.0, 1.0 - edge, r)
         d_light = math.hypot(cx - lx, cy - ly)
         lit = 1.0 / (1.0 + (d_light / illum) ** 2)
-        field = field + disc * (float(gains[i]) * lit)
+        lobe = disc * (float(gains[i]) * lit)
+        if tints is None:
+            field = field + lobe
+        else:
+            t = tints[i]
+            field[..., 0] += lobe * t[0]
+            field[..., 1] += lobe * t[1]
+            field[..., 2] += lobe * t[2]
     return field
 
 

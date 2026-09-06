@@ -6,7 +6,7 @@ authors = [{ name = "cyco.creates" }]
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
-dependencies = ["torch", "numpy"]
+dependencies = ["torch", "numpy", "Pillow"]
 keywords = ["comfyui", "lens-flare", "compositing", "vfx"]
 
 [project.urls]

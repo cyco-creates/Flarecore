@@ -449,6 +449,9 @@ class PointPicker {
     const searchOn = !linked && ["track", "track_dots", "lock"].includes(posMode)
       && getVal(this.node, "search_radius", 0) > 0;
     const followOn = !linked && posMode === "follow";
+    // a baked two-tracker solve carries the anchor on a path of its own
+    const anchorDriven = !linked && posMode === "path"
+      && parsePath(getStr(this.node, "anchor_path")).length > 1;
     if (driven) {
       ctx.fillStyle = "rgba(0,0,0,0.55)";
       ctx.fillRect(r.x, r.y + r.h - 17, r.w, 17);
@@ -458,7 +461,9 @@ class PointPicker {
         linked
           ? "light driven by the lights input — set the switch to manual to drag it"
           : (posMode === "path"
-            ? "light follows the drawn path — the anchor still drags"
+            ? (anchorDriven
+              ? "light and anchor follow their drawn paths"
+              : "light follows the drawn path — the anchor still drags")
             : followOn
               ? "drag the light to where the source really is, even outside the frame — the camera carries it"
               : searchOn
@@ -543,6 +548,21 @@ class PointPicker {
         });
       }
     }
+    // the baked anchor path, read-only: edit the light's points, the anchor
+    // keeps the pair's geometry frame for frame
+    const aps = this.pathMode ? parsePath(getStr(this.node, "anchor_path")) : [];
+    if (aps.length > 1) {
+      const P = (p) => [r.x + p[0] * r.w, r.y + p[1] * r.h];
+      const curve = samplePath(aps, Math.max(aps.length * 8, 48));
+      ctx.strokeStyle = "rgba(95,215,255,0.7)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      curve.forEach((p, i) => {
+        const [sx, sy] = P(p);
+        i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy);
+      });
+      ctx.stroke();
+    }
     this._pathChip = null;
     if (this.pathMode) {
       ctx.fillStyle = "rgba(0,0,0,0.55)";
@@ -563,8 +583,8 @@ class PointPicker {
     ctx.fillStyle = driven ? "#8a8a92" : "#ffb648";
     ctx.beginPath(); ctx.arc(lx, ly, 2.5, 0, Math.PI * 2); ctx.fill();
 
-    ctx.strokeStyle = "#5fd7ff";
-    ctx.fillStyle = "rgba(95,215,255,0.18)";
+    ctx.strokeStyle = anchorDriven ? "#8a8a92" : "#5fd7ff";
+    ctx.fillStyle = anchorDriven ? "rgba(138,138,146,0.16)" : "rgba(95,215,255,0.18)";
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(fx, fy, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.lineWidth = 1;
@@ -604,7 +624,9 @@ class PointPicker {
         // the anchor is still a real control in path mode, so it wins a
         // click near it; everywhere else edits the path
         const [ax, ay] = this.point("flare_x", "flare_y", r);
-        if (Math.hypot(x - ax, y - ay) <= 11) {
+        const anchorOnPath = TARGET === "light_path"
+          && parsePath(getStr(this.node, "anchor_path")).length > 1;
+        if (Math.hypot(x - ax, y - ay) <= 11 && !anchorOnPath) {
           this.drag = "flare";
           this.canvas.setPointerCapture(e.pointerId);
           e.stopPropagation(); e.preventDefault();
@@ -694,6 +716,7 @@ const CATEGORY_OF = {
   ring: "rings", spectral: "rings", hoop: "hoops",
   caustic: "caustics", "lens dirt": "lens_dirt",
   "lens orbs": "ghosts", orbs: "ghosts",
+  crescent: "rings", "edge hotspot": "glows", "ghost streak": "streaks",
 };
 
 // Old presets and saved workflows may carry pre-consolidation family names.
@@ -713,6 +736,9 @@ const ADD_MENU = [
   ["Sparkle", "sparkle"], ["Rays", "rays"],
   ["Streak", "streak"], ["Stripe", "stripe"],
   ["Ring", "ring"], ["Hoop", "hoop"], ["Spectral", "spectral"],
+  ["Crescent (clipped ghost)", "crescent"],
+  ["Edge hotspot (frame edge)", "edge_hotspot"],
+  ["Ghost streak (below source)", "ghost_streak"],
   ["From library…", "texture"],
 ];
 
@@ -732,7 +758,13 @@ const ADD_DEFAULTS = {
   stripe: { type: "streak", label: "stripe", offset: 0, scale: 1.2, intensity: 0.5, auto_rotate: false, rotation: 12, color: [0.8, 0.85, 1], params: { length: 2.0, thickness: 0.004 } },
   ring: { type: "ring", label: "ring", offset: 1.4, scale: 0.4, intensity: 0.15, dispersion: 0.8, color: [1, 0.95, 1], params: { radius: 1, thickness: 0.08 } },
   hoop: { type: "hoop", label: "hoop", offset: 0.5, scale: 0.8, intensity: 0.12, dispersion: 1, color: [1, 0.8, 0.6], params: { radius: 0.9, thickness: 0.22, angular_falloff: 0.8 } },
-  spectral: { type: "spectral", label: "spectral", offset: 1.7, scale: 0.45, intensity: 0.15, params: { shape: "ring", radius: 1, thickness: 0.06 } },
+  // dispersion is stated rather than left implicit: the schema gives this
+  // type 1.0 / 7 samples of its own, and a row that showed 0 while the
+  // engine rendered a rainbow was simply lying about itself
+  spectral: { type: "spectral", label: "spectral", offset: 1.7, scale: 0.45, intensity: 0.15, dispersion: 1, dispersion_samples: 7, params: { shape: "ring", radius: 1, thickness: 0.06 } },
+  crescent: { type: "ring", label: "crescent", offset: 1.2, scale: 0.35, intensity: 0.3, dispersion: 0.6, shade: 0.4, color: [1, 0.88, 0.62], params: { radius: 0.92, thickness: 0.13, crescent: 0.55, crescent_feather: 0.2 } },
+  edge_hotspot: { type: "glow", label: "edge hotspot", offset: 0, scale: 0.035, intensity: 0.5, auto_rotate: false, stretch: [0.35, 1.6], pin: [null, -1], color: [0.55, 0.9, 1], blur: 0.08, params: { softness: 0.35, falloff: 2 } },
+  ghost_streak: { type: "streak", label: "ghost streak", offset: 0, scale: 1, intensity: 0.2, auto_rotate: false, shift: [0, 0.6], color: [0.15, 0.35, 1], blur: 0.12, params: { length: 2.2, thickness: 0.01, curve: 0.3 } },
   texture: { type: "texture", label: "element", offset: 0.6, scale: 0.3, intensity: 0.6, params: { file: "", channel: "auto" } },
   orbs: { type: "orbs", label: "lens orbs", offset: 0, scale: 1.0, intensity: 0.35, auto_rotate: false, screen_space: true, color: [0.9, 0.95, 1], params: { count: 24, size: 0.12, size_jitter: 0.6, spread: 1.2, edge_softness: 0.3, illumination: 0.8, shape: "disc", blades: 6 } },
 };
@@ -796,6 +828,7 @@ const COMMON_SPECS = {
   light_mask: [0, 1, 0.01],
   mask_scene: [0, 1, 0.01],
   mask_floor: [0, 0.95, 0.01],
+  shade: [-1, 1, 0.01],
   dispersion: [0, 3, 0.05], dispersion_samples: [3, 15, 2],
   rotation: [-180, 180, 1], count: [1, 24, 1], spread: [0, 1, 0.01],
   count_falloff: [0.1, 1, 0.01], count_scale_step: [0.5, 2, 0.01],
@@ -808,6 +841,7 @@ const COMMON_DEFAULTS = {
   light_mask: 0,
   mask_scene: 1,
   mask_floor: 0,
+  shade: 0,
   dispersion: 0, dispersion_samples: 3, rotation: 0, count: 1, spread: 0,
   count_falloff: 1, count_scale_step: 1,
 };
@@ -815,28 +849,31 @@ const COMMON_DEFAULTS = {
 const COMPLETION_FALLBACK = { completion: 360, completion_feather: 0.2 };
 const COMPLETION_SPEC = { completion: [10, 360, 1], completion_feather: [0, 1, 0.01] };
 
+const CRESCENT_FALLBACK = { crescent: 0, crescent_feather: 0.1 };
+const CRESCENT_SPEC = { crescent: [0, 0.98, 0.01], crescent_feather: [0.001, 1, 0.005] };
+
 const PARAM_FALLBACKS = {
   glow: { softness: 0.35, falloff: 1.2 },
-  iris: { blades: 6, edge_softness: 0.15, hollow: 0 },
-  streak: { length: 0.8, thickness: 0.02, count: 1 },
-  ring: { radius: 0.5, thickness: 0.05, ...COMPLETION_FALLBACK },
-  hoop: { radius: 0.6, thickness: 0.15, angular_falloff: 0.8, ...COMPLETION_FALLBACK },
+  iris: { blades: 6, edge_softness: 0.15, hollow: 0, ...CRESCENT_FALLBACK },
+  streak: { length: 0.8, thickness: 0.02, count: 1, curve: 0, dash: 0 },
+  ring: { radius: 0.5, thickness: 0.05, ...COMPLETION_FALLBACK, ...CRESCENT_FALLBACK },
+  hoop: { radius: 0.6, thickness: 0.15, angular_falloff: 0.8, ...COMPLETION_FALLBACK, ...CRESCENT_FALLBACK },
   glint: { points: 8, length: 0.5, thickness: 0.008, length_jitter: 0.3, ...COMPLETION_FALLBACK },
-  spectral: { radius: 0.5, thickness: 0.08, blades: 8, edge_softness: 0.1, hollow: 0, ...COMPLETION_FALLBACK },
+  spectral: { radius: 0.5, thickness: 0.08, blades: 8, edge_softness: 0.1, hollow: 0, ...COMPLETION_FALLBACK, ...CRESCENT_FALLBACK },
   texture: {},
-  orbs: { count: 24, size: 0.12, size_jitter: 0.6, spread: 1.0, edge_softness: 0.3, illumination: 0.8, blades: 6 },
+  orbs: { count: 24, size: 0.12, size_jitter: 0.6, spread: 1.0, edge_softness: 0.3, illumination: 0.8, blades: 6, ring: 0, ring_width: 0.3, spectral: 0 },
 };
 
 const PARAM_SPECS = {
   glow: { softness: [0.01, 2, 0.01], falloff: [0.05, 6, 0.05] },
-  iris: { blades: [3, 24, 1], edge_softness: [0, 1, 0.01], hollow: [0, 0.95, 0.01] },
-  streak: { length: [0.01, 4, 0.01], thickness: [0.001, 0.5, 0.001], count: [1, 8, 1] },
-  ring: { radius: [0, 2, 0.01], thickness: [0.001, 0.5, 0.001], ...COMPLETION_SPEC },
-  hoop: { radius: [0, 2, 0.01], thickness: [0.001, 1, 0.001], angular_falloff: [0, 1, 0.01], ...COMPLETION_SPEC },
-  glint: { points: [2, 256, 1], length: [0.01, 3, 0.01], thickness: [0.001, 0.1, 0.001], length_jitter: [0, 1, 0.01], ...COMPLETION_SPEC },
-  spectral: { radius: [0, 2, 0.01], thickness: [0.001, 0.5, 0.001], blades: [3, 24, 1], edge_softness: [0, 1, 0.01], hollow: [0, 0.95, 0.01], ...COMPLETION_SPEC },
+  iris: { blades: [3, 24, 1], edge_softness: [0, 1, 0.01], hollow: [0, 0.95, 0.01], ...CRESCENT_SPEC },
+  streak: { length: [0.01, 4, 0.01], thickness: [0.001, 0.5, 0.001], count: [1, 8, 1], curve: [-1, 1, 0.01], dash: [0, 1, 0.01] },
+  ring: { radius: [0, 2, 0.01], thickness: [0.001, 0.5, 0.001], ...COMPLETION_SPEC, ...CRESCENT_SPEC },
+  hoop: { radius: [0, 2, 0.01], thickness: [0.001, 1, 0.001], angular_falloff: [0, 1, 0.01], ...COMPLETION_SPEC, ...CRESCENT_SPEC },
+  glint: { points: [1, 256, 1], length: [0.01, 3, 0.01], thickness: [0.001, 0.1, 0.001], length_jitter: [0, 1, 0.01], ...COMPLETION_SPEC },
+  spectral: { radius: [0, 2, 0.01], thickness: [0.001, 0.5, 0.001], blades: [3, 24, 1], edge_softness: [0, 1, 0.01], hollow: [0, 0.95, 0.01], ...COMPLETION_SPEC, ...CRESCENT_SPEC },
   texture: {},
-  orbs: { count: [1, 200, 1], size: [0.01, 1, 0.005], size_jitter: [0, 1, 0.01], spread: [0, 3, 0.01], edge_softness: [0, 1, 0.01], illumination: [0.05, 5, 0.01], blades: [3, 16, 1] },
+  orbs: { count: [1, 200, 1], size: [0.01, 1, 0.005], size_jitter: [0, 1, 0.01], spread: [0, 3, 0.01], edge_softness: [0, 1, 0.01], illumination: [0.05, 5, 0.01], blades: [3, 16, 1], ring: [0, 1, 0.01], ring_width: [0.01, 2, 0.01], spectral: [0, 1, 0.01] },
 };
 
 const CSS = `
@@ -958,6 +995,10 @@ const CSS = `
   text-align: left; padding: 6px 10px; cursor: pointer; font-size: 12px;
   border-radius: 3px; }
 .fcore-menu button:hover { background: #2a2a33; color: #fff; }
+.fcore-menu-head { color: #8a8a97; font-size: 10px; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 8px 10px 3px; border-top: 1px solid #2b2b33;
+  margin-top: 3px; }
+.fcore-menu-head:first-child { border-top: none; margin-top: 0; padding-top: 4px; }
 .fcore-shade { position: fixed; inset: 0; z-index: 10001;
   background: rgba(0,0,0,0.6); display: flex; align-items: center;
   justify-content: center; }
@@ -1024,6 +1065,14 @@ function popupMenu(evt, entries, onPick) {
   const menu = document.createElement("div");
   menu.className = "fcore-menu";
   for (const [label, value] of entries) {
+    // a null value is a section heading, not something to pick
+    if (value === null) {
+      const h = document.createElement("div");
+      h.className = "fcore-menu-head";
+      h.textContent = label;
+      menu.appendChild(h);
+      continue;
+    }
     const b = document.createElement("button");
     b.textContent = label;
     b.onclick = () => { menu.remove(); onPick(value); };
@@ -1140,6 +1189,21 @@ const TIPS = {
   // element row
   "pos": "where along the flare axis this element sits: 0 is on the light, 1 is on the anchor, negative is behind the light. Ghosts usually spread between 0.2 and 1.5.",
   "blur": "softens this element only.",
+  // shapes drawn from the cine-lens survey
+  "shade": "lights the element from one side only, in its own local frame: a ghost bright on the edge facing the source reads as a comet, and as a pointed crescent once the frame cuts it. Negative lights the other edge.",
+  "shift x": "a nudge across the SCREEN, applied after the flare axis, so it does not swing as the light moves. Half-frame-heights.",
+  "shift y": "a nudge DOWN the screen that ignores the flare angle. This is how a companion ghost keeps its own streak a fixed drop below the source.",
+  "pin x to frame": "lock this element's horizontal position to the frame; its vertical position keeps following the light.",
+  "pin y to frame": "lock this element's vertical position to the frame. With y pinned to -1 it rides the top edge directly above the light, which is the hotspot most anamorphics throw.",
+  "pin x": "where on the frame the horizontal position is locked: -1 is the left edge of a square frame, 0 the centre.",
+  "pin y": "where on the frame the vertical position is locked: -1 the top edge, 0 the centre, 1 the bottom edge.",
+  "curve": "bows the streak into a shallow arc instead of a rule. Positive sags down the screen. Every anamorphic line bends a little.",
+  "dash": "breaks the streak into segments with gaps between them. The pattern is seeded, so it holds still across a clip.",
+  "crescent": "cuts the ghost with a disc the size of its own body, the way a barrel clips a reflection: 0 leaves it whole, 0.5 takes a third, 0.9 leaves a thin arc. Rotation aims the opening.",
+  "crescent feather": "how soft the cut edge is.",
+  "ring": "gathers the specks onto a rim instead of filling the disc — the dust caught around a front-element reflection.",
+  "ring width": "how wide that rim is, as a fraction of the spread.",
+  "spectral": "lets each speck diffract its own colour instead of taking the element's.",
   // light source
   "threshold": "how bright a spot must be to count as a light, relative to the brightest pixel. Raise it when the flare latches onto bright sky or reflections.",
   "dot threshold": "how bright a dot must be to count, relative to the brightest dot in the clip. Lower it if dots drop out.",
@@ -1573,10 +1637,37 @@ class FlareEditor {
       try {
         const r = await api.fetchApi("/flarecore/presets");
         const d = await r.json();
-        const names = (d.presets || []).map((n) => n.replace(/\.json$/, ""));
-        // every preset twice: load it, or merge its elements into the stack
-        const entries = names.map((n) => [n, "load:" + n])
-          .concat(names.map((n) => ["+ merge: " + n, "add:" + n]));
+        const index = d.index && d.index.length ? d.index
+          : (d.presets || []).map((n) => ({ name: n.replace(/\.json$/, ""),
+                                            category: "", subcategory: "" }));
+        // Grouped by the category each preset files itself under, so the
+        // library reads as a shelf instead of one long alphabetical run.
+        // Order the headings deliberately; anything unfiled trails.
+        const ORDER = ["Anamorphic", "Spherical", "Scenario", "Utility"];
+        const rank = (c) => {
+          const i = ORDER.indexOf(c);
+          return i < 0 ? ORDER.length : i;
+        };
+        const groups = new Map();
+        for (const p of index) {
+          const key = (p.category || "Other")
+            + (p.subcategory ? " · " + p.subcategory : "");
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push(p.name);
+        }
+        const keys = [...groups.keys()].sort((a, b) => {
+          const ra = rank(a.split(" · ")[0]), rb = rank(b.split(" · ")[0]);
+          return ra !== rb ? ra - rb : a.localeCompare(b);
+        });
+        const entries = [];
+        for (const k of keys) {
+          entries.push([k, null]);
+          for (const n of groups.get(k)) entries.push([n, "load:" + n]);
+        }
+        entries.push(["merge into the current stack", null]);
+        for (const k of keys) {
+          for (const n of groups.get(k)) entries.push(["+ " + n, "add:" + n]);
+        }
         popupMenu(e, entries,
           async (pick) => {
             const [action, name] = [pick.slice(0, pick.indexOf(":")), pick.slice(pick.indexOf(":") + 1)];
@@ -1852,14 +1943,17 @@ class FlareEditor {
       nodeSlider("travel", "light_travel", [0, 1, 0.01]);
     } else if (mode === "path") {
       const pts = parsePath(getStr(this.node, "light_path"));
+      const aps = parsePath(getStr(this.node, "anchor_path"));
       const count = document.createElement("label");
-      count.textContent = `${pts.length} point${pts.length === 1 ? "" : "s"}`;
+      count.textContent = `${pts.length} point${pts.length === 1 ? "" : "s"}`
+        + (aps.length ? ` · anchor on its own path` : "");
       const clear = document.createElement("button");
       clear.className = "fcore-btn";
       clear.textContent = "clear path";
-      clear.disabled = !pts.length;
+      clear.disabled = !pts.length && !aps.length;
       clear.onclick = () => {
         setStr(this.node, "light_path", "");
+        setStr(this.node, "anchor_path", "");
         this.node.setDirtyCanvas(true, false);
         this.node._fcPicker?.draw();
         this.build();
@@ -1878,13 +1972,17 @@ class FlareEditor {
       bake.textContent = "bake to path";
       bake.title = "turn the light path from the last render into an editable motion path (switches to path mode; drag or shift-click points to fix it)";
       bake.onclick = () => {
-        const n = Math.min(solved.length, 24);
-        const pts = [];
-        for (let k = 0; k < n; k++) {
-          const q = solved[Math.round(k * (solved.length - 1) / Math.max(n - 1, 1))];
-          pts.push([q[0], q[1]]);
-        }
+        // Every frame becomes a knot: the path samples each segment at
+        // t = 0, so it reproduces the track exactly and dragging one point
+        // fixes one frame. A couple of dozen knots read as a smooth curve
+        // instead -- fine motion gone, the timing bent. A two-tracker solve
+        // keeps its anchor on a path of its own, so the axis keeps the
+        // pair's rotation and scale.
+        const pts = solved.map((q) => [q[0], q[1]]);
+        const aps = solved.every((q) => q[2] != null && q[3] != null)
+          ? solved.map((q) => [q[2], q[3]]) : [];
         setStr(this.node, "light_path", formatPath(pts));
+        setStr(this.node, "anchor_path", aps.length ? formatPath(aps) : "");
         setStr(this.node, "position_mode", "path");
         this.node.setDirtyCanvas(true, false);
         this.node._fcPicker?.draw();
@@ -2164,6 +2262,40 @@ class FlareEditor {
         p.elements[i].move = [m[0], v];
       })));
 
+    // A screen-space nudge: unlike `offset` it does not swing with the
+    // flare axis, so a companion ghost stays a fixed drop below the source.
+    adv.appendChild(sliderCol("shift x", elem.shift?.[0] ?? 0, [-2, 2, 0.01],
+      (v) => this.mutateQuiet((p) => {
+        const s = p.elements[i].shift || [0, 0];
+        p.elements[i].shift = [v, s[1]];
+      })));
+    adv.appendChild(sliderCol("shift y", elem.shift?.[1] ?? 0, [-2, 2, 0.01],
+      (v) => this.mutateQuiet((p) => {
+        const s = p.elements[i].shift || [0, 0];
+        p.elements[i].shift = [s[0], v];
+      })));
+
+    // Lock one axis to the frame and the other keeps following the light:
+    // the hotspot that rides the top edge above the source.
+    for (const [axis, idx] of [["x", 0], ["y", 1]]) {
+      const at = Array.isArray(elem.pin) ? elem.pin[idx] : null;
+      const setPin = (value, rebuild) => {
+        this.mutateQuiet((p) => {
+          const q = Array.isArray(p.elements[i].pin)
+            ? p.elements[i].pin.slice() : [null, null];
+          q[idx] = value;
+          p.elements[i].pin = q;
+        });
+        if (rebuild) { this.flushPending(); this.build(); }
+      };
+      adv.appendChild(checkbox(`pin ${axis} to frame`, at != null,
+        (on) => setPin(on ? (idx === 1 ? -1 : 0) : null, true)));
+      if (at != null) {
+        adv.appendChild(sliderCol(`pin ${axis}`, at, [-2, 2, 0.01],
+          (v) => setPin(v, false)));
+      }
+    }
+
     if (elem.type === "spectral") {
       adv.appendChild(dropdown("shape", elem.params?.shape || "ring",
         ["ring", "iris"], (v) => setParam("shape", v)));
@@ -2306,7 +2438,13 @@ function setupForgePanel(nodeType) {
     const styleLab = document.createElement("label");
     styleLab.textContent = "extra style";
     styleLab.style.cssText = "color:#aaa;font-size:11px;";
-    styleRow.append(styleToggle, styleLab);
+    // A shelf of real conditions -- a lens era, a stock, weather, what is
+    // lighting it, what is on the matte box -- rather than one suggestion.
+    // Picking one fills the box below, which stays editable.
+    const styleSel = document.createElement("select");
+    styleSel.className = "fcore-src-sel";
+    styleSel.style.cssText = "flex:1 1 auto;min-width:0;";
+    styleRow.append(styleToggle, styleLab, styleSel);
     // its own multi-line box: a style tail is a sentence, not a word
     const styleText = document.createElement("textarea");
     styleText.className = "styletext";
@@ -2317,7 +2455,7 @@ function setupForgePanel(nodeType) {
     hint.className = "fcore-hint";
     root.append(selRow, prompt, styleRow, styleText, hint);
 
-    for (const el of [catSel, elemSel, prompt, styleToggle, styleText]) {
+    for (const el of [catSel, elemSel, prompt, styleToggle, styleSel, styleText]) {
       el.addEventListener("pointerdown", (e) => e.stopPropagation());
     }
 
@@ -2357,8 +2495,40 @@ function setupForgePanel(nodeType) {
     styleToggle.onchange = syncStyle;
     styleText.addEventListener("input", syncStyle);
 
+    let styles = {};
+    const fillStyles = () => {
+      styleSel.textContent = "";
+      const custom = document.createElement("option");
+      custom.value = "";
+      custom.textContent = "custom…";
+      styleSel.appendChild(custom);
+      for (const [group, entries] of Object.entries(styles)) {
+        const og = document.createElement("optgroup");
+        og.label = group;
+        for (const name of Object.keys(entries)) {
+          const o = document.createElement("option");
+          o.value = `${group}/${name}`;
+          o.textContent = name;
+          og.appendChild(o);
+        }
+        styleSel.appendChild(og);
+      }
+    };
+    // typing in the box means the tail is no longer one of the presets
+    styleText.addEventListener("input", () => { styleSel.value = ""; });
+    styleSel.onchange = () => {
+      const [group, name] = styleSel.value.split("/");
+      const text = styles[group]?.[name];
+      if (!text) return;
+      styleText.value = text;
+      styleToggle.checked = true;
+      syncStyle();
+    };
+
     api.fetchApi("/flarecore/prompt_bank").then((r) => r.json()).then((d) => {
       bank = d.bank || {};
+      styles = d.styles || {};
+      fillStyles();
       catSel.textContent = "";
       for (const cat of Object.keys(bank)) {
         const o = document.createElement("option");
@@ -2378,7 +2548,16 @@ function setupForgePanel(nodeType) {
       }
       const savedPrompt = getStr(node, "custom_prompt");
       const savedStyle = getStr(node, "extra_style");
-      if (savedStyle) { styleToggle.checked = true; styleText.value = savedStyle; }
+      if (savedStyle) {
+        styleToggle.checked = true;
+        styleText.value = savedStyle;
+        // show which preset it came from, when it is still one of them
+        for (const [group, entries] of Object.entries(styles)) {
+          for (const [name, text] of Object.entries(entries)) {
+            if (text === savedStyle) styleSel.value = `${group}/${name}`;
+          }
+        }
+      }
       if (savedPrompt) prompt.value = savedPrompt;
       else applySelection(true);
       applySelection(false);
@@ -2473,6 +2652,54 @@ function reviveDeadSubgraph(node) {
   for (const n of inner) n.mode = 0;
 }
 
+/* ------------------------------------------------- generator switch --- */
+
+// Everything that feeds one input of a switch, found by walking the links
+// rather than by group titles, so the switch works in any graph.
+function upstreamOf(node, inputName) {
+  const seen = new Set();
+  const idx = (node.inputs || []).findIndex((i) => i.name === inputName);
+  if (idx < 0) return seen;
+  const stack = [node.getInputNode(idx)];
+  while (stack.length) {
+    const n = stack.pop();
+    if (!n || seen.has(n)) continue;
+    seen.add(n);
+    for (let s = 0; s < (n.inputs?.length || 0); s++) {
+      const up = n.getInputNode(s);
+      if (up) stack.push(up);
+    }
+  }
+  return seen;
+}
+
+// The lazy input already guarantees the unselected branch never RUNS; this
+// makes it also LOOK disabled. Nodes feeding both branches (the prompt
+// node, usually) are shared plumbing and stay untouched.
+function applyGeneratorChoice(node) {
+  if (!node.graph) return;
+  const choice = String(findWidget(node, "generator")?.value ?? "a");
+  const a = upstreamOf(node, "image_a");
+  const b = upstreamOf(node, "image_b");
+  const [active, inactive] = choice === "a" ? [a, b] : [b, a];
+  for (const n of inactive) {
+    if (!active.has(n)) n.mode = 2;        // 2 = NEVER (muted)
+  }
+  for (const n of active) {
+    if (!inactive.has(n) && n.mode === 2) {
+      n.mode = 0;
+      reviveDeadSubgraph(n);
+    }
+  }
+  node.graph.setDirtyCanvas?.(true, true);
+}
+
+function reapplyGeneratorChoices(graph) {
+  for (const n of graph?._nodes || []) {
+    if (n.type === "FlareGeneratorSelect") applyGeneratorChoice(n);
+  }
+}
+
 function applyStudioSection(graph, active) {
   for (const g of graph._groups || []) {
     const entry = STUDIO_SECTIONS.find(([, t]) =>
@@ -2486,6 +2713,9 @@ function applyStudioSection(graph, active) {
     }
     g.color = on ? (GROUP_ACTIVE[entry[1]] || g.color) : GROUP_DIM;
   }
+  // waking a bench force-unmutes everything in it, which would re-enable
+  // the generator branch the switch has parked; let the switch re-decide
+  reapplyGeneratorChoices(graph);
   graph.setDirtyCanvas?.(true, true);
 }
 
@@ -2549,6 +2779,33 @@ app.registerExtension({
     registerStudioSwitch(app);
   },
   async beforeRegisterNodeDef(nodeType, nodeData) {
+    if (nodeData.name === "FlareGeneratorSelect") {
+      const onNodeCreated = nodeType.prototype.onNodeCreated;
+      nodeType.prototype.onNodeCreated = function () {
+        onNodeCreated?.apply(this, arguments);
+        const w = findWidget(this, "generator");
+        if (w) {
+          const prior = w.callback;
+          w.callback = (...args) => {
+            prior?.(...args);
+            applyGeneratorChoice(this);
+          };
+        }
+      };
+      // links only exist after the whole graph is configured, so the
+      // first application is deferred a beat
+      const onConfigure = nodeType.prototype.onConfigure;
+      nodeType.prototype.onConfigure = function () {
+        onConfigure?.apply(this, arguments);
+        setTimeout(() => applyGeneratorChoice(this), 60);
+      };
+      const onConnectionsChange = nodeType.prototype.onConnectionsChange;
+      nodeType.prototype.onConnectionsChange = function () {
+        onConnectionsChange?.apply(this, arguments);
+        if (this.graph) setTimeout(() => applyGeneratorChoice(this), 0);
+      };
+      return;
+    }
     if (nodeData.name === "FlareElementPrompts") {
       setupForgePanel(nodeType);
       return;

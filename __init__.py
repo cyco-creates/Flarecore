@@ -18,6 +18,7 @@ if __package__:
         FlareElementPrompts,
         FlareTexturePrepare,
         FlareElementSave,
+        FlareGeneratorSelect,
     )
     from .nodes.api import register_routes
 else:
@@ -52,6 +53,7 @@ else:
     FlareElementPrompts = _pkg.FlareElementPrompts
     FlareTexturePrepare = _pkg.FlareTexturePrepare
     FlareElementSave = _pkg.FlareElementSave
+    FlareGeneratorSelect = _pkg.FlareGeneratorSelect
     register_routes = _pkg.register_routes
 
 # Editor and point-picker widgets.
@@ -69,6 +71,7 @@ NODE_CLASS_MAPPINGS = {
     "FlareElementPrompts": FlareElementPrompts,
     "FlareTexturePrepare": FlareTexturePrepare,
     "FlareElementSave": FlareElementSave,
+    "FlareGeneratorSelect": FlareGeneratorSelect,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -79,6 +82,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "FlareElementPrompts": "Flare Element Prompts",
     "FlareTexturePrepare": "Flare Texture Prepare",
     "FlareElementSave": "Flare Element Save",
+    "FlareGeneratorSelect": "Flare Generator Select",
 }
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]

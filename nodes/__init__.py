@@ -7,6 +7,7 @@ from .elements_lab import (
     FlareElementPrompts,
     FlareTexturePrepare,
     FlareElementSave,
+    FlareGeneratorSelect,
 )
 
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     "FlareElementPrompts",
     "FlareTexturePrepare",
     "FlareElementSave",
+    "FlareGeneratorSelect",
 ]

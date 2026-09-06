@@ -307,7 +307,7 @@ class FlareRender:
                     "tooltip": "track/track_dots: position smoothing.",
                 }),
                 "track_max_jump": ("FLOAT", {
-                    "default": 0.06, "min": 0.01, "max": 1.0, "step": 0.01,
+                    "default": 0.10, "min": 0.01, "max": 1.0, "step": 0.01,
                     "tooltip": "track/track_dots: how far a light may travel "
                                "between frames (fraction of height). Also the "
                                "gate that stops a flare hopping onto a rival "
@@ -421,6 +421,14 @@ class FlareRender:
                                "detector's motion is kept in full. A matte "
                                "with no scene in it is left alone either way.",
                 }),
+                "anchor_path": ("STRING", {
+                    "default": "",
+                    "tooltip": "path mode: the flare anchor's own 'u,v; u,v' "
+                               "path. Bake to path writes it from a "
+                               "two-tracker solve so the axis keeps the "
+                               "pair's rotation and scale. Empty: the anchor "
+                               "stays at flare_x/flare_y.",
+                }),
             },
             "optional": {
                 "depth": ("IMAGE",),
@@ -435,12 +443,13 @@ class FlareRender:
                flare_x, flare_y, detect_threshold, detect_max_lights,
                occlusion_radius, light_depth, invert_depth, intensity, scale,
                blend_mode, clamp_output, seed, occlusion_smooth=0.4,
-               scene_color=0.0, track_smoothing=0.6, track_max_jump=0.06,
+               scene_color=0.0, track_smoothing=0.6, track_max_jump=0.10,
                depth_normalize="as_is", depth_blur=0.0,
                depth_temporal_smooth=0.0, light_path="", mask_falloff=0.35,
                colorspace="srgb", chunk_frames=0, light_travel=1.0, track_points="", track_feature=32,
                track_search=48, track_hold=3, track_fade=4,
-               search_radius=0.0, scene_lock=1.0, depth=None, lights=None):
+               search_radius=0.0, scene_lock=1.0, anchor_path="",
+               depth=None, lights=None):
         preset = load_preset(preset_json)
 
         # ComfyUI passes IMAGE tensors on the CPU regardless of where they
@@ -483,6 +492,7 @@ class FlareRender:
                 light_path=light_path, track_points=track_points,
                 track_feature=track_feature, track_search=track_search,
                 hold=track_hold, fade=track_fade, search_radius=search_radius,
+                anchor_path=anchor_path,
             )
 
         if (lights is None and batch > 2 and scene_lock > 0.0
@@ -731,9 +741,9 @@ class FlareRender:
 
     def _resolve_lights(self, linear_chunk, batch, chunk, position_mode,
                         light_x, light_y, detect_threshold, detect_max_lights,
-                        smoothing=0.6, max_jump=0.06, light_path="",
+                        smoothing=0.6, max_jump=0.10, light_path="",
                         track_points="", track_feature=32, track_search=48,
-                        hold=3, fade=4, search_radius=0.0):
+                        hold=3, fade=4, search_radius=0.0, anchor_path=""):
         """linear_chunk(start, stop) hands back that slice of the clip in
         linear light on the compute device — pixels are only touched a slice
         at a time, matching the streamed render pass."""
@@ -748,8 +758,16 @@ class FlareRender:
                     "position_mode is 'path' but no path is drawn; use the "
                     "picker's path tool, or switch to manual"
                 )
-            return [[{"u": u, "v": v, "brightness": 1.0}]
-                    for u, v in sample_path(points, batch)]
+            frames = [[{"u": u, "v": v, "brightness": 1.0}]
+                      for u, v in sample_path(points, batch)]
+            # a baked two-tracker solve carries the anchor on its own path,
+            # so the axis keeps the pair's rotation and scale
+            anchors = parse_path(anchor_path)
+            if anchors:
+                for frame, (au, av) in zip(frames, sample_path(anchors, batch)):
+                    frame[0]["au"] = au
+                    frame[0]["av"] = av
+            return frames
 
         probe = linear_chunk(0, 1)
         frame_aspect = probe.shape[2] / max(probe.shape[1], 1)
@@ -877,9 +895,13 @@ def _scene_light_color(plate_linear, u, v, strength, radius=0.03):
     h, w = plate_linear.shape[:2]
     r = max(int(radius * h), 1)
     cy, cx = int(v * (h - 1)), int(u * (w - 1))
-    patch = plate_linear[max(cy - r, 0):cy + r + 1, max(cx - r, 0):cx + r + 1, :3]
-    if patch.numel() == 0:
+    # Both ends clamped: a light above the frame has a negative cy, and a
+    # negative slice END wraps to nearly the whole plate.
+    y0, y1 = max(cy - r, 0), min(cy + r + 1, h)
+    x0, x1 = max(cx - r, 0), min(cx + r + 1, w)
+    if y1 <= y0 or x1 <= x0:
         return [1.0, 1.0, 1.0]
+    patch = plate_linear[y0:y1, x0:x1, :3]
     lum = linear_luminance(patch)
     # weight by brightness so the source dominates over its surroundings
     wsum = lum.sum()

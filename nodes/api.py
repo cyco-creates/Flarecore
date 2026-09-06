@@ -24,6 +24,25 @@ def _list_presets() -> list[str]:
     return sorted(p.name for p in PRESETS_DIR.glob("*.json"))
 
 
+def _preset_index() -> list[dict]:
+    """Every preset with the category it files itself under, so the editor
+    can group the menu without opening each file. A preset that names no
+    category simply lands in a trailing group."""
+    out = []
+    for path in sorted(PRESETS_DIR.glob("*.json")):
+        entry = {"name": path.stem, "title": "", "category": "",
+                 "subcategory": ""}
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            entry["title"] = str(data.get("name", ""))
+            entry["category"] = str(data.get("category", ""))
+            entry["subcategory"] = str(data.get("subcategory", ""))
+        except (OSError, json.JSONDecodeError, AttributeError):
+            pass          # a broken preset still deserves a menu entry
+        out.append(entry)
+    return out
+
+
 def _find_preset(name: str):
     """Resolve a requested preset by its listed name — the same names the
     listing route returns, so anything advertised is loadable."""
@@ -121,9 +140,11 @@ def register_routes() -> bool:
 
     @routes.get("/flarecore/prompt_bank")
     async def flarecore_prompt_bank(request):
-        # the forge panel's category/element dropdowns and editable prompt
-        from .elements_lab import _load_prompt_bank
-        return web.json_response({"bank": _load_prompt_bank()})
+        # the forge panel's category/element dropdowns and editable prompt,
+        # plus the grouped style tails its style picker offers
+        from .elements_lab import _load_prompt_bank, _load_style_bank
+        return web.json_response({"bank": _load_prompt_bank(),
+                                  "styles": _load_style_bank()})
 
     @routes.get("/flarecore/element/{ref:.*}")
     async def flarecore_element(request):
@@ -139,7 +160,10 @@ def register_routes() -> bool:
 
     @routes.get("/flarecore/presets")
     async def flarecore_presets(request):
-        return web.json_response({"presets": _list_presets()})
+        # `presets` stays a plain name list for anything already reading it;
+        # `index` carries the grouping.
+        return web.json_response({"presets": _list_presets(),
+                                  "index": _preset_index()})
 
     @routes.get("/flarecore/preset/{name}")
     async def flarecore_preset(request):

@@ -219,6 +219,21 @@ class TestSceneColour:
         assert rb_neutral == pytest.approx(1.0, abs=0.05)
         assert rb_tinted > 3.0
 
+    def test_a_light_outside_the_frame_takes_no_tint(self):
+        """A light above the frame has no plate under it. The patch slice
+        must come back empty -- a negative end index wraps and samples
+        nearly the whole frame, so the sun picks up a tint from whatever
+        sits in the far corner."""
+        from conftest import load_package
+        scene_light_color = load_package().nodes.render._scene_light_color
+        plate = torch.full((120, 160, 3), 0.05)
+        # a warm patch mid-frame, in the light's own column band: a wrapped
+        # slice [0:-k] sweeps straight through it
+        plate[30:50, 70:90] = torch.tensor([1.0, 0.3, 0.1])
+        for v in (-0.08, -0.5, 1.5):
+            got = scene_light_color(plate, 0.5, v, 1.0)
+            assert got == pytest.approx([1.0, 1.0, 1.0], abs=1e-5), (v, got)
+
 
 class TestTriggerLightModeAndRotation:
     def test_light_mode_fires_when_element_nears_the_light(self):

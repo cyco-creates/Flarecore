@@ -2,11 +2,16 @@
   "schema_version": 1,
   "name": "Neon Night",
   "author": "flarecore",
+  "category": "Scenario",
   "global": {
     "intensity": 1.0,
     "scale": 1.0,
     "aspect": 1.2,
-    "tint": [1.0, 0.96, 1.05],
+    "tint": [
+      1.0,
+      0.96,
+      1.05
+    ],
     "seed": 57,
     "fringe": 0.2
   },
@@ -19,8 +24,15 @@
       "offset": 0.0,
       "scale": 0.07,
       "intensity": 3.0,
-      "color": [1.0, 0.9, 1.0],
-      "params": { "softness": 0.3, "falloff": 2.2 }
+      "color": [
+        1.0,
+        0.9,
+        1.0
+      ],
+      "params": {
+        "softness": 0.3,
+        "falloff": 2.2
+      }
     },
     {
       "type": "glow",
@@ -31,8 +43,15 @@
       "scale": 0.4,
       "intensity": 0.8,
       "irregular": 0.2,
-      "color": [1.0, 0.35, 0.85],
-      "params": { "softness": 0.5, "falloff": 1.5 }
+      "color": [
+        1.0,
+        0.35,
+        0.85
+      ],
+      "params": {
+        "softness": 0.5,
+        "falloff": 1.5
+      }
     },
     {
       "type": "streak",
@@ -45,8 +64,15 @@
       "auto_rotate": false,
       "irregular": 0.2,
       "blur": 0.04,
-      "color": [0.3, 0.95, 1.0],
-      "params": { "length": 0.6, "thickness": 0.01 }
+      "color": [
+        0.3,
+        0.95,
+        1.0
+      ],
+      "params": {
+        "length": 0.6,
+        "thickness": 0.01
+      }
     },
     {
       "type": "iris",
@@ -64,8 +90,15 @@
       "dispersion": 1.4,
       "dispersion_samples": 7,
       "blur": 0.06,
-      "color": [1.0, 0.3, 0.9],
-      "params": { "blades": 8, "edge_softness": 0.4 }
+      "color": [
+        1.0,
+        0.3,
+        0.9
+      ],
+      "params": {
+        "blades": 8,
+        "edge_softness": 0.4
+      }
     },
     {
       "type": "iris",
@@ -83,8 +116,16 @@
       "dispersion": 1.2,
       "dispersion_samples": 7,
       "blur": 0.05,
-      "color": [0.25, 0.9, 1.0],
-      "params": { "blades": 8, "edge_softness": 0.4, "hollow": 0.5 }
+      "color": [
+        0.25,
+        0.9,
+        1.0
+      ],
+      "params": {
+        "blades": 8,
+        "edge_softness": 0.4,
+        "hollow": 0.5
+      }
     },
     {
       "type": "spectral",
@@ -98,7 +139,11 @@
       "dispersion": 2.0,
       "dispersion_samples": 9,
       "blur": 0.05,
-      "params": { "shape": "ring", "radius": 1.0, "thickness": 0.06 }
+      "params": {
+        "shape": "ring",
+        "radius": 1.0,
+        "thickness": 0.06
+      }
     },
     {
       "type": "orbs",
@@ -108,7 +153,11 @@
       "scale": 1.0,
       "intensity": 0.14,
       "blur": 0.04,
-      "color": [0.9, 0.55, 1.0],
+      "color": [
+        0.9,
+        0.55,
+        1.0
+      ],
       "params": {
         "count": 32,
         "size": 0.06,
@@ -132,7 +181,11 @@
       "intensity": 0.0,
       "irregular": 0.6,
       "blur": 0.02,
-      "color": [0.6, 1.0, 1.0],
+      "color": [
+        0.6,
+        1.0,
+        1.0
+      ],
       "trigger": {
         "mode": "light",
         "source": "element",
@@ -142,9 +195,18 @@
         "brightness": 0.7,
         "scale": 0.5,
         "rotation": 30.0,
-        "color": [1.0, 0.6, 1.0]
+        "color": [
+          1.0,
+          0.6,
+          1.0
+        ]
       },
-      "params": { "points": 6, "length": 0.5, "thickness": 0.005, "length_jitter": 0.5 }
+      "params": {
+        "points": 6,
+        "length": 0.5,
+        "thickness": 0.005,
+        "length_jitter": 0.5
+      }
     }
   ]
 }

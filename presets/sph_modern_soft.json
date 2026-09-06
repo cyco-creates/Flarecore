@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "name": "Spherical Modern Soft",
+  "author": "flarecore",
+  "category": "Spherical",
+  "global": {
+    "tint": [
+      0.98,
+      0.99,
+      1.03
+    ],
+    "seed": 111,
+    "fringe": 0.08
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "core",
+      "label": "core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.055,
+      "intensity": 3.6,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "params": {
+        "softness": 0.28,
+        "falloff": 2.3
+      }
+    },
+    {
+      "type": "glow",
+      "id": "halo",
+      "label": "halo",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.38,
+      "intensity": 0.8,
+      "color": [
+        0.7,
+        0.85,
+        1.0
+      ],
+      "irregular": 0.2,
+      "params": {
+        "softness": 0.55,
+        "falloff": 1.5
+      }
+    },
+    {
+      "type": "glint",
+      "id": "spokes",
+      "label": "spokes",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.45,
+      "intensity": 0.28,
+      "color": [
+        0.8,
+        0.9,
+        1.0
+      ],
+      "blur": 0.04,
+      "irregular": 0.4,
+      "params": {
+        "points": 12,
+        "length": 0.24,
+        "thickness": 0.007,
+        "length_jitter": 0.6
+      }
+    },
+    {
+      "type": "ring",
+      "id": "rings",
+      "label": "twin rings",
+      "slot": "rings",
+      "offset": 1.4,
+      "count": 2,
+      "spread": 0.4,
+      "scale": 0.46,
+      "count_scale_step": 1.25,
+      "count_falloff": 0.6,
+      "intensity": 0.05,
+      "color": [
+        0.45,
+        0.6,
+        1.0
+      ],
+      "blur": 0.1,
+      "params": {
+        "radius": 0.9,
+        "thickness": 0.02
+      }
+    },
+    {
+      "type": "iris",
+      "id": "magenta",
+      "label": "magenta hollows",
+      "slot": "ghosts",
+      "offset": 1.55,
+      "count": 2,
+      "spread": 0.3,
+      "scale": 0.055,
+      "intensity": 0.2,
+      "color": [
+        0.9,
+        0.35,
+        0.85
+      ],
+      "blur": 0.12,
+      "dispersion": 0.5,
+      "count_scale_step": 1.2,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.4,
+        "hollow": 0.55
+      }
+    },
+    {
+      "type": "iris",
+      "id": "bluedisc",
+      "label": "blue disc",
+      "slot": "ghosts",
+      "offset": 2.3,
+      "scale": 0.05,
+      "intensity": 0.12,
+      "color": [
+        0.3,
+        0.45,
+        1.0
+      ],
+      "blur": 0.15,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.6
+      }
+    },
+    {
+      "type": "texture",
+      "id": "cornerfan",
+      "label": "corner fan",
+      "slot": "caustics",
+      "offset": -0.25,
+      "scale": 0.85,
+      "intensity": 0.0,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "blur": 0.03,
+      "irregular": 0.0,
+      "trigger": {
+        "mode": "border",
+        "source": "light",
+        "inner": 0.0,
+        "outer": 0.62,
+        "falloff": "smooth",
+        "brightness": 0.9
+      },
+      "params": {
+        "file": "caustics/prismatic_fan.png",
+        "channel": "auto"
+      }
+    },
+    {
+      "type": "glow",
+      "id": "veil",
+      "label": "veil",
+      "slot": "glows",
+      "offset": 0.1,
+      "scale": 2.2,
+      "intensity": 0.0021,
+      "color": [
+        0.5,
+        0.6,
+        1.0
+      ],
+      "blur": 0.3,
+      "irregular": 0.3,
+      "params": {
+        "softness": 1.0,
+        "falloff": 0.8
+      }
+    }
+  ]
+}

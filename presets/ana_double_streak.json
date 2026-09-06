@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "name": "Anamorphic Double Streak",
+  "author": "flarecore",
+  "category": "Anamorphic",
+  "global": {
+    "tint": [
+      0.95,
+      0.98,
+      1.06
+    ],
+    "seed": 71,
+    "aspect": 1.65,
+    "fringe": 0.08
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "core",
+      "label": "core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.048,
+      "intensity": 4.2,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "params": {
+        "softness": 0.28,
+        "falloff": 2.3
+      }
+    },
+    {
+      "type": "glow",
+      "id": "halo",
+      "label": "halo",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.28,
+      "intensity": 0.85,
+      "color": [
+        0.55,
+        0.9,
+        1.0
+      ],
+      "irregular": 0.2,
+      "params": {
+        "softness": 0.4,
+        "falloff": 1.5
+      }
+    },
+    {
+      "type": "glint",
+      "id": "spokes",
+      "label": "spokes",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.4,
+      "intensity": 0.32,
+      "color": [
+        0.8,
+        0.9,
+        1.0
+      ],
+      "blur": 0.04,
+      "irregular": 0.4,
+      "params": {
+        "points": 16,
+        "length": 0.26,
+        "thickness": 0.005,
+        "length_jitter": 0.6
+      }
+    },
+    {
+      "type": "streak",
+      "id": "streak",
+      "label": "streak",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.6,
+      "auto_rotate": false,
+      "color": [
+        0.12,
+        0.32,
+        1.0
+      ],
+      "blur": 0.03,
+      "irregular": 0.2,
+      "params": {
+        "length": 6.5,
+        "thickness": 0.005,
+        "curve": 0.2,
+        "dash": 0.0
+      }
+    },
+    {
+      "type": "streak",
+      "id": "lowerstreak",
+      "label": "lower streak",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.2,
+      "auto_rotate": false,
+      "color": [
+        0.15,
+        0.35,
+        1.0
+      ],
+      "blur": 0.06,
+      "irregular": 0.2,
+      "shift": [
+        0.0,
+        0.6
+      ],
+      "params": {
+        "length": 5.5,
+        "thickness": 0.006,
+        "curve": 0.2,
+        "dash": 0.0
+      }
+    },
+    {
+      "type": "glow",
+      "id": "rider",
+      "label": "rider dot",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.014,
+      "intensity": 0.7,
+      "color": [
+        0.55,
+        0.9,
+        1.0
+      ],
+      "blur": 0.04,
+      "shift": [
+        0.35,
+        0.6
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.35,
+        "falloff": 2.4
+      }
+    },
+    {
+      "type": "glow",
+      "id": "yellowdot",
+      "label": "yellow dot",
+      "slot": "glows",
+      "offset": 0.1,
+      "scale": 0.008,
+      "intensity": 0.5,
+      "color": [
+        1.0,
+        0.85,
+        0.2
+      ],
+      "blur": 0.03,
+      "params": {
+        "softness": 0.4,
+        "falloff": 2.4
+      }
+    },
+    {
+      "type": "glow",
+      "id": "veil",
+      "label": "veil",
+      "slot": "glows",
+      "offset": 0.1,
+      "scale": 2.2,
+      "intensity": 0.00225,
+      "color": [
+        0.5,
+        0.6,
+        1.0
+      ],
+      "blur": 0.3,
+      "irregular": 0.3,
+      "params": {
+        "softness": 1.0,
+        "falloff": 0.8
+      }
+    }
+  ]
+}

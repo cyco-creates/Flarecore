@@ -1090,6 +1090,274 @@ threshold, so track's applied default moved from 0.06 to 0.10. That is a
 robustness change, not a jitter one: 17% better worst step, and the failure
 mode gone.
 
+## A light outside the frame has no depth, no plate, and a moving pyramid
+
+Fresh-eyes audit (docs/AUDIT_2026-09-06.md). Three bugs on the off-frame
+light path that `follow` and the -1..2 widget range opened, none of which
+any test could reach because no test had ever placed a light outside [0, 1].
+
+**Occlusion clamped its samples into the map.** `occlusion_factor` gathered
+its 48-sample disk with `clamp(0, width-1)`, so a light above the frame was
+judged by the top row of the depth map. Measured: near foliage in the top
+rows only, sun at v=-0.08, light_depth 0.1 -> occlusion 1.000. Both studio
+benches wire Depth Anything into FlareRender, so `follow` with the sun placed
+where it really is -- the recommended setup -- rendered a black flare. A
+sample outside the map is unknown, not occluding: the fraction is now taken
+over in-frame samples only, and no in-frame samples means 0. A light
+straddling the edge is still judged by what IS under it.
+
+**Scene motion left the reference pyramid behind.** When the forward-backward
+check kept fewer than MIN_INLIERS features, the loop reseeded features on the
+current frame and continued -- without `pyr_prev = pyr_cur`, which the
+featureless branch twelve lines above does. Every later frame was then
+matched against the pre-cut pyramid, failed again, reseeded again, and
+replayed the last good motion: a light gliding at a frozen velocity for the
+rest of the shot. Reproducing it needed a HARD-EDGED texture after the cut;
+on smooth noise LK lands on a wrong-but-self-consistent match and the FB
+check waves the cut through (23 of 24 frames "solved", one of them garbage).
+On hard edges, the real case: 11 of 24 solved, +2 px/frame forever. One line.
+
+**`_scene_light_color` wrapped its slice.** `cy` is negative for a light
+above the frame, and `plate[0 : cy + r + 1]` has a negative END index, which
+Python reads from the far end: 685 of 720 rows sampled, and the sun's tint
+came from whatever sat in the opposite corner. Both slice ends are clamped
+now and an empty window returns neutral.
+
+Lesson, recorded for the next widened domain: when a feature lets a value
+leave its old range, the first test to write is the one at the new edge.
+
+## Bake to path keeps every frame, and the anchor
+
+The owner: "point track gives very nice tracking data, but when I click
+bake to path the data gets distorted and I lose my tracked path." Two
+causes, both in the bake itself.
+
+**Twenty-four knots.** The bake subsampled the track to at most 24 points
+before writing the path. A path is sampled by parameter -- equal frames per
+segment, Catmull-Rom between knots -- so uniform-in-time knots keep the
+timing in principle, but a knot every seven frames cannot hold fine motion
+and the spline bends between them. Measured on a 174-frame track that
+pauses and then moves: 5.9 px off at 1280 wide. It also defeated the
+feature's own purpose ("fix the one frame the tracker got wrong by dragging
+a point"): no knot IS one frame. The bake now writes one knot per frame.
+`sample_path` evaluates frame f at t = 0 of segment f, so the path returns
+the track to 2e-16 -- pinned by `test_one_knot_per_frame_reproduces_a_track_exactly`.
+The picker draws a denser row of handles; dragging one moves one frame.
+
+**No anchor.** A two-tracker solve reports `[u, v, au, av]` per frame; the
+bake wrote `[u, v]` and path mode used the static `flare_x/flare_y`. The
+rotation and scale the second tracker existed to provide vanished on bake.
+New widget `anchor_path` (appended last, default empty): path mode samples
+it into the anchor per frame; the bake writes it whenever every frame
+carries an anchor. The picker draws it in cyan, greys the static anchor
+handle while a path owns it, and `clear path` clears both. Pinned by
+`test_anchor_path_carries_the_flare_anchor`.
+
+## The horizontal panel collapse, twice
+
+Reported twice ("the panel shrinks horizontally"), gone both times after a
+hard reload. The second time it was instrumented properly: a temporary
+route wrote panel geometry, every write to the panel widgets' width, every
+`setSize`, and picker pointer events to a file while the owner reproduced.
+Result: eight tracker placements, panel width held at node width minus
+margins throughout, no width writes at all. The collapsed width in the
+report was 480 = the 500-wide node-creation floor minus margins: the layout
+of the OLD module. Rule: a UI report begins with Ctrl+Shift+R, before any
+code is read. Mechanism worth keeping: the frontend (1.51.9) sizes a DOM
+widget's container as `(widget.width ?? node.width) - 2 * margin`.
+
+## The lens survey: seven controls and a rebuilt preset library
+
+Forty-four cine lenses on lenses.cineflares.com, each shot as a point source
+sweeping across a dark frame, sampled at five to nine positions and read
+shape by shape (working notes: the session scratchpad's lens_notes.md; the
+screenshots are reference only and never enter the pack).
+
+Two findings organise everything else. **Geometry belongs to the optics,
+colour to the coating**: the three coatings of one anamorphic share every
+shape and differ only in the colour and strength of the streak, and the
+"clear" coating simply has no streak at all. **Ghost size scales with focal
+length** — the same zoom at 15 mm and 70 mm throws ghosts three to four
+times apart — which `global.scale` already expresses, so a tele preset is
+its wide sibling scaled up rather than a new stack.
+
+Seven shapes recurred and had no vocabulary, so they became keys rather
+than one-off presets:
+
+- `shift` [x, y], screen-space and applied after the axis. Three Nanomorph
+  focal lengths, the Atlas and the Viltrox all put a second, dimmer streak a
+  fixed distance below the source: it is the companion ghost, itself a
+  bright point inside the lens, getting its own anamorphic line. `offset`
+  runs along the flare axis and cannot hold a fixed screen drop.
+- `pin` [x|null, y|null], locking one coordinate to the frame. The Atlas,
+  every Nanomorph and every Proteus throw a hotspot welded to the top edge
+  that tracks the light's x, joined to the source by a vertical hairline.
+- `shade` (−1..1), a linear ramp across the element's own axis. The Zeiss
+  Radiance ghost is lit only on the edge facing the source, which reads as a
+  comet mid-frame and as a cusped crescent once the frame cuts it.
+- streak `curve`: every Laowa line sags into a shallow arc. Subtracted, so a
+  positive curve sags DOWN the screen — the first sign convention chosen was
+  backwards and a test caught it.
+- streak `dash`: the Ultra Panatar's line is segments with gaps. Thresholding
+  the same seeded harmonic noise the irregularity uses keeps the segments
+  still across a clip.
+- `crescent` on the round types: a clipping disc of the element's own radius
+  slides across it, so 0 leaves the ghost whole and 0.9 leaves a thin arc.
+  The Xelmus's giant arc, the Hawk's cat-eye disc and the edge crescents on
+  the Kowa and the Baltar are all one barrel clipping one reflection.
+- orbs `ring` / `ring_width` / `spectral`: the Hawk's front-element disc is
+  rimmed with dust, each speck diffracting its own colour. The hue column is
+  drawn AFTER the existing five so switching it on cannot re-roll an
+  existing preset's layout.
+
+Two things needed no new key. A one-sided ray is `glint` with `points: 1`
+(the bound was 2 for no reason; the Lensworks two-tone streak is two of
+them, aimed opposite and tinted warm and cool). Spectral caps where a streak
+leaves the frame are what `dispersion` on a streak already does, since red
+is pushed furthest along the line.
+
+The preset library was rebuilt around this: twenty-three lens-character
+presets, brand-free, plus the nine scenario presets; twelve older
+lens-look presets retired. `cine_blue` keeps its filename because the node
+loads it as the default, and is rebuilt as the hairline anamorphic.
+
+**Tuning was done by eye, not by number.** The first contact sheet of all
+thirty-four presets showed the whole library shouting: veils that read as a
+whisper over a lit scene turn a black plate grey, and rings and hoops at
+frame-filling scale swamped everything else. Veils came down about four
+stops, big round elements to a third of their size, and the crescent's
+dispersion from a cartoon rainbow to a warm rim. There is no metric for
+this; there is only rendering the sheet and looking at it.
+
+## The corner fan had to be forged
+
+A striped rainbow fan appears in the near corner as the light approaches an
+edge on five of the surveyed lenses, spherical and anamorphic alike. A
+dispersed starburst cannot make parallel diffraction bands, so it is a
+photographed element (`caustics/prismatic_fan`), generated through the
+pack's own forge and filed in the library. Four more were forged with it:
+`caustics/prismatic_patch`, `ghosts/amber_bubble`, `rings/brushed_crescent`
+and `glows/hairy_bloom`.
+
+Two lessons from generating them. The first amber_bubble came back as a
+hard-edged sphere filling the frame; content that reaches the texture edge
+is cut by the border feather and shows its rectangle in additive light, so
+the prompt has to ask for the subject SMALL in frame with generous empty
+black on every side. And the fan's placement is a slightly NEGATIVE offset:
+it belongs in the corner the light is approaching, not the one opposite, but
+past about −0.3 it leaves the frame before its border rule has faded in.
+
+`presets/*.json` that reference a texture make that file a hard dependency —
+`resolve_preset_textures` raises when it is missing — so `prismatic_fan.png`
+must be committed alongside the presets that use it.
+
+## The library has two taxonomies, and now something enforces them
+
+An audit of every category-like field found the ELEMENT side already
+consistent: the folders under `elements/`, the prompt bank's keys, the
+editor's `CATEGORY_OF` targets and every preset element's `slot` all named
+the same eight families, with no orphan in either direction. What was
+missing was anything that would notice if they stopped agreeing. Thirteen
+elements across two older presets also carried no `slot` and no `label` at
+all, so clicking their name opened an unfiltered gallery and the editor
+listed them as blank rows.
+
+The PRESET side had no taxonomy whatever. Thirty-four presets rendered as
+one alphabetical run of sixty-eight buttons (each preset twice, to load or
+to merge), with the scenario presets scattered through the lens presets
+because sorting is by filename.
+
+Decisions:
+
+- `ELEMENT_SLOTS` and `PRESET_CATEGORIES` are named in `flare/schema.py` and
+  are the single source. `validate_preset` warns — rather than raises — on
+  an unknown value, so a preset from a newer revision still loads.
+- Presets carry `category` and optional `subcategory` as top-level keys, and
+  the editor groups its menu by them. The category lives INSIDE the preset,
+  not in its filename: `FlarePresetLoader` stores a filename in the saved
+  workflow, so renaming presets to make them sort would break every graph
+  already referencing one. Subcategories are used only where a real sibling
+  set exists (four coatings of one lens, a wide and tele cut of another) --
+  inventing one per preset would be the same clutter under new headings.
+- `/flarecore/presets` gained an `index` array beside the existing `presets`
+  name list, so the menu can group without opening thirty-four files.
+- `tests/test_library.py` pins all of it: the four element taxonomies must
+  agree, every preset must name a known category, every element a known slot
+  and a label, every referenced texture must exist, a texture must sit in
+  the family its slot claims, and each element type has a set of slots that
+  make sense for it (a `streak` cannot be filed under `ghosts`).
+
+That last file is the actual answer to keeping the library tidy. The
+taxonomy was consistent by care alone until now, and care does not survive
+contact with a rushed evening.
+
+## Extra styles are shooting conditions, not moods
+
+The forge's style tail was one hardcoded suggestion behind a checkbox. It is
+now a grouped bank in `prompts/element_styles.json`, offered by a dropdown
+and still editable by hand.
+
+Every entry names something that actually happens on a set or in a lens:
+a **lens era** (uncoated pre-war, single-coated sixties, modern multicoat),
+a **capture medium** (colour negative with its red halation, reversal stock
+that clips hard, black and white, 65mm, a digital sensor's magenta
+saturation edge), the **state of the front element** (dust, a greasy
+fingerprint, rain, breath fog, separated cement), the **atmosphere** (haze,
+fog, airborne dust, underwater), the **light source** by its real character
+(tungsten 3200K, a daylight arc at 5600K, low-pressure sodium's
+monochromatic amber, mercury vapour's green-cyan, candle, cold LED), and
+**filtration** (black diffusion, heavy diffusion, a two-line streak filter,
+a six-point star, a warming filter). Nothing describes a mood, and nothing
+names a product: `test_library.py` fails on a brand name in the bank.
+
+Verified rather than assumed. One neutral base element rendered at a fixed
+seed through five tails came back visibly and correctly different: black
+and white negative desaturated it completely, low-pressure sodium pushed it
+monochromatic amber, uncoated pre-war glass warmed it and dropped its
+contrast, and rain on the glass scattered droplet specks across it. A style
+bank that reads well but does nothing would have passed every test in the
+file; only rendering it shows whether the words reach the model.
+
+Format rules the tests pin: a tail is appended, so it starts lower-case and
+carries no trailing full stop, and names are unique across groups so the
+dropdown cannot show the same label twice.
+
+## A manual switch between two forge generators (2026-09-06)
+
+The owner gets better elements from a GPT image model than from the local
+Krea2 chain for some elements, and wanted to keep both in the forge with a
+manual switch that enables one and disables the other.
+
+`FlareGeneratorSelect` is a one-output IMAGE node with two optional IMAGE
+inputs and an `a`/`b` combo. The inputs are declared `lazy`, and
+`check_lazy_status` returns only the selected one, so ComfyUI never
+executes the branch that is not chosen. That is the whole point: a hosted
+API generator parked on the unused input is not merely ignored at compose
+time, it is never called, so it incurs no cost or latency while the local
+generator runs, and vice versa. A one-output selector with lazy inputs is
+the ComfyUI-idiomatic mux; a two-output "router" would have to evaluate its
+input first, defeating the purpose.
+
+The lazy input handles execution. The editor handles APPEARANCE, so the
+disabled generator also looks disabled: on the switch's `generator`
+callback, on connection changes and on configure, `applyGeneratorChoice`
+walks the links upstream of each input and sets `mode = 2` (NEVER) on every
+node feeding only the unselected branch, un-muting the selected one. Nodes
+feeding both inputs (the shared prompt node) are left alone. Because waking
+a studio bench force-unmutes everything in it, `applyStudioSection` now
+calls `reapplyGeneratorChoices` after it, or flipping to the forge bench
+would silently re-enable the parked generator.
+
+Shipped in `flarecore_studio.json`: the prompt node feeds both the existing
+Krea2 subgraph (`image_a`) and a new GPT Image 2 node (`image_b`, size set
+to Custom so the prompt node's gen_width/gen_height still drive it), the
+switch feeds Flare Texture Prepare, and both new nodes sit inside the
+ELEMENT FORGE group so the bench switch governs them. The template ships
+with `generator = a`, which is why the GPT node ships muted -- correct,
+since it needs an API key the owner supplies. The Krea2 subgraph
+definition still ships live (all inner modes 0), pinned as before by
+`test_subgraph_definitions_ship_live_nodes`.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

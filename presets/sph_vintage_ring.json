@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "name": "Spherical Vintage Ring",
+  "author": "flarecore",
+  "category": "Spherical",
+  "global": {
+    "tint": [
+      1.0,
+      0.98,
+      1.02
+    ],
+    "seed": 101,
+    "fringe": 0.1
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "core",
+      "label": "core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.055,
+      "intensity": 3.8,
+      "color": [
+        1.0,
+        0.95,
+        0.88
+      ],
+      "params": {
+        "softness": 0.28,
+        "falloff": 2.3
+      }
+    },
+    {
+      "type": "glow",
+      "id": "halo",
+      "label": "halo",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.4,
+      "intensity": 1.1,
+      "color": [
+        0.85,
+        0.85,
+        1.0
+      ],
+      "irregular": 0.2,
+      "params": {
+        "softness": 0.5,
+        "falloff": 1.5
+      }
+    },
+    {
+      "type": "glint",
+      "id": "spokes",
+      "label": "spokes",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.42,
+      "intensity": 0.45,
+      "color": [
+        1.0,
+        0.95,
+        0.88
+      ],
+      "blur": 0.04,
+      "irregular": 0.8,
+      "params": {
+        "points": 42,
+        "length": 0.16,
+        "thickness": 0.004,
+        "length_jitter": 0.6
+      }
+    },
+    {
+      "type": "ring",
+      "id": "hugering",
+      "label": "huge ring",
+      "slot": "rings",
+      "offset": 1.3,
+      "count": 2,
+      "spread": 0.35,
+      "scale": 0.56,
+      "count_scale_step": 1.15,
+      "count_falloff": 0.45,
+      "intensity": 0.07,
+      "color": [
+        0.45,
+        0.72,
+        1.0
+      ],
+      "blur": 0.06,
+      "irregular": 0.35,
+      "params": {
+        "radius": 0.95,
+        "thickness": 0.016
+      }
+    },
+    {
+      "type": "iris",
+      "id": "cateye",
+      "label": "outer cat-eye",
+      "slot": "ghosts",
+      "offset": -0.35,
+      "scale": 0.035,
+      "stretch": [
+        2.5,
+        1.0
+      ],
+      "intensity": 0.6,
+      "color": [
+        0.75,
+        0.95,
+        1.0
+      ],
+      "blur": 0.06,
+      "shade": 0.3,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.45
+      }
+    },
+    {
+      "type": "iris",
+      "id": "chain",
+      "label": "ghost chain",
+      "slot": "ghosts",
+      "offset": 1.0,
+      "count": 3,
+      "spread": 0.3,
+      "scale": 0.028,
+      "count_scale_step": 1.18,
+      "count_falloff": 0.85,
+      "intensity": 0.12,
+      "color": [
+        0.3,
+        0.5,
+        1.0
+      ],
+      "dispersion": 0.4,
+      "blur": 0.08,
+      "irregular": 0.3,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.5,
+        "hollow": 0.0
+      }
+    },
+    {
+      "type": "glow",
+      "id": "reddot",
+      "label": "red dot",
+      "slot": "glows",
+      "offset": 2.4,
+      "scale": 0.01,
+      "intensity": 0.4,
+      "color": [
+        1.0,
+        0.35,
+        0.2
+      ],
+      "blur": 0.05,
+      "params": {
+        "softness": 0.4,
+        "falloff": 2.2
+      }
+    },
+    {
+      "type": "glow",
+      "id": "veil",
+      "label": "veil",
+      "slot": "glows",
+      "offset": 0.1,
+      "scale": 2.4,
+      "intensity": 0.0045,
+      "color": [
+        0.55,
+        0.65,
+        1.0
+      ],
+      "blur": 0.3,
+      "irregular": 0.3,
+      "params": {
+        "softness": 1.0,
+        "falloff": 0.8
+      }
+    }
+  ]
+}

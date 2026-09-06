@@ -34,6 +34,29 @@ def panning_clip(frames=24, h=200, w=300, dx=2.0, dy=0.5, zoom=0.0, seed=0):
     return clip, (u0, v0), truth
 
 
+def _pan(base, xs, h, w):
+    clip = torch.zeros(len(xs), h, w, 3)
+    for i, tx in enumerate(xs):
+        theta = torch.tensor([[1.0, 0.0, -tx / (w / 2)], [0.0, 1.0, 0.0]])
+        grid = F.affine_grid(theta.unsqueeze(0), (1, 1, h, w), align_corners=False) / 3
+        clip[i] = F.grid_sample(base, grid, align_corners=False)[0, 0].unsqueeze(-1).expand(-1, -1, 3)
+    return clip
+
+
+def cut_clip(before=12, after=12, h=200, w=300, dx_before=2.0, dx_after=-3.0):
+    """A soft texture panned at dx_before, then a hard cut to an unrelated
+    HARD-EDGED texture panned at dx_after. The edges matter: on smooth noise
+    LK lands on a wrong-but-self-consistent match and the forward-backward
+    check waves the cut through; on hard edges it fails, which is what real
+    footage does. Frame `before` is the cut."""
+    g = torch.Generator().manual_seed(0)
+    soft = F.avg_pool2d(torch.rand(1, 1, h * 3, w * 3, generator=g), 7, 1, 3)
+    g = torch.Generator().manual_seed(5)
+    blobs = (F.avg_pool2d(torch.rand(1, 1, h * 3, w * 3, generator=g), 9, 1, 4) > 0.5).float()
+    return torch.cat([_pan(soft, [dx_before * i for i in range(before)], h, w),
+                      _pan(blobs, [dx_after * i for i in range(after)], h, w)])
+
+
 class TestFeatures:
     def test_finds_corners_on_texture(self):
         clip, _, _ = panning_clip(frames=1)
@@ -113,3 +136,18 @@ class TestCarry:
         clip, (u0, v0), _ = panning_clip(frames=1)
         assert carry_point(u0, v0, estimate_motion(clip), 200, 300) == [(u0, v0)]
         assert estimate_motion(torch.zeros(0, 10, 10, 3)) == [(1.0, 0.0, 0.0, 0.0)]
+
+    def test_recovers_after_a_cut(self):
+        """One frame LK cannot bridge -- a cut, a whip -- must not freeze
+        the solve. Reseeding features on the new frame is only half of it:
+        the reference pyramid has to move on too, or every later frame is
+        matched against the pre-cut frame, fails again, and replays the last
+        good motion for the rest of the shot."""
+        clip = cut_clip(before=12, after=12, dx_before=2.0, dx_after=-3.0)
+        stats = {}
+        mo = estimate_motion(clip, anchor_uv=(0.5, 0.5), stats=stats)
+        # only the cut itself is unsolvable
+        assert stats["solved_frames"] >= clip.shape[0] - 2, stats
+        # and after it the motion is the new pan, not a replay of the old
+        tx_after = [round(m[2], 2) for m in mo[13:]]
+        assert all(t < -1.5 for t in tx_after), tx_after

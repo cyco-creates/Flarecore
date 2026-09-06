@@ -1,7 +1,8 @@
 # comfyui-flarecore
 
 Procedural lens flare rendering for ComfyUI. Pure PyTorch math on a coordinate
-grid — no OpenGL, no textures, no models, no network calls. Works headless on
+grid — no OpenGL, no models, no network calls. Photographed elements are
+optional and sampled through the same transform pipeline. Works headless on
 CUDA, MPS, and CPU.
 
 ## What it does
@@ -116,6 +117,8 @@ Combine. `position_mode` chooses:
 
 - `manual` — drag the light on the picker.
 - `detect` — the brightest spot, each frame on its own.
+- `detect_with_manual_offset` — detect, then shift by the picker's own
+  offset from centre, for a light the detector finds slightly off.
 - `track` — the same, followed through the clip. For footage. If the flare
   wanders between nearby lights, lower `track_max_jump`.
 - `track_dots` — a black plate with white dots as a control layer: **every
@@ -229,12 +232,32 @@ Shipped workflows (ComfyUI → Workflow → Browse Templates → flarecore):
 
 The forge bench's prompt node carries its own panel: pick a **category**,
 then an **element**, and its bank prompt appears in an editable box — what
-you see is exactly what queues. The **extra style** suggestion is appended
-only while its toggle is on. The old raw widgets still exist underneath and
+you see is exactly what queues. The **extra style** tail is appended only
+while its toggle is on, and its dropdown offers real shooting conditions
+from `prompts/element_styles.json`, grouped as lens era, capture medium,
+lens condition, atmosphere, light source and filtration: uncoated pre-war
+glass, colour reversal stock, a greasy fingerprint, thick fog, a
+low-pressure sodium lamp, a black diffusion filter. Picking one fills the
+box, which stays editable — type over it and the picker reads *custom*.
+Add your own by editing the file; the panel rescans it. The old raw widgets still exist underneath and
 still drive everything, so saved workflows and API use are unchanged. The
 model and sampling chain is collapsed into a **Krea2 generator** subgraph —
 double-click it to look inside; `seed` is exposed on the outside for quick
 variations.
+
+### Two generators, one switch
+
+The forge can carry two image generators side by side — the local **Krea2
+generator** subgraph and a hosted **GPT Image 2** node — with a **Flare
+Generator Select** node choosing between them. Flip its `generator` widget
+(`a` = Krea2, `b` = GPT Image 2) and the chosen branch feeds Flare Texture
+Prepare while the other is muted: the switch's inputs are *lazy*, so the
+unselected generator is never executed and the API one costs nothing while
+you work locally. The editor also greys the muted branch so the disabled
+generator looks disabled, and re-applies that after the studio bench switch
+wakes the forge (which would otherwise un-mute everything in it). To swap
+GPT Image 2 for any other generator, rewire its IMAGE output into the
+switch's `image_b`; add a third by chaining a second switch.
 
 Depth occlusion lives in the video bench, where the footage is; wire any
 depth map into FlareRender's `depth` input to use it elsewhere.
@@ -279,8 +302,9 @@ Two controls decide the result:
   It is never guessed.
 
 `occlusion_radius` sets how gradually the flare fades as an object crosses the
-light — about 20 px of travel at the `0.02` default on a 1024-wide frame, and
-roughly 46 px at `0.08`. Raise it, and the adapter's `blur`, for a softer fade
+light. It is a fraction of frame HEIGHT, so on a 1080-high frame the `0.02`
+default samples a disc about 22 px across and `0.08` about 86 px — four times
+the travel, not twice. Raise it, and the adapter's `blur`, for a softer fade
 on moving shots.
 
 For video, leave the adapter's `normalize` on `per_batch`. Per-frame
@@ -296,10 +320,87 @@ minimal preset is just:
 { "schema_version": 1, "elements": [{ "type": "glow" }] }
 ```
 
-See `presets/` for full examples (`cine_blue` is the default; `anamorphic_gold`,
-`sun_natural` and `stage_spot` show move locks, triggers, orbs, completion and
-flicker) and `flare/schema.py` for the complete key reference. Unknown element
-types fail loudly; unknown extra keys warn.
+See `presets/` for full examples and `flare/schema.py` for the complete key
+reference. Unknown element types fail loudly; unknown extra keys warn.
+
+## The preset library
+
+Built from a frame-by-frame survey of 44 cine lenses on a sweeping point
+source. Each preset models an optical *family* rather than a product, and is
+named for the behaviour. Two things the survey settled shape the library:
+**geometry belongs to the optics and colour to the coating** — three
+coatings of one lens share every shape and differ only in the streak — and
+**ghost size scales with focal length**, which is what `global.scale` does,
+so the `_tele` variants are the same stack scaled up.
+
+Anamorphic: `ana_soft_bloom` (big cool bloom, ghosts that flash through one
+narrow angle), `ana_hairline_classic` (full-width hairline, front-element
+disc rimmed with spectral dust — also shipped as `cine_blue`, the default),
+`ana_heavy_blue` (bimodal streak, the companion ghost's own streak below,
+edge hotspots, spectral caps), `ana_clean_modern`, `ana_coated_blue` /
+`_amber` / `_silver` / `_clear` (one geometry, four coatings),
+`ana_dashed_lf`, `ana_vintage_lf` (two-tone streak, spectral ringed disc,
+corner caustic), `ana_crescent`, `ana_double_streak`.
+
+Spherical: `sph_vintage_coated`, `sph_uncoated_veil`, `sph_vintage_ring`,
+`sph_modern_soft`, `sph_modern_clean`, `sph_designed_blue` (+ `_tele`),
+`sph_golden_vintage`, `sph_epic_65`, `sph_jewel_lf`, `sph_zoom_sparkle`,
+`sph_zoom_tele_warm`.
+
+Scenario presets stay alongside them: `trigger_showcase`, `stage_spot`,
+`sodium_street`, `neon_night`, `headlight_bloom`, `underwater_caustic`,
+`film_halation`, `scifi_starburst`, `specimen_all_elements`.
+
+### How the library is organised
+
+Two taxonomies, each with one owner.
+
+**Elements** belong to eight families — `glows`, `ghosts`, `rays`,
+`streaks`, `rings`, `hoops`, `caustics`, `lens_dirt`. The same eight name
+the folders under `elements/`, the top-level keys of the prompt bank, the
+editor's gallery filter, and every preset element's `slot`. A `slot` is what
+opens when you click an element's name: the shelf of the library holding
+plausible replacements for it, which is why a one-sided `glint` used as a
+streak is filed under `streaks` rather than `rays`. `flare/schema.py` holds
+the list as `ELEMENT_SLOTS`, and `tests/test_library.py` fails if any of the
+four places drifts from it.
+
+**Presets** file themselves with a `category` (`Anamorphic`, `Spherical`,
+`Scenario`, `Utility`) and an optional `subcategory` for genuine sibling
+sets — the four coatings of one anamorphic, the wide and tele cut of one
+spherical. The editor's `presets ▾` menu groups by them. The category lives
+*inside* the preset rather than in its filename on purpose: a saved workflow
+loads a preset by name, so renaming files to sort them would break graphs
+that already exist.
+
+## Controls drawn from real lenses
+
+Every one of these exists because a shape kept recurring across the survey
+and could not be expressed. All default to off.
+
+- **`shift` [x, y]** — a nudge across the *screen*, applied after the flare
+  axis, so it does not swing as the light moves. A companion ghost carries
+  its own anamorphic streak a fixed drop below the source; `offset` cannot
+  say that.
+- **`pin` [x, y]** — lock one coordinate to the frame (`null` leaves an axis
+  free). With y pinned to −1 an element rides the top edge directly above
+  the light, which is the hotspot most anamorphics throw.
+- **`shade`** (−1..1) — light the element from one side only, across its own
+  axis. A ghost bright on the edge facing the source reads as a comet, and
+  as a pointed crescent once the frame cuts it.
+- **`curve`** (streak) — bow the line into a shallow arc. Positive sags.
+- **`dash`** (streak) — break the line into seeded segments with gaps.
+- **`crescent`** / **`crescent_feather`** (iris, ring, hoop, spectral) — cut
+  the ghost with a disc of its own size, the way a barrel clips a
+  reflection: 0 leaves it whole, 0.9 leaves a thin arc. Rotation aims it.
+- **`ring`** / **`ring_width`** / **`spectral`** (orbs) — gather the specks
+  onto a rim instead of filling the disc, and let each diffract its own
+  colour: the dusty rim of a front-element reflection.
+
+A one-sided ray is `glint` with `points: 1`; two of them, aimed opposite and
+tinted differently, make the warm/cool two-tone streak of an old anamorphic.
+Spectral caps at the ends of a streak need no new key — `dispersion` already
+pushes red furthest along the line.
 
 ## Notes for compositors
 

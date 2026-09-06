@@ -57,7 +57,7 @@ class TestFlareRender:
             "FlareRender", "FlarePresetLoader", "FlareDepthAdapter",
             "FlareKeyframes",
             "FlareElementPrompts", "FlareTexturePrepare",
-            "FlareElementSave",
+            "FlareElementSave", "FlareGeneratorSelect",
         }
         assert PKG.WEB_DIRECTORY == "./web"
         assert FlareRender.CATEGORY == "flare"
@@ -65,6 +65,38 @@ class TestFlareRender:
         it = FlareRender.INPUT_TYPES()
         assert "image" in it["required"]
         assert "depth" in it["optional"]
+
+    def test_generator_select_passes_the_chosen_image_through(self):
+        """The forge can carry two generators; the switch decides which one
+        actually runs. Lazy inputs are the point: the branch that is not
+        selected is never evaluated, so an API generator costs nothing
+        while the local one is active."""
+        node = PKG.NODE_CLASS_MAPPINGS["FlareGeneratorSelect"]()
+        a = torch.zeros(1, 8, 8, 3)
+        b = torch.ones(1, 8, 8, 3)
+        assert node.select("a", image_a=a, image_b=b)[0] is a
+        assert node.select("b", image_a=a, image_b=b)[0] is b
+
+    def test_generator_select_requests_only_the_chosen_branch(self):
+        node = PKG.NODE_CLASS_MAPPINGS["FlareGeneratorSelect"]()
+        assert node.check_lazy_status("a") == ["image_a"]
+        assert node.check_lazy_status("b", image_a=None, image_b=None) == ["image_b"]
+
+    def test_generator_select_works_with_one_branch_wired(self):
+        node = PKG.NODE_CLASS_MAPPINGS["FlareGeneratorSelect"]()
+        a = torch.zeros(1, 8, 8, 3)
+        assert node.select("a", image_a=a)[0] is a
+
+    def test_generator_select_names_the_missing_branch(self):
+        node = PKG.NODE_CLASS_MAPPINGS["FlareGeneratorSelect"]()
+        with pytest.raises(ValueError, match="image_a"):
+            node.select("a", image_b=torch.ones(1, 8, 8, 3))
+
+    def test_generator_select_inputs_are_lazy(self):
+        cls = PKG.NODE_CLASS_MAPPINGS["FlareGeneratorSelect"]
+        opt = cls.INPUT_TYPES()["optional"]
+        assert opt["image_a"][1].get("lazy") is True
+        assert opt["image_b"][1].get("lazy") is True
 
     def test_flare_pass_composites_to_image_output(self):
         # Definition of done #4: decoding the pass and the source, adding in
@@ -209,7 +241,7 @@ class TestFlareDepthAdapter:
 class TestFlarePresetLoader:
     def test_lists_shipped_presets(self):
         files = FlarePresetLoader.INPUT_TYPES()["required"]["preset_file"][0]
-        assert "clean_35mm.json" in files
+        assert "cine_blue.json" in files
         assert "specimen_all_elements.json" in files
         assert len(files) >= 5
 

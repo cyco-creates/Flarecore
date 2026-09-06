@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "name": "Anamorphic Dashed",
+  "author": "flarecore",
+  "category": "Anamorphic",
+  "global": {
+    "tint": [
+      0.95,
+      0.98,
+      1.06
+    ],
+    "seed": 41,
+    "aspect": 1.7,
+    "fringe": 0.1
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "core",
+      "label": "core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.05,
+      "intensity": 4.4,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "params": {
+        "softness": 0.28,
+        "falloff": 2.3
+      }
+    },
+    {
+      "type": "glow",
+      "id": "halo",
+      "label": "halo",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.3,
+      "intensity": 0.9,
+      "color": [
+        0.55,
+        0.9,
+        1.0
+      ],
+      "irregular": 0.2,
+      "params": {
+        "softness": 0.42,
+        "falloff": 1.5
+      }
+    },
+    {
+      "type": "glint",
+      "id": "spokes",
+      "label": "spokes",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.45,
+      "intensity": 0.28,
+      "color": [
+        0.85,
+        0.94,
+        1.0
+      ],
+      "blur": 0.04,
+      "irregular": 0.5,
+      "params": {
+        "points": 110,
+        "length": 0.22,
+        "thickness": 0.003,
+        "length_jitter": 0.6
+      }
+    },
+    {
+      "type": "streak",
+      "id": "streak",
+      "label": "streak",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.45,
+      "auto_rotate": false,
+      "color": [
+        0.12,
+        0.32,
+        1.0
+      ],
+      "blur": 0.04,
+      "irregular": 0.3,
+      "params": {
+        "length": 5.0,
+        "thickness": 0.005,
+        "curve": 0.0,
+        "dash": 0.55
+      }
+    },
+    {
+      "type": "streak",
+      "id": "streakband",
+      "label": "streak band",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.06,
+      "auto_rotate": false,
+      "color": [
+        0.15,
+        0.3,
+        0.9
+      ],
+      "blur": 0.3,
+      "irregular": 0.2,
+      "params": {
+        "length": 4.0,
+        "thickness": 0.06,
+        "curve": 0.0,
+        "dash": 0.0
+      }
+    },
+    {
+      "type": "glow",
+      "id": "warmdot",
+      "label": "warm dot",
+      "slot": "glows",
+      "offset": 1.5,
+      "scale": 0.012,
+      "intensity": 0.35,
+      "color": [
+        1.0,
+        0.6,
+        0.3
+      ],
+      "blur": 0.05,
+      "params": {
+        "softness": 0.4,
+        "falloff": 2.4
+      }
+    },
+    {
+      "type": "ring",
+      "id": "smallring",
+      "label": "small ring",
+      "slot": "rings",
+      "offset": 1.9,
+      "scale": 0.1,
+      "intensity": 0.06,
+      "color": [
+        0.4,
+        0.6,
+        1.0
+      ],
+      "blur": 0.1,
+      "params": {
+        "radius": 0.8,
+        "thickness": 0.09
+      }
+    },
+    {
+      "type": "glow",
+      "id": "veil",
+      "label": "veil",
+      "slot": "glows",
+      "offset": 0.1,
+      "scale": 2.5,
+      "intensity": 0.003,
+      "color": [
+        0.45,
+        0.58,
+        1.0
+      ],
+      "blur": 0.3,
+      "irregular": 0.3,
+      "params": {
+        "softness": 1.0,
+        "falloff": 0.8
+      }
+    }
+  ]
+}

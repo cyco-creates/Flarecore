@@ -60,6 +60,20 @@ ELEMENT_COMMON_DEFAULTS = {
     "move": [1.0, 1.0],     # how much of the light-driven motion this element
                             # follows per screen axis: [1, 0] slides only
                             # horizontally (anamorphic elements)
+    "shift": [0.0, 0.0],    # screen-space offset in half-heights applied
+                            # AFTER the axis position, so it does not swing
+                            # with the flare angle the way `offset` does: a
+                            # companion ghost's own streak sits a fixed
+                            # distance below the source
+    "pin": [None, None],    # lock a coordinate to the frame in grid units
+                            # (y -1 top, +1 bottom); the other axis keeps
+                            # following the light, which is the hotspot
+                            # welded to the frame edge above the source.
+                            # null leaves that axis free
+    "shade": 0.0,           # -1..1 linear brightness ramp across the
+                            # element's own axis: a ghost lit only on the
+                            # edge facing the source reads as a comet, and
+                            # as a cusped crescent once the frame cuts it
     "rotation": 0.0,        # degrees
     "auto_rotate": True,    # add the flare axis angle to rotation
     "intensity": 1.0,
@@ -99,24 +113,37 @@ ELEMENT_COMMON_DEFAULTS = {
 # (360 = whole circle) and a feathered fade at the window's ends.
 _COMPLETION_DEFAULTS = {"completion": 360.0, "completion_feather": 0.2}
 
+# The barrel cutting a ghost into a crescent: a clipping disc of the
+# element's own radius slides across it, so 0 leaves the ghost whole and
+# 0.9 leaves a thin arc. Shared by the round element types.
+_CRESCENT_DEFAULTS = {"crescent": 0.0, "crescent_feather": 0.1}
+
 # Per-type params defaults (the "params" sub-dict).
 PARAM_DEFAULTS = {
     "glow": {"softness": 0.35, "falloff": 1.2},
-    "iris": {"blades": 6, "edge_softness": 0.15, "hollow": 0.0},
-    "streak": {"length": 0.8, "thickness": 0.02, "count": 1},
-    "ring": {"radius": 0.5, "thickness": 0.05, **_COMPLETION_DEFAULTS},
+    "iris": {"blades": 6, "edge_softness": 0.15, "hollow": 0.0,
+             **_CRESCENT_DEFAULTS},
+    "streak": {"length": 0.8, "thickness": 0.02, "count": 1,
+               # a shallow arc instead of a rule, and gaps along it
+               "curve": 0.0, "dash": 0.0},
+    "ring": {"radius": 0.5, "thickness": 0.05, **_COMPLETION_DEFAULTS,
+             **_CRESCENT_DEFAULTS},
     "hoop": {"radius": 0.6, "thickness": 0.15, "angular_falloff": 0.8,
-             **_COMPLETION_DEFAULTS},
+             **_COMPLETION_DEFAULTS, **_CRESCENT_DEFAULTS},
     "glint": {"points": 8, "length": 0.5, "thickness": 0.008, "length_jitter": 0.3,
               **_COMPLETION_DEFAULTS},
     "spectral": {"shape": "ring", "radius": 0.5, "thickness": 0.08,
                  "blades": 8, "edge_softness": 0.1, "hollow": 0.0,
-                 **_COMPLETION_DEFAULTS},
+                 **_COMPLETION_DEFAULTS, **_CRESCENT_DEFAULTS},
     "texture": {"file": "", "channel": "auto"},
     # procedural out-of-focus spots on the lens, lit by proximity to the light
     "orbs": {"count": 24, "size": 0.12, "size_jitter": 0.6, "spread": 1.0,
              "edge_softness": 0.3, "illumination": 0.8, "shape": "disc",
-             "blades": 6},
+             "blades": 6,
+             # gather the specks on an annulus instead of filling the disc,
+             # and let each diffract its own colour: the dusty rim of a
+             # front-element reflection
+             "ring": 0.0, "ring_width": 0.3, "spectral": 0.0},
 }
 
 # Per-type overrides of the common element defaults.
@@ -128,7 +155,22 @@ ELEMENT_TYPE_OVERRIDES = {
 
 ELEMENT_TYPES = tuple(sorted(PARAM_DEFAULTS.keys()))
 
-_TOP_LEVEL_KEYS = {"schema_version", "name", "author", "global", "elements"}
+_TOP_LEVEL_KEYS = {"schema_version", "name", "author", "category",
+                   "subcategory", "global", "elements"}
+
+# How a preset files itself in the library. The editor's preset menu groups
+# by these, so a browsable library is a property of the presets themselves
+# rather than of their filenames -- renaming a preset would break every
+# saved workflow that loads it by name.
+PRESET_CATEGORIES = ("Anamorphic", "Spherical", "Scenario", "Utility")
+
+# The eight families every element belongs to. A preset element's `slot`
+# says which of them holds alternatives for it, so clicking its name in the
+# editor opens the right shelf of the library. Folder names under
+# elements/, the prompt bank's top-level keys and the editor's CATEGORY_OF
+# targets are all this same list; tests/test_library.py pins them together.
+ELEMENT_SLOTS = ("glows", "ghosts", "rays", "streaks", "rings", "hoops",
+                 "caustics", "lens_dirt")
 
 
 def _require_number(value, key, lo=None, hi=None, hi_exclusive=False):
@@ -178,6 +220,17 @@ def normalize_texture_ref(ref, key="params.file") -> str:
             f"'{key}' must be a relative path inside the element library, got {ref!r}"
         )
     return norm
+
+
+def _require_pin(value, key):
+    """[x, y] in grid units where either entry may be null to leave that
+    axis following the light."""
+    if not isinstance(value, (list, tuple)) or len(value) != 2:
+        raise ValueError(
+            f"preset key '{key}' must be a list of 2 numbers or nulls, got {value!r}"
+        )
+    return [None if c is None else _require_number(c, f"{key}[{i}]", lo=-10.0, hi=10.0)
+            for i, c in enumerate(value)]
 
 
 def _validate_trigger(raw, where: str):
@@ -256,6 +309,11 @@ def _validate_element(raw: dict, index: int) -> dict:
     elem["id"] = str(elem["id"])
     elem["label"] = str(elem["label"])
     elem["slot"] = str(elem["slot"])
+    if elem["slot"] and elem["slot"] not in ELEMENT_SLOTS:
+        warnings.warn(
+            f"{where}.slot {elem['slot']!r} is not one of "
+            f"{', '.join(ELEMENT_SLOTS)}; the gallery cannot filter it"
+        )
     elem["enabled"] = bool(elem["enabled"])
     elem["solo"] = bool(elem["solo"])
     elem["offset"] = _require_number(elem["offset"], f"{where}.offset", lo=-10.0, hi=10.0)
@@ -266,6 +324,9 @@ def _validate_element(raw: dict, index: int) -> dict:
     if elem["stretch"][0] <= 0 or elem["stretch"][1] <= 0:
         raise ValueError(f"{where}.stretch components must be > 0")
     elem["move"] = _require_vec(elem["move"], f"{where}.move", 2, lo=0.0, hi=1.0)
+    elem["shift"] = _require_vec(elem["shift"], f"{where}.shift", 2, lo=-10.0, hi=10.0)
+    elem["pin"] = _require_pin(elem["pin"], f"{where}.pin")
+    elem["shade"] = _require_number(elem["shade"], f"{where}.shade", lo=-1.0, hi=1.0)
     elem["rotation"] = _require_number(elem["rotation"], f"{where}.rotation")
     elem["auto_rotate"] = bool(elem["auto_rotate"])
     elem["intensity"] = _require_number(elem["intensity"], f"{where}.intensity",
@@ -306,6 +367,13 @@ def _validate_element(raw: dict, index: int) -> dict:
         p["completion_feather"] = _require_number(
             p["completion_feather"], f"{where}.params.completion_feather", lo=0.0, hi=1.0
         )
+    if etype in ("iris", "ring", "hoop", "spectral"):
+        p["crescent"] = _require_number(p["crescent"], f"{where}.params.crescent",
+                                        lo=0.0, hi=0.98)
+        p["crescent_feather"] = _require_number(
+            p["crescent_feather"], f"{where}.params.crescent_feather",
+            lo=0.001, hi=1.0
+        )
     if etype == "glow":
         p["softness"] = _require_number(p["softness"], f"{where}.params.softness", lo=1e-4)
         p["falloff"] = _require_number(p["falloff"], f"{where}.params.falloff", lo=0.05)
@@ -320,6 +388,10 @@ def _validate_element(raw: dict, index: int) -> dict:
         p["length"] = _require_number(p["length"], f"{where}.params.length", lo=1e-4)
         p["thickness"] = _require_number(p["thickness"], f"{where}.params.thickness", lo=1e-5)
         p["count"] = _require_int(p["count"], f"{where}.params.count", lo=1, hi=32)
+        p["curve"] = _require_number(p["curve"], f"{where}.params.curve",
+                                     lo=-1.0, hi=1.0)
+        p["dash"] = _require_number(p["dash"], f"{where}.params.dash",
+                                    lo=0.0, hi=1.0)
     elif etype == "ring":
         p["radius"] = _require_number(p["radius"], f"{where}.params.radius", lo=0.0)
         p["thickness"] = _require_number(p["thickness"], f"{where}.params.thickness", lo=1e-5)
@@ -330,7 +402,10 @@ def _validate_element(raw: dict, index: int) -> dict:
             p["angular_falloff"], f"{where}.params.angular_falloff", lo=0.0, hi=1.0
         )
     elif etype == "glint":
-        p["points"] = _require_int(p["points"], f"{where}.params.points", lo=2, hi=256)
+        # 1 is a single one-sided ray, not a degenerate star: it is how a
+        # two-tone streak is built (a warm ray one way, a cool one the
+        # other) and how a lone hair ray off the source is drawn
+        p["points"] = _require_int(p["points"], f"{where}.params.points", lo=1, hi=256)
         p["length"] = _require_number(p["length"], f"{where}.params.length", lo=1e-4)
         p["thickness"] = _require_number(p["thickness"], f"{where}.params.thickness", lo=1e-5)
         p["length_jitter"] = _require_number(
@@ -357,6 +432,13 @@ def _validate_element(raw: dict, index: int) -> dict:
         if p["shape"] not in ("disc", "polygon"):
             raise ValueError(f"{where}.params.shape must be 'disc' or 'polygon', got {p['shape']!r}")
         p["blades"] = _require_int(p["blades"], f"{where}.params.blades", lo=3, hi=32)
+        p["ring"] = _require_number(p["ring"], f"{where}.params.ring",
+                                    lo=0.0, hi=1.0)
+        p["ring_width"] = _require_number(p["ring_width"],
+                                          f"{where}.params.ring_width",
+                                          lo=0.01, hi=2.0)
+        p["spectral"] = _require_number(p["spectral"], f"{where}.params.spectral",
+                                        lo=0.0, hi=1.0)
     elif etype == "spectral":
         if p["shape"] not in ("ring", "iris"):
             raise ValueError(f"{where}.params.shape must be 'ring' or 'iris', got {p['shape']!r}")
@@ -405,9 +487,16 @@ def validate_preset(raw: dict) -> dict:
         "schema_version": SCHEMA_VERSION,
         "name": str(raw.get("name", "")),
         "author": str(raw.get("author", "")),
+        "category": str(raw.get("category", "")),
+        "subcategory": str(raw.get("subcategory", "")),
         "global": copy.deepcopy(GLOBAL_DEFAULTS),
         "elements": [],
     }
+    if out["category"] and out["category"] not in PRESET_CATEGORIES:
+        warnings.warn(
+            f"preset category {out['category']!r} is not one of "
+            f"{', '.join(PRESET_CATEGORIES)}; it will group on its own"
+        )
 
     raw_global = raw.get("global", {})
     if not isinstance(raw_global, dict):

@@ -1,0 +1,46 @@
+{
+  "Lens era": {
+    "uncoated pre-war glass": "shot through uncoated pre-war glass, low contrast with a warm straw cast, veiling glare lifting the black, edges soft and unresolved",
+    "single-coated sixties glass": "shot through single-coated glass, a warm amber cast on every reflection, moderate veiling, edges that stay soft wide open",
+    "modern multicoated glass": "shot through modern multicoated glass, neutral and high in contrast, the black staying black, the shape small and cleanly defined",
+    "anamorphic front element": "shot through an anamorphic front element, a cool blue-green cast on every reflection, stretched horizontally, gentle halation",
+    "long telephoto": "shot on a long telephoto, the shape large and flattened against the frame, its edges compressed and low in contrast"
+  },
+  "Capture medium": {
+    "colour negative": "recorded on tungsten-balanced colour negative, fine grain, red halation blooming around the brightest area, highlights rolling off gently instead of clipping",
+    "colour reversal stock": "recorded on colour reversal stock, high in contrast and heavily saturated, highlights clipping hard with almost no roll-off, the black very deep",
+    "black and white negative": "recorded on black and white negative, neutral silver tones with no colour anywhere, pronounced grain, a soft glow around the brightest area",
+    "65mm negative": "recorded on 65mm negative, extremely fine grain and an enormous tonal range, the whole shape smooth and cleanly resolved",
+    "digital sensor": "recorded on a digital sensor, clean and noise-free in the shadows, the core clipping abruptly to white with a faint magenta edge where it saturates",
+    "early video tube": "recorded on an early video tube, soft and slightly smeared, the brightest area blooming and trailing a little to one side"
+  },
+  "Lens condition": {
+    "dusty scratched glass": "with a dusty scratched front element, fine bright specks and hairline scratches catching the light across the shape",
+    "greasy fingerprint": "with a greasy fingerprint smeared across the front element, the shape softened and drawn out in streaks where the grease spreads it",
+    "rain on the glass": "with rain beading on the front element, small round droplets scattered over the shape, each carrying a tiny bright copy of the light",
+    "breath fog": "with breath fogging the front element, a milky bloom spreading unevenly across the shape and thinning toward one edge",
+    "separated cement": "through an old lens whose cemented elements have begun to separate, a yellowed irregular edge and a faint second image offset from the first"
+  },
+  "Atmosphere": {
+    "atmospheric haze": "through heavy atmospheric haze on set, the shape diffused and enlarged, its edges dissolving into a broad soft bloom",
+    "thick fog": "in thick fog, the shape swollen into a large diffuse ball with almost no defined edge, low in contrast throughout",
+    "dust in the air": "with dust hanging in the air, the shape broken up by drifting specks that each catch a point of light",
+    "underwater": "photographed underwater, a strong blue-green cast, the shape softened and rippling, fine suspended particles catching the light"
+  },
+  "Light source": {
+    "tungsten lamp": "lit by a tungsten lamp at 3200K, a deep warm orange cast throughout with the core burning out to white",
+    "daylight arc lamp": "lit by a daylight-balanced arc lamp at 5600K, crisp and faintly cool, the core a clean neutral white",
+    "sodium street lamp": "lit by a low-pressure sodium street lamp, almost monochromatic amber-orange with no other colour present anywhere",
+    "mercury vapour lamp": "lit by a mercury vapour lamp, a cold green-cyan cast with a faint violet edge, slightly harsh",
+    "candle flame": "lit by candle flame, very warm and deep orange, dim and unsteady, the shape small and soft",
+    "cold LED headlight": "lit by a cold white LED headlight, hard-edged and faintly blue, the core clipping sharply at a crisp boundary",
+    "firelight": "lit by open firelight, warm orange shading to red at the edges, uneven in brightness as though flickering"
+  },
+  "Filtration": {
+    "black diffusion filter": "shot through a black diffusion filter, the highlight blooming into a soft halo while the blacks stay dense and un-lifted",
+    "heavy diffusion": "shot through heavy diffusion, the whole shape softened and its edges bled outward into a milky glow",
+    "two-line streak filter": "shot through a two-line streak filter, a long horizontal blue streak drawn out through the brightest area",
+    "six-point star filter": "shot through a six-point star filter, six even spikes radiating from the brightest area",
+    "warming filter": "shot through a warming filter, the whole shape pushed toward amber with the cool tones removed"
+  }
+}

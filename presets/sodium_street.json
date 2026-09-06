@@ -2,11 +2,16 @@
   "schema_version": 1,
   "name": "Sodium Street",
   "author": "flarecore",
+  "category": "Scenario",
   "global": {
     "intensity": 1.0,
     "scale": 1.0,
     "aspect": 1.0,
-    "tint": [1.0, 0.88, 0.7],
+    "tint": [
+      1.0,
+      0.88,
+      0.7
+    ],
     "seed": 23,
     "fringe": 0.06,
     "flicker_amount": 0.12,
@@ -21,8 +26,15 @@
       "offset": 0.0,
       "scale": 0.09,
       "intensity": 3.2,
-      "color": [1.0, 0.8, 0.45],
-      "params": { "softness": 0.35, "falloff": 2.0 }
+      "color": [
+        1.0,
+        0.8,
+        0.45
+      ],
+      "params": {
+        "softness": 0.35,
+        "falloff": 2.0
+      }
     },
     {
       "type": "glow",
@@ -34,8 +46,15 @@
       "intensity": 0.9,
       "irregular": 0.25,
       "blur": 0.1,
-      "color": [1.0, 0.65, 0.3],
-      "params": { "softness": 0.6, "falloff": 1.3 }
+      "color": [
+        1.0,
+        0.65,
+        0.3
+      ],
+      "params": {
+        "softness": 0.6,
+        "falloff": 1.3
+      }
     },
     {
       "type": "glow",
@@ -47,8 +66,15 @@
       "intensity": 0.05,
       "irregular": 0.3,
       "blur": 0.35,
-      "color": [1.0, 0.6, 0.3],
-      "params": { "softness": 1.0, "falloff": 0.9 }
+      "color": [
+        1.0,
+        0.6,
+        0.3
+      ],
+      "params": {
+        "softness": 1.0,
+        "falloff": 0.9
+      }
     },
     {
       "type": "hoop",
@@ -61,8 +87,18 @@
       "irregular": 0.4,
       "dispersion": 0.6,
       "blur": 0.12,
-      "color": [1.0, 0.7, 0.35],
-      "params": { "radius": 0.9, "thickness": 0.22, "angular_falloff": 0.8, "completion": 240, "completion_feather": 0.4 }
+      "color": [
+        1.0,
+        0.7,
+        0.35
+      ],
+      "params": {
+        "radius": 0.9,
+        "thickness": 0.22,
+        "angular_falloff": 0.8,
+        "completion": 240,
+        "completion_feather": 0.4
+      }
     },
     {
       "type": "iris",
@@ -79,8 +115,15 @@
       "irregular": 0.3,
       "dispersion": 0.4,
       "blur": 0.15,
-      "color": [1.0, 0.75, 0.45],
-      "params": { "blades": 8, "edge_softness": 0.7 }
+      "color": [
+        1.0,
+        0.75,
+        0.45
+      ],
+      "params": {
+        "blades": 8,
+        "edge_softness": 0.7
+      }
     },
     {
       "type": "glint",
@@ -92,8 +135,17 @@
       "intensity": 0.22,
       "irregular": 0.6,
       "blur": 0.08,
-      "color": [1.0, 0.85, 0.55],
-      "params": { "points": 24, "length": 0.4, "thickness": 0.006, "length_jitter": 0.7 }
+      "color": [
+        1.0,
+        0.85,
+        0.55
+      ],
+      "params": {
+        "points": 24,
+        "length": 0.4,
+        "thickness": 0.006,
+        "length_jitter": 0.7
+      }
     },
     {
       "type": "glow",
@@ -104,9 +156,16 @@
       "scale": 1.2,
       "intensity": 0.0,
       "auto_rotate": false,
-      "stretch": [1.0, 0.12],
+      "stretch": [
+        1.0,
+        0.12
+      ],
       "blur": 0.2,
-      "color": [1.0, 0.6, 0.25],
+      "color": [
+        1.0,
+        0.6,
+        0.25
+      ],
       "trigger": {
         "mode": "border",
         "source": "light",
@@ -115,9 +174,16 @@
         "falloff": "smooth",
         "brightness": 0.3,
         "scale": 0.3,
-        "color": [1.0, 0.55, 0.2]
+        "color": [
+          1.0,
+          0.55,
+          0.2
+        ]
       },
-      "params": { "softness": 0.9, "falloff": 1.1 }
+      "params": {
+        "softness": 0.9,
+        "falloff": 1.1
+      }
     }
   ]
 }

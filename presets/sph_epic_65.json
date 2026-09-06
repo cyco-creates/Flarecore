@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "name": "Spherical Epic 65",
+  "author": "flarecore",
+  "category": "Spherical",
+  "global": {
+    "tint": [
+      1.0,
+      0.99,
+      1.02
+    ],
+    "seed": 151,
+    "fringe": 0.1
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "core",
+      "label": "core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.07,
+      "intensity": 3.2,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "params": {
+        "softness": 0.28,
+        "falloff": 2.3
+      }
+    },
+    {
+      "type": "glow",
+      "id": "halo",
+      "label": "halo",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.62,
+      "intensity": 0.5,
+      "color": [
+        0.85,
+        0.92,
+        1.0
+      ],
+      "irregular": 0.2,
+      "params": {
+        "softness": 0.62,
+        "falloff": 1.15
+      }
+    },
+    {
+      "type": "glint",
+      "id": "spokes",
+      "label": "spokes",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.7,
+      "intensity": 0.22,
+      "color": [
+        0.9,
+        0.95,
+        1.0
+      ],
+      "blur": 0.04,
+      "irregular": 0.65,
+      "params": {
+        "points": 170,
+        "length": 0.5,
+        "thickness": 0.0028,
+        "length_jitter": 0.6
+      }
+    },
+    {
+      "type": "iris",
+      "id": "veildisc",
+      "label": "veil disc",
+      "slot": "ghosts",
+      "offset": 0.35,
+      "scale": 1.4,
+      "intensity": 0.006,
+      "color": [
+        0.7,
+        0.8,
+        1.0
+      ],
+      "blur": 0.3,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.2
+      }
+    },
+    {
+      "type": "iris",
+      "id": "pink",
+      "label": "pink ghost",
+      "slot": "ghosts",
+      "offset": 1.1,
+      "count": 2,
+      "spread": 0.3,
+      "scale": 0.07,
+      "intensity": 0.16,
+      "color": [
+        1.0,
+        0.82,
+        0.86
+      ],
+      "blur": 0.14,
+      "count_scale_step": 1.2,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.5
+      }
+    },
+    {
+      "type": "iris",
+      "id": "lavender",
+      "label": "lavender ghost",
+      "slot": "ghosts",
+      "offset": 1.75,
+      "scale": 0.09,
+      "intensity": 0.14,
+      "color": [
+        0.78,
+        0.7,
+        1.0
+      ],
+      "blur": 0.16,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.5,
+        "hollow": 0.4
+      }
+    },
+    {
+      "type": "iris",
+      "id": "paleblue",
+      "label": "pale blue ghost",
+      "slot": "ghosts",
+      "offset": 2.35,
+      "scale": 0.075,
+      "intensity": 0.16,
+      "color": [
+        0.55,
+        0.68,
+        1.0
+      ],
+      "blur": 0.14,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.5
+      }
+    },
+    {
+      "type": "glow",
+      "id": "reddot",
+      "label": "red core",
+      "slot": "glows",
+      "offset": 2.35,
+      "scale": 0.006,
+      "intensity": 0.9,
+      "color": [
+        1.0,
+        0.25,
+        0.15
+      ],
+      "blur": 0.02,
+      "params": {
+        "softness": 0.3,
+        "falloff": 2.6
+      }
+    },
+    {
+      "type": "glow",
+      "id": "veil",
+      "label": "veil",
+      "slot": "glows",
+      "offset": 0.1,
+      "scale": 3.0,
+      "intensity": 0.0075,
+      "color": [
+        0.7,
+        0.8,
+        1.0
+      ],
+      "blur": 0.45,
+      "irregular": 0.3,
+      "params": {
+        "softness": 1.0,
+        "falloff": 0.8
+      }
+    }
+  ]
+}
