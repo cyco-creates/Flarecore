@@ -1068,6 +1068,28 @@ independently: solve the camera and carry the light; a sun needs a no-depth
 solve; never clamp the light to the frame; on driving shots the dominant
 motion is the road, so weight the far field.
 
+## The settings sweep: the defaults hold
+
+A 196-run sweep over the owner's two clips -- threshold x smoothing x max
+jump x scene lock for detect, track and lock on the driving shot, and for
+track_dots on the matte -- against the defaults each mode applies when it is
+chosen. The bar for changing a default was a clear win: at least 20% lower
+worst step, no extra dropouts, the light still top-right.
+
+Nothing cleared it. detect's best beat the default by 6%, lock's by 19%,
+track_dots' by 3%, and none of those improvements pointed in one consistent
+direction. The defaults stand.
+
+Two things the sweep did settle. Scene lock at 0.5 is not a gentler 1: it
+opens the deviation limit to a third of the frame, and detect's worst step
+went from 0.004 to 0.118 -- the sun modes want 1. And in track, a tight max
+jump (0.04) is the one genuine failure mode in the grid: the light is lost
+and reborn at a rival on the far side of frame. With scene anchoring now
+doing the work the tight gate used to do, 0.10 was best across every
+threshold, so track's applied default moved from 0.06 to 0.10. That is a
+robustness change, not a jitter one: 17% better worst step, and the failure
+mode gone.
+
 ## 4. Repo location
 
 Repo root is `C:\WORK\Comfy_Flares\comfyui-flarecore`; the spec and planning

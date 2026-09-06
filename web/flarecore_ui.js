@@ -149,7 +149,7 @@ const MODE_DEFAULTS = {
   detect_with_manual_offset: { detect_threshold: 0.6, detect_max_lights: 1,
             track_smoothing: 0.85, light_travel: 1, scene_lock: 1 },
   track: { detect_threshold: 0.6, detect_max_lights: 1, track_smoothing: 0.85,
-           track_max_jump: 0.06, light_travel: 1, track_hold: 3, track_fade: 4,
+           track_max_jump: 0.1, light_travel: 1, track_hold: 3, track_fade: 4,
            search_radius: 0, scene_lock: 1 },
   track_dots: { detect_threshold: 0.5, detect_max_lights: 4, track_smoothing: 0.7,
                 track_max_jump: 0.08, light_travel: 1, track_hold: 3, track_fade: 4,

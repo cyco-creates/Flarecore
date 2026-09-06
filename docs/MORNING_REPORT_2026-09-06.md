@@ -263,3 +263,17 @@ file is untouched.
   element — procedural ones included — renders **solo, as configured**
   (colour, scale, count, blur) into a 260 px popover, via a small CPU render
   cached by content. ~10–17 ms.
+
+
+## The settings sweep (agent, 196 renders on your two clips)
+
+The bar for changing a default was a clear win: 20% lower worst step, no
+extra dropouts, light still top-right. **Nothing cleared it** — the defaults
+each mode applies are at or within a few percent of the best the grid found
+(detect +6%, lock +19%, dots +3%, no consistent direction). One change made
+anyway: `track`'s `max jump` moved 0.06 → 0.10, because a *tight* gate (0.04)
+was the single real failure in the grid — the light lost and reborn at a
+rival — and 0.10 was best at every threshold now that scene anchoring does
+the job the tight gate used to. `scene lock 0.5` is not a gentler 1: it
+opens the limit to a third of the frame and detect's worst step jumped from
+0.004 to 0.118. Leave it at 1 for a sun.
