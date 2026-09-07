@@ -1,3 +1,5 @@
+![image alt](https://github.com/cyco-creates/Flarecore/blob/63305c875b25aeaffbd816e3d701f49735068ebf/Flarecore_cover.png)
+
 # comfyui-flarecore
 
 Procedural lens flare rendering for ComfyUI. Pure PyTorch math on a coordinate
