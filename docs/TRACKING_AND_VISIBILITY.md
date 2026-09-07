@@ -65,6 +65,3 @@ Node IDs and existing widget order are unchanged; the visibility selector is
 appended. Existing workflows use Hybrid when no explicit value is supplied.
 Choose Depth only to disable image-driven attenuation. Feature confidence is
 reported separately: confidence alone does not prove physical obstruction.
-
-Restart ComfyUI and refresh its page after updating. Saved Manual placement stays
-Manual; switch to the full-clip tracking method explicitly for moving sources.
