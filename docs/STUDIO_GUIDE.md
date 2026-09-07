@@ -74,7 +74,10 @@ Expand an element row to reveal five focused sections. Shape opens initially; th
 | Masking & lens space | Scene/light masks, full-frame plates, and multi-light illumination |
 | Optical response | Curves controlling how the element changes as the source moves |
 
-Optical response is the animation editor for new work. Existing legacy rules still render, but their old control panel is removed. Only elements carrying an old rule show a compatibility notice and a Remove old rule button (covered by stack Undo). There is no automatic conversion: old additive triggers are not equivalent to response multipliers. Applying a response starting point replaces that element's curves; stack Undo restores the previous state.
+Optical response is the animation editor for moving elements. Choose a response
+starting point, then shape its curves for the selected element. Curves can drive
+opacity, size, aspect, rotation, color and supported shape properties. Stack
+Undo restores the previous curve settings.
 
 ## Light sources: six jobs, not nine competing modes
 
@@ -87,15 +90,24 @@ Optical response is the animation editor for new work. Existing legacy rules sti
 | Track a chosen feature | Explicit one/two-feature tracking, independent of brightness |
 | Draw / edit a path | Authored or baked motion |
 
-Detection offset is a modifier, not a separate job. Frame matching, whole-clip solving and dot mattes share one tracking entry but retain distinct algorithms: replacing them with a single implementation would change behavior. Whole-clip solving does not use Hold/Fade, so those controls are hidden for that method. Feature tracking now exposes its existing smoothing setting.
+Detection offset is a modifier, not a separate job. Frame matching, whole-clip
+solving and dot mattes are available under Track bright sources. Whole-clip
+solving uses the complete batch, while frame matching follows sources from one
+frame to the next. Feature tracking has its own patch, search and smoothing
+controls.
 
-Switching modes or methods preserves tuning. Use Recommended settings when you deliberately want the mode's starting values. The underlying serialized mode identifiers remain compatible with saved workflows and external inputs. A connected lights input takes priority over the source selector.
+Switching modes preserves your tuning. Use Recommended settings when you want a
+good starting point for the selected method. A connected lights input takes
+priority over the source selector.
 
 ## Element Forge
 
 The prompt node has labeled Family and Element selectors, a larger generation-prompt editor with character count and Restore base prompt action, and a collapsible Optional styling section. Saved custom text is retained on load. Selecting a different element loads that element's base prompt.
 
-The bench flows left to right: define the element, configure a generator, choose its branch, prepare the texture, inspect it, then save to the library. The preview is explicitly the prepared element, not confirmation that saving succeeded. The existing Krea2 and GPT Image 2 branches and their settings are preserved; no generation or paid request is performed by a UI change.
+The bench flows left to right: define the element, configure a generator,
+choose its branch, prepare the texture, inspect it, then save to the library.
+The preview shows the prepared element. Krea2 and GPT Image 2 are optional
+generator branches; only the selected branch runs.
 
 ## Depth in Flare Lab
 
@@ -108,10 +120,11 @@ The image loader feeds both Flare Render and **Depth · Flare Lab**, placed belo
 
 Use the render settings to adjust light depth and invert the near/far convention when necessary. Disconnect the depth cable for a render without depth estimation. FlareDepthAdapter remains available as an optional node for additional conditioning of externally supplied depth maps.
 
-The restored depth node is inside the Flare Lab group and has the same enabled/bypassed state as that bench. Switching benches therefore includes it.
+The depth node is inside the Flare Lab group and follows that bench's enabled or
+bypassed state.
 
 ## Finish and save
 
 Save your preset from the stack editor. The composite is the finished image; flare pass is the flare over black for external compositing; alpha is the flare mask. Save the workflow too when you change connections or layout.
 
-After installing UI changes, save any unsaved work before refreshing the ComfyUI page. Reopen the updated Studio workflow to load the restored depth node: editing a saved workflow file does not change an already-open graph.
+After installing UI changes, save any unsaved work before refreshing the ComfyUI page. Reopen the Studio workflow if you want to load its current bench layout; editing a saved workflow file does not change an already-open graph.

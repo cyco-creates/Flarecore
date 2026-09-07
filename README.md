@@ -9,17 +9,14 @@ static demo images.
 
 ## What Flarecore is
 
-Flarecore renders an element stack along the axis from a light source to a
-movable flare anchor. The stack can contain procedural glows, ghosts, rays,
-streaks, rings, hoops, caustics, lens orbs and photographed textures. Every
-element uses the same transform and optical-response pipeline, so a library
-texture behaves like a procedural element when the light moves.
+Flarecore renders an element stack from a light source toward a movable flare
+anchor. The stack can contain procedural glows, ghosts, rays, streaks, rings,
+hoops, caustics, lens orbs and photographed textures. Library textures move
+with the same controls as procedural elements.
 
-The renderer is pure PyTorch math with NumPy/Pillow support for library
-textures. It runs on CUDA, MPS or CPU, has no required models or network
-service, keeps energy in linear light, and can preserve HDR values until the
-final output encode. Optional Studio branches can add depth models or image
-generators, but they are not required to render a flare.
+It runs on CUDA, MPS or CPU, needs no model to render a flare, and keeps the
+image in linear light until the final output. Optional Studio branches add depth
+models or image generators when you want them.
 
 ## Start here
 
@@ -74,9 +71,6 @@ Back them up before replacing the extension folder.
 - **Flarecore · Generator Select** — switches between optional element
   generators without running the unselected branch.
 
-Serialized node IDs remain stable as `FlareRender`, `FlarePresetLoader`, and so
-on, so existing workflows continue to load.
-
 ## Six light-source jobs
 
 The source menu has six jobs. Related algorithms are grouped under one job so
@@ -112,8 +106,7 @@ The visibility choices are:
 
 - **Image + depth** — default; combines image evidence with depth.
 - **Image visibility** — useful when no depth map is available.
-- **Depth only** — depth-driven compatibility mode with improved aperture
-  sampling.
+- **Depth only** — let the depth map control obstruction by itself.
 - **Off** — disables automatic image/depth attenuation while preserving any
   explicitly supplied per-light obstruction.
 
@@ -151,14 +144,13 @@ organized into Shape & appearance, Position & orientation, Repeated elements,
 Masking & lens space, and Optical response.
 
 Optical response curves animate opacity, size, aspect, rotation, color and
-supported shape properties from source position. The old trigger editor is
-retired; older trigger rules still render for compatibility and can be removed
-explicitly.
+supported shape properties from source position. Use the response presets for
+common behaviors such as edge emergence, gentle breathing and ghost movement.
 
 ## Building realistic flares
 
-The shipped library is organized around optical families rather than camera
-brand emulation. Presets cover anamorphic, spherical and scenario looks, with
+The library is organized around optical families. Presets cover anamorphic,
+spherical and scenario looks, with
 coating variants such as blue, amber, silver and clear. Element families are:
 
 `glows`, `ghosts`, `rays`, `streaks`, `rings`, `hoops`, `caustics`, and
@@ -171,9 +163,8 @@ Random detail is seeded so a video holds together instead of re-rolling every
 frame.
 
 The Element Forge includes an editable prompt bank and optional Krea2/GPT Image
-2 generator branches. The renderer itself never calls an image model. Prepared
-textures are centered, feathered and given a black floor so they can be reused
-without unexpected cropping.
+2 generator branches. Prepared textures are centered, feathered and given a
+black floor so they can be reused without unexpected cropping.
 
 ## Outputs and compositing
 
@@ -192,9 +183,9 @@ the flare pass can retain HDR values for downstream compositing.
 - [Realism collection](docs/REALISM_UPGRADE.md) — optical library additions.
 - [Flare anatomy study](docs/FLARE_ANATOMY_STUDY.md) — observed flare features
   and design rationale.
-- [Documentation index](docs/README.md) — developer and user references.
+- [Documentation index](docs/README.md) — user guides and references.
 
-## Compatibility and limits
+## Requirements and limits
 
 The renderer does not estimate depth by itself; connect a depth model or a
 rendered Z-pass when needed. The Studio's optional depth, video and generator
