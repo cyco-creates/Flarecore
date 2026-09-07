@@ -44,6 +44,8 @@ For reference documents and developer entry points, use the
 
 ## The editor
 
+![image alt](https://github.com/cyco-creates/Flarecore/blob/46b95a4d13ef30019f6bae65e8837c355b1088af/images/studio.png)
+
 FlareRender carries its own UI:
 
 - **Point picker** — drag the orange **light** and the cyan **flare anchor**
@@ -109,6 +111,8 @@ Elements can react to where the light is without keyframes:
   instead of shimmering between frames.
 
 ## Video
+
+![image alt](https://github.com/cyco-creates/Flarecore/blob/46b95a4d13ef30019f6bae65e8837c355b1088af/images/video.png)
 
 In ComfyUI a video is an image batch, and every node here is batch-native.
 **One node does the work**: FlareRender tracks, conditions depth and picks
@@ -211,6 +215,8 @@ The studio's video bench wires the whole chain from Load Video to two
 rendered videos (composite and flare pass).
 
 ## Custom elements (element forge)
+
+![image alt](https://github.com/cyco-creates/Flarecore/blob/46b95a4d13ef30019f6bae65e8837c355b1088af/images/element.png)
 
 The prompt bank (`prompts/element_prompts.json`, 75 prompts across eight
 families) is written for Krea 2: natural-language prose, subject first, the
