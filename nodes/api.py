@@ -61,6 +61,15 @@ PREVIEW_W, PREVIEW_H = 256, 144
 
 def _render_element_png(elem: dict, glob: dict) -> bytes:
     """Solo-render one element at preview size and encode it as PNG."""
+    e = dict(elem)
+    e["enabled"] = True
+    e["solo"] = False
+    return _render_preset_png(json.dumps({"schema_version": 1, "global": glob,
+                                          "elements": [e]}), PREVIEW_W, PREVIEW_H)
+
+
+def _render_preset_png(text: str, width: int = 512, height: int = 288) -> bytes:
+    """Render the actual full preset, including library textures, on black."""
     import io as _io
     import numpy as np
     import torch
@@ -70,12 +79,10 @@ def _render_element_png(elem: dict, glob: dict) -> bytes:
     from ..flare.grid import uv_to_grid
     from ..flare.colorspace import linear_to_srgb
 
-    e = dict(elem)
-    e["enabled"] = True
-    e["solo"] = False
-    preset = load_preset(json.dumps({"schema_version": 1, "global": glob,
-                                     "elements": [e]}))
-    h, w = PREVIEW_H, PREVIEW_W
+    from .library import resolve_preset_textures
+    preset = load_preset(text)
+    resolve_preset_textures(preset, device=torch.device("cpu"), dtype=torch.float32)
+    h, w = height, width
     # the light a third of the way in, the anchor past centre: enough axis
     # for a ghost chain to read, without the flare leaving the picture
     x, y = uv_to_grid(0.32, 0.42, h, w)
@@ -106,6 +113,31 @@ def register_routes() -> bool:
 
     from .library import list_elements, ELEMENTS_DIR
     from ..flare.schema import normalize_texture_ref
+    import asyncio
+    preview_slots = asyncio.Semaphore(2)
+
+    @routes.get("/flarecore/preset_preview/{name}")
+    async def flarecore_preset_preview(request):
+        path = _find_preset(request.match_info["name"])
+        if path is None:
+            return web.json_response({"error": "preset not found"}, status=404)
+        try:
+            text = path.read_text(encoding="utf-8")
+            # Editing a referenced texture must also invalidate its preview.
+            stamp = tuple((str(p.relative_to(ELEMENTS_DIR)), p.stat().st_mtime_ns)
+                          for p in sorted(ELEMENTS_DIR.rglob("*.png")))
+            key = (text, stamp)
+            async with preview_slots:
+                png = _PREVIEW_CACHE.get(key)
+                if png is None:
+                    png = await asyncio.to_thread(_render_preset_png, text)
+                    if len(_PREVIEW_CACHE) >= 256:
+                        _PREVIEW_CACHE.pop(next(iter(_PREVIEW_CACHE)))
+                    _PREVIEW_CACHE[key] = png
+            return web.Response(body=png, content_type="image/png",
+                                headers={"Cache-Control": "no-cache"})
+        except Exception:
+            return web.json_response({"error": "Preview unavailable; check preset and texture files."}, status=400)
 
     @routes.get("/flarecore/motion_schema")
     async def motion_schema(request):
@@ -177,8 +209,13 @@ def register_routes() -> bool:
             return web.json_response(
                 {"error": f"preset {request.match_info['name']!r} not found"},
                 status=404)
-        return web.json_response({"name": path.stem,
-                                  "json": path.read_text(encoding="utf-8")})
+        try:
+            text = path.read_text(encoding="utf-8")
+            from ..flare.schema import load_preset
+            load_preset(text)
+        except (OSError, ValueError, TypeError):
+            return web.json_response({"error": "Preset is invalid or unreadable."}, status=400)
+        return web.json_response({"name": path.stem, "json": text})
 
     @routes.post("/flarecore/save_preset")
     async def flarecore_save_preset(request):
@@ -207,6 +244,7 @@ def register_routes() -> bool:
 
         try:
             parsed = json.loads(text)
+            parsed["preset_file"] = name
             (PRESETS_DIR / filename).write_text(
                 json.dumps(parsed, indent=2) + "\n", encoding="utf-8")
         except OSError as e:

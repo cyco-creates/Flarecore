@@ -14,8 +14,7 @@ from ..flare.detect import detect_lights, linear_luminance
 # a light, as a fraction of frame height. Big enough to turn a clipped sky
 # into one hill, small enough to keep two genuinely separate sources apart.
 DETECT_REGION_SIGMA = 0.02
-from ..flare.track import (track_lights, parse_path, sample_path,
-                           solve_light_path, smooth_series)
+from ..flare.track import (track_lights, parse_path, sample_path, smooth_series)
 from ..flare.feature_track import track_points as track_points_in
 from ..flare.feature_track import transform_from
 from ..flare.scene_motion import estimate_motion, carry_point, scene_luma
@@ -23,6 +22,8 @@ from ..flare.track import _blend_toward_fit, _fill_gaps
 from ..flare.engine import render_batch, composite
 from ..flare.grid import uv_to_grid
 from ..flare.occlude import occlusion_factor
+from ..flare.visibility import apply_source_visibility
+from ..flare.source_track import detect_sources, track_sources
 from ..flare.schema import load_preset
 from .library import resolve_preset_textures
 
@@ -148,6 +149,12 @@ def _anchor_to_scene(lights_per_frame, luma, amount, lock=1.0):
         if stats.get("solved_frames", 0) < 0.5 * max(frames - 1, 1):
             continue
         carried = carry_point(ref["u"], ref["v"], motions, height, width, start=ref_i)
+        observed_span = max(l['u'] for _,_,l in entries)-min(l['u'] for _,_,l in entries)
+        carried_span = max(p[0] for p in carried)-min(p[0] for p in carried)
+        if carried_span > max(.08, observed_span*2):
+            # Foreground parallax is not a camera solution for a distant
+            # source. Do not drag a stable sun along with passing trees.
+            continue
         res_u = [None] * frames
         res_v = [None] * frames
         for i, slot, l in entries:
@@ -429,6 +436,10 @@ class FlareRender:
                                "pair's rotation and scale. Empty: the anchor "
                                "stays at flare_x/flare_y.",
                 }),
+                "visibility_mode": (["hybrid", "depth", "image", "off"], {
+                    "default": "hybrid",
+                    "tooltip": "hybrid: combine depth with measured source-area brightness, so thin branches dim and shrink the flare. image: relative brightness only. depth: previous behavior. off: no automatic obstruction. Image visibility needs at least one clear view in the clip; exposure changes also affect it.",
+                }),
             },
             "optional": {
                 "depth": ("IMAGE",),
@@ -449,7 +460,17 @@ class FlareRender:
                colorspace="srgb", chunk_frames=0, light_travel=1.0, track_points="", track_feature=32,
                track_search=48, track_hold=3, track_fade=4,
                search_radius=0.0, scene_lock=1.0, anchor_path="",
-               depth=None, lights=None):
+               depth=None, lights=None, visibility_mode="hybrid", _group_pass=False):
+        import json
+        raw = json.loads(preset_json)
+        if isinstance(raw, dict) and "groups" in raw:
+            from .groups import render_groups
+            arguments = locals().copy()
+            for key in ("self", "raw", "json", "_group_pass", "render_groups"):
+                arguments.pop(key, None)
+            return render_groups(self, raw, arguments)
+        if visibility_mode not in ("hybrid", "depth", "image", "off"):
+            raise ValueError(f"unknown visibility_mode {visibility_mode!r}")
         preset = load_preset(preset_json)
 
         # ComfyUI passes IMAGE tensors on the CPU regardless of where they
@@ -501,15 +522,14 @@ class FlareRender:
 
         if (lights is None and batch > 2 and scene_lock > 0.0
                 and position_mode in ("detect", "detect_with_manual_offset",
-                                      "track", "track_dots", "lock")):
+                                      "track", "track_dots")):
             luma = torch.cat([scene_luma(linear_chunk(s, min(s + chunk, batch)))
                               for s in range(0, batch, chunk)], dim=0)
             lights_per_frame = _anchor_to_scene(lights_per_frame, luma,
                                                 track_smoothing, scene_lock)
             del luma
-        lights_per_frame = _damp_travel(lights_per_frame, light_travel)
 
-        if depth is not None:
+        if depth is not None and visibility_mode in ("hybrid", "depth"):
             bd = depth.shape[0]
             if 1 < bd < batch:
                 raise ValueError(
@@ -553,12 +573,18 @@ class FlareRender:
             for i, frame_lights in enumerate(lights_per_frame):
                 dmap = depth_cpu[0 if bd == 1 else i]
                 for light in frame_lights:
-                    light["occlusion"] = occlusion_factor(
+                    light["occlusion"] = max(light.get("occlusion", 0.0), occlusion_factor(
                         dmap, light["u"], light["v"],
                         radius=occlusion_radius, invert=False,
                         light_depth=light_depth,
-                    )
+                    ))
             self._smooth_occlusion(lights_per_frame, occlusion_smooth)
+
+        apply_source_visibility(linear_chunk, lights_per_frame, chunk,
+                                occlusion_radius, visibility_mode, occlusion_smooth)
+        # Artistic travel is not the physical position of the emitter.
+        # Measure obstruction before damping the rendered trajectory.
+        lights_per_frame = _damp_travel(lights_per_frame, light_travel)
 
         # The flare anchor (t = 1) is a second free point: element spacing
         # scales with the light-to-anchor distance. Lights supplied through
@@ -590,9 +616,9 @@ class FlareRender:
 
         # Results accumulate where the input lives (CPU for ComfyUI), so the
         # card only ever holds one slice of the clip.
-        out_full = torch.empty(batch, height, width, 3, dtype=output_dtype, device=home)
-        pass_full = torch.empty_like(out_full)
-        alpha_full = torch.empty(batch, height, width, dtype=output_dtype, device=home)
+        out_full = None if _group_pass else torch.empty(batch, height, width, 3, dtype=output_dtype, device=home)
+        pass_full = torch.empty(batch, height, width, 3, dtype=dtype if _group_pass else output_dtype, device=home)
+        alpha_full = None if _group_pass else torch.empty(batch, height, width, dtype=output_dtype, device=home)
 
         for s in range(0, batch, chunk):
             e = min(s + chunk, batch)
@@ -645,6 +671,10 @@ class FlareRender:
                 scene_masks=scene_masks, glow_masks=glow_masks, frame_offset=s,
             )
 
+            if _group_pass:
+                pass_full[s:e] = flare_linear.to(home)
+                del chunk_linear, flare_linear, scene_masks, glow_masks
+                continue
             out_linear = composite(chunk_linear, flare_linear, blend_mode)
             out_c = out_linear if is_linear else linear_to_srgb(out_linear)
             pass_c = flare_linear if is_linear else linear_to_srgb(flare_linear)
@@ -657,6 +687,8 @@ class FlareRender:
             del chunk_linear, flare_linear, out_linear, out_c, pass_c, scene_masks
             del glow_masks
 
+        if _group_pass:
+            return pass_full, lights_per_frame, light_source
         result = (out_full, pass_full, alpha_full)
         out = out_full
         if _folder_paths is None:
@@ -681,8 +713,21 @@ class FlareRender:
                 fc_track.append(None)
         return {"ui": {"fc_preview": _save_preview(out[0])["images"],
                        "fc_light_src": [light_source],
+                       "fc_source_status": [self._source_status(lights_per_frame, visibility_mode)],
                        "fc_track": [fc_track]},
                 "result": result}
+
+    @staticmethod
+    def _source_status(frames, mode):
+        primary = [frame[0] for frame in frames if frame]
+        if not primary:
+            return "No source found. Adjust the threshold or search region."
+        visible = [1.0-light.get('occlusion',0.0) for light in primary]
+        estimated = sum(light.get('confidence',1.0)<.35 for light in primary)
+        status = f"Visibility ({mode}): {min(visible):.0%}–{max(visible):.0%}."
+        if estimated:
+            status += f" Position estimated / low confidence in {estimated} of {len(primary)} frames; inspect before baking."
+        return status
 
     def _chunk_size(self, requested, batch, height, width, device):
         """Frames per GPU slice. Explicit request wins; 0 sizes the slice so
@@ -777,9 +822,13 @@ class FlareRender:
         frame_aspect = probe.shape[2] / max(probe.shape[1], 1)
         del probe
 
-        def detect_chunked(threshold, pool, region_sigma=0.0):
+        def detect_chunked(threshold, pool, region_sigma=0.0, connected=False):
             dets = []
             for s in range(0, batch, chunk):
+                if connected:
+                    dets += detect_sources(linear_chunk(s, min(s + chunk, batch)),
+                                           threshold=threshold, max_lights=pool)
+                    continue
                 dets += detect_lights(linear_chunk(s, min(s + chunk, batch)),
                                       threshold=threshold, max_lights=pool,
                                       region_sigma=region_sigma)
@@ -831,26 +880,22 @@ class FlareRender:
                     q["u"], q["v"] = uu, vv
             if len(tracked) == 1:
                 return [[{"u": p["u"], "v": p["v"], "brightness": 1.0,
-                          "tid": 0}] for p in tracked[0]]
+                          "tid": 0, "confidence": p["confidence"]}] for p in tracked[0]]
             # two points: the second becomes the flare's anchor, so the axis
             # inherits the pair's rotation and scale without any extra maths
             return [[{"u": f["u"], "v": f["v"], "au": f["au"], "av": f["av"],
-                      "brightness": 1.0, "tid": 0}]
+                      "brightness": 1.0, "tid": 0, "confidence": f["confidence"]}]
                     for f in transform_from(tracked[0], tracked[1])]
 
         if position_mode == "lock":
-            # Solve the clip as one problem: the trajectory that explains
-            # every frame with the least total travel. A single bad frame
-            # cannot hand the light to a rival across the frame, which is
-            # what per-frame detection does on a shot with two bright
-            # regions. max_jump keeps its meaning -- how far the light may
-            # travel between frames -- and sets how dearly travel is paid
-            # for, so there is no new dial to learn.
+            # Luminous-core regions retain one identity through hidden
+            # intervals. Scene motion is deliberately not applied: nearby
+            # buildings and trees do not share a distant sun's parallax.
             pool = max(detect_max_lights * 8, 12)
-            raw = detect_chunked(detect_threshold, pool)
-            cost = 4.0 / max(max_jump, 1e-3) ** 2
-            return solve_light_path(raw, max_tracks=detect_max_lights,
-                                    motion_cost=cost, smoothing=smoothing)
+            raw = detect_chunked(detect_threshold, pool, connected=True)
+            return track_sources(raw, max_tracks=detect_max_lights,
+                                 max_jump=max_jump, smoothing=smoothing,
+                                 aspect=frame_aspect)
 
         if position_mode in ("track", "track_dots"):
             threshold = detect_threshold
@@ -868,7 +913,7 @@ class FlareRender:
             # more candidates than flares: association picks the nearest, so
             # spares keep a followed light fed through a busy frame
             pool = max(detect_max_lights * 8, 12)
-            raw = detect_chunked(threshold, pool)
+            raw = detect_chunked(threshold, pool, connected=position_mode == "track")
             return track_lights(raw, smoothing=smoothing, max_jump=max_jump,
                                 hold=hold, fade=fade,
                                 max_tracks=detect_max_lights)

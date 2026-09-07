@@ -439,8 +439,9 @@ def render_stack(preset, lights, height, width, device, dtype,
     x, y = grid
 
     g = preset["global"]
-    g_intensity = g["intensity"] * intensity
-    g_scale = g["scale"] * scale
+    master = g.get("master", 1.0)
+    g_intensity = g["intensity"] * intensity * master
+    g_scale = g["scale"] * scale * master
     base_seed = g["seed"] + extra_seed
 
     if out is None:

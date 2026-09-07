@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-flarecore"
-version = "0.1.1b1"
+version = "0.1.2b1"
 description = "Procedural, physically-plausible lens flare rendering nodes for ComfyUI. Pure PyTorch, no GL, no models."
 authors = [{ name = "cyco.creates" }]
 readme = "README.md"

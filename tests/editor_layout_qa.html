@@ -13,6 +13,8 @@ source=source.replace(/import \{ app \} from [^;]+;/,'const app={registerExtensi
   .replace(/import \{ createMotionPanel \} from [^;]+;/,
     `import {createMotionPanel as panel} from '${new URL('../web/flarecore_motion.js',location.href)}';
      const createMotionPanel=(e,c,unused,s)=>panel(e,c,()=>Promise.resolve(${JSON.stringify(contract)}),s);`);
+source=source.replace(/import \{ openPresetGallery \} from [^;]+;/,`import {openPresetGallery} from '${new URL('../web/flarecore_presets.js',location.href)}';`);
+source=source.replace('./flarecore_groups.js',new URL('../web/flarecore_groups.js',location.href).href);
 const blob=URL.createObjectURL(new Blob([source+'\nexport {FlareEditor,injectCSS};'],{type:'text/javascript'}));
 const {FlareEditor,injectCSS}=await import(blob);URL.revokeObjectURL(blob);injectCSS();
 let preset={elements:[{id:'qa',type:'iris',motion:responseProfile('ghost','iris'),params:{blades:6}}]},changes=0;

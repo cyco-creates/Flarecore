@@ -9,6 +9,8 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { createMotionPanel } from "./flarecore_motion.js";
+import { openPresetGallery } from "./flarecore_presets.js";
+import { SOURCE_FIELDS, clone, sceneDocument, activeGroup, sourceValue, setGroupSource, ensureGroups, newGroupId, selectGroupResult } from "./flarecore_groups.js";
 
 /* ------------------------------------------------------------------ utils */
 
@@ -71,7 +73,7 @@ function setAdvanced(node, visible) {
   // save/load — a plain JS field would silently reset to closed
   if (node.properties) node.properties.fc_advanced = visible;
   for (const w of nodeWidgets(node)) {
-    (visible ? showWidget : hideWidget)(w);
+    (visible && !(activeGroup(sceneDocument(node)) && SOURCE_FIELDS.has(w.name)) ? showWidget : hideWidget)(w);
   }
   // grow when the widgets need more room, but never shrink a node the user
   // deliberately made taller
@@ -87,13 +89,15 @@ function findWidget(node, name) {
   return node.widgets?.find((w) => w.name === name);
 }
 function getVal(node, name, fallback) {
+  const grouped=sourceValue(node,name);if(grouped!==undefined)return Number(grouped);
   const w = findWidget(node, name);
   return w ? Number(w.value) : fallback;
 }
 function setVal(node, name, value) {
+  if(setGroupSource(node,name,value))return;
   const w = findWidget(node, name);
   if (w) {
-    w.value = Math.round(value * 1000) / 1000;
+    w.value = typeof value === 'number' ? Math.round(value * 1000) / 1000 : value;
     w.callback?.(w.value, app.canvas, node, null, null);
   }
 }
@@ -149,12 +153,12 @@ const MODE_DEFAULTS = {
             track_smoothing: 0.85, light_travel: 1, scene_lock: 1, search_radius: 0 },
   track: { detect_threshold: 0.6, detect_max_lights: 1, track_smoothing: 0.85,
            track_max_jump: 0.1, light_travel: 1, track_hold: 3, track_fade: 4,
-           search_radius: 0, scene_lock: 1 },
+           search_radius: 0, scene_lock: 0 },
   track_dots: { detect_threshold: 0.5, detect_max_lights: 4, track_smoothing: 0.7,
                 track_max_jump: 0.08, light_travel: 1, track_hold: 3, track_fade: 4,
                 search_radius: 0, scene_lock: 0 },
   lock: { detect_threshold: 0.6, detect_max_lights: 1, track_smoothing: 0.9,
-          track_max_jump: 0.06, light_travel: 1, scene_lock: 1 },
+          track_max_jump: 0.06, light_travel: 1, scene_lock: 0, visibility_mode: "hybrid" },
   point_track: { track_feature: 32, track_search: 64, track_smoothing: 0.6,
                  light_travel: 1 },
   follow: { track_smoothing: 0.6, light_travel: 1 },
@@ -174,10 +178,10 @@ const MODE_HINT = {
   track_dots: "white dots on a dark plate, one flare each, each keeping its "
     + "identity. The threshold is relative to the brightest dot in the clip. "
     + "Max lights is a cap, not a quota — a higher cap never invents flares.",
-  lock: "reads the whole clip before deciding, and picks the light path with "
-    + "the least total travel — a sun cannot jump to the far side of frame "
-    + "for a few frames and come back. Max jump is how far it may move "
-    + "between frames; smoothing irons out the rest.",
+  lock: "recommended for a sun behind branches: tracks the luminous core, "
+    + "bridges hidden intervals and measures visibility separately. Place the light "
+    + "near your target and narrow search radius if there are rival highlights. "
+    + "Hidden positions are estimates; inspect the path before baking it.",
   follow: "place the source, even outside the frame. Scene motion carries it "
     + "through the clip without light detection. Needs trackable detail in the scene.",
   point_track: "place one tracker on a feature and the light follows it; add "
@@ -237,11 +241,13 @@ function formatPath(pts) {
 }
 
 function getStr(node, name) {
+  const grouped=sourceValue(node,name);if(grouped!==undefined)return String(grouped);
   const w = findWidget(node, name);
   return w ? String(w.value ?? "") : "";
 }
 
 function setStr(node, name, value) {
+  if(setGroupSource(node,name,value))return;
   const w = findWidget(node, name);
   if (w) w.value = value;
 }
@@ -571,6 +577,16 @@ class PointPicker {
 
     // light handle: a plain ring and dot — no sun-ray decoration, which
     // read as a rendered sun on the backdrop
+    const scene=sceneDocument(this.node),selected=activeGroup(scene);
+    for(const group of Array.isArray(scene?.groups) ? scene.groups : []){
+      if(group.id===selected?.id || group.enabled===false)continue;
+      const tracked=this.node._fcGroupResults?.[group.id]?.track?.[0];
+      const u=tracked?.[0] ?? group.source?.light_x ?? .25;
+      const v=tracked?.[1] ?? group.source?.light_y ?? .3;
+      const sx=r.x+u*r.w,sy=r.y+v*r.h;
+      ctx.strokeStyle='#999';ctx.fillStyle='#bbb';ctx.lineWidth=1;ctx.font='10px sans-serif';
+      ctx.beginPath();ctx.arc(sx,sy,6,0,Math.PI*2);ctx.stroke();ctx.fillText(group.name || 'Flare',sx+9,sy-7);
+    }
     ctx.strokeStyle = driven ? "#8a8a92" : "#ffb648";
     ctx.fillStyle = driven ? "rgba(138,138,146,0.16)" : "rgba(255,182,72,0.18)";
     ctx.lineWidth = 2;
@@ -875,9 +891,39 @@ const CSS = `
 .fcore { font: 12px/1.4 sans-serif; color: #ccc; background: #131317;
   border: 1px solid #2b2b33; border-radius: 4px; padding: 8px;
   display: flex; flex-direction: column; gap: 7px; box-sizing: border-box;
-  height: 100%; overflow: hidden; }
+  height: 100%; overflow-x:hidden; overflow-y:auto; }
 .fcore * { box-sizing: border-box; }
-.fcore-bar { display: flex; gap: 6px; align-items: center; }
+.fcore > :not(.fcore-list) { flex-shrink:0; }
+.fcore > .fcore-list { min-height:120px; }
+.fcore-bar { display: flex; gap: 8px; align-items: center; flex-wrap:wrap; width:100%; }
+.fcore-bar > .fcore-btn { min-height:36px; padding:7px 12px; }
+.fcore-bar .fcore-preset-button { flex:1 1 200px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; }
+.fcore-preset-gallery { box-sizing:border-box; width:min(1050px,94vw); max-height:88vh; padding:18px; border:1px solid #3a3a44; border-radius:10px; background:#19191f; color:#ddd; font:13px sans-serif; }
+.fcore-preset-gallery::backdrop { background:#0009; }
+.fcore-preset-gallery header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.fcore-preset-gallery h2 { margin:0 0 12px; font-size:20px; }
+.fcore-preset-gallery input[type=search] { box-sizing:border-box; width:100%; height:36px; margin:8px 0 14px; padding:8px; border:1px solid #3a3a44; border-radius:4px; background:#101014; color:#eee; }
+.fcore-preset-body { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:18px; }
+.fcore-preset-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); grid-auto-rows:max-content; align-content:start; gap:9px; overflow:auto; max-height:55vh; padding:2px; }
+.fcore-preset-card { min-width:0; padding:0 0 9px; border:1px solid #34343e; border-radius:6px; overflow:hidden; background:#1e1e25; color:#ddd; cursor:pointer; text-align:left; }
+.fcore-preset-card:hover,.fcore-preset-card:focus-visible,.fcore-preset-card.selected { border-color:#e8a33d; outline:1px solid #e8a33d; }
+.fcore-preset-card.preview-selected { border-color:#e8a33d; outline:2px solid #e8a33d; background:#30271c; }
+.fcore-preset-card img { display:block; width:100%; aspect-ratio:16/9; object-fit:contain; background:#050508; }
+.fcore-preset-card span,.fcore-preset-card small { display:block; padding:7px 9px 0; overflow-wrap:anywhere; }
+.fcore-preset-card small { color:#aaa; }
+.fcore-preset-gallery .fcore-preset-card { display:flex!important; flex-direction:column!important; height:auto!important; min-height:145px!important; max-height:none!important; align-self:start; justify-content:flex-start; line-height:1.35; white-space:normal!important; }
+.fcore-preset-gallery .fcore-preset-card img { width:100%!important; height:auto!important; max-height:none!important; flex:0 0 auto; aspect-ratio:16/9; object-fit:contain!important; }
+.fcore-preset-gallery .fcore-preset-card span,.fcore-preset-gallery .fcore-preset-card small { display:block!important; flex:0 0 auto; height:auto!important; min-height:1.3em; white-space:normal; text-align:left; }
+.fcore-preset-category { display:block; width:100%; height:34px!important; margin:0 0 12px; border:1px solid #3a3a44; border-radius:4px; background:#202027; color:#eee; }
+.fcore-groups { display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:8px 0; border-bottom:1px solid #34343e; margin-bottom:8px; }
+.fcore-groups .fcore-btn { min-height:30px; }
+.fcore-groups .active { border-color:#e8a33d; color:#ffd08a; background:#30271e; }
+.fcore-group-title { flex-basis:100%; color:#aaa; font-size:11px; }
+.fcore-preset-preview { min-width:0; }
+.fcore-preset-preview img { display:block; width:100%; aspect-ratio:16/9; object-fit:contain; background:#050508; border-radius:6px; }
+.fcore-preset-preview p { color:#aaa; line-height:1.5; }
+.fcore-preset-actions { display:flex; gap:8px; flex-wrap:wrap; }
+@media(max-width:620px) { .fcore-preset-body { grid-template-columns:1fr; } .fcore-preset-grid { max-height:28vh; } .fcore-preset-preview img { max-height:22vh; } }
 .fcore-btn { background: #1e1e25; color: #ddd; border: 1px solid #34343e;
   border-radius: 3px; padding: 5px 12px; cursor: pointer; font-size: 12px; }
 .fcore-btn:hover { background: #2a2a33; border-color: #e8a33d; }
@@ -1242,7 +1288,7 @@ const TIPS = {
   "scene lock": "how much the light is held to the way the picture moves. A sun is at infinity and moves only with the camera, so at 1 the detector may only nudge it and a hop to a rival source cannot drag it. Set 0 for a light that moves on its own — headlights, a torch. A matte with no scene in it is left alone either way.",
   "search radius": "only look for the light inside this circle around the picker's light point (fraction of frame height). 0 searches the whole frame. Set it when a rival source elsewhere keeps stealing the flare; drag the light point to move the ring.",
   // look
-  "master": "overall brightness of the whole flare.",
+  "master": "linked brightness and size multiplier. 1 preserves the preset; 0 turns it off. Base brightness and size remain independent in lens settings.",
   "aspect": "stretches every element horizontally: 1 is spherical, 1.3 to 2 reads as anamorphic.",
   // element settings
   "irregular": "seeded organic unevenness in the shape, so it stops looking computer-perfect.",
@@ -1340,7 +1386,7 @@ function sliderCol(label, value, [min, max, step], onChange, tip) {
   range.value = Math.min(max, Math.max(min, real));
   const num = document.createElement("input");
   num.type = "number"; num.min = min; num.step = step;
-  const fmt = (v) => Number(v).toFixed(step >= 1 ? 0 : 2);
+  const fmt = (v) => Number(v).toFixed(step >= 1 ? 0 : Math.max(2, Math.ceil(-Math.log10(step))));
   num.value = fmt(real);
   range.addEventListener("input", () => {
     num.value = fmt(range.value);
@@ -1416,7 +1462,8 @@ class FlareEditor {
 
   read() {
     try {
-      const preset = JSON.parse(this.widget?.value || "{}");
+      const document = JSON.parse(this.widget?.value || "{}");
+      const preset = activeGroup(document)?.preset || document;
       if (!preset.elements) preset.elements = [];
       if (!preset.schema_version) preset.schema_version = 1;
       if (!preset.global) preset.global = {};
@@ -1429,6 +1476,12 @@ class FlareEditor {
   }
 
   write(preset, { quiet = false } = {}) {
+    const document=sceneDocument(this.node),group=activeGroup(document);
+    if(group){group.preset=preset;return this.writeDocument(document,{quiet});}
+    return this.writeDocument(preset,{quiet});
+  }
+
+  writeDocument(preset, { quiet = false } = {}) {
     const text = JSON.stringify(preset, null, 2);
     this.snapshot(quiet);
     if (this.widget) { this.widget.value = text; this.lastText = text; }
@@ -1636,6 +1689,14 @@ class FlareEditor {
     const keptScroll = this.root.querySelector(".fcore-list")?.scrollTop ?? 0;
     this.root.textContent = "";
     const preset = this.read();
+    const scene=sceneDocument(this.node),group=activeGroup(scene);
+    for(const widget of nodeWidgets(this.node))if(SOURCE_FIELDS.has(widget.name)){
+      if(group)hideWidget(widget);else if(this.node._fcAdvanced)showWidget(widget);
+    }
+    if(this.node._fcActiveGroup!==group?.id){
+      this.node._fcActiveGroup=group?.id;
+      if(group)selectGroupResult(this.node,scene);
+    }
 
     /* toolbar: + add | presets | save… | library | ⚙  (no play button —
        queueing belongs to ComfyUI's own Run) */
@@ -1655,81 +1716,58 @@ class FlareEditor {
     });
 
     const loadBtn = document.createElement("button");
-    loadBtn.className = "fcore-btn";
-    loadBtn.textContent = "presets ▾";
-    loadBtn.onclick = async (e) => {
+    loadBtn.className = "fcore-btn fcore-preset-button";
+    loadBtn.textContent = (preset?.name || preset?.preset_file || "Choose a preset") + " ▾";
+    loadBtn.title = "Preset gallery · " + (preset?.name || "Custom flare");
+    loadBtn.onclick = async () => {
+      this.flushPending();
+      loadBtn.disabled=true;
       try {
-        const r = await api.fetchApi("/flarecore/presets");
-        const d = await r.json();
-        const index = d.index && d.index.length ? d.index
-          : (d.presets || []).map((n) => ({ name: n.replace(/\.json$/, ""),
-                                            category: "", subcategory: "" }));
-        // Grouped by the category each preset files itself under, so the
-        // library reads as a shelf instead of one long alphabetical run.
-        // Order the headings deliberately; anything unfiled trails.
-        const ORDER = ["Anamorphic", "Spherical", "Scenario", "Utility"];
-        const rank = (c) => {
-          const i = ORDER.indexOf(c);
-          return i < 0 ? ORDER.length : i;
-        };
-        const groups = new Map();
-        for (const p of index) {
-          const key = (p.category || "Other")
-            + (p.subcategory ? " · " + p.subcategory : "");
-          if (!groups.has(key)) groups.set(key, []);
-          groups.get(key).push(p.name);
-        }
-        const keys = [...groups.keys()].sort((a, b) => {
-          const ra = rank(a.split(" · ")[0]), rb = rank(b.split(" · ")[0]);
-          return ra !== rb ? ra - rb : a.localeCompare(b);
+        const r=await api.fetchApi("/flarecore/presets");
+        if(!r.ok)throw new Error("Preset listing failed");
+        const d=await r.json();
+        const index=d.index?.length ? d.index : (d.presets || []).map(n=>({name:n.replace(/\.json$/,"")}));
+        const current=this.read();
+        openPresetGallery({
+          index, selected:current?.preset_file || current?.name,
+          opener:loadBtn,
+          previewUrl:name=>api.apiURL(`/flarecore/preset_preview/${encodeURIComponent(name)}`),
+          onChoose:async(action,item)=>{
+            const rr=await api.fetchApi(`/flarecore/preset/${encodeURIComponent(item.name)}`);
+            if(!rr.ok)throw new Error("Preset load failed");
+            const dd=await rr.json();
+            const incoming=JSON.parse(dd.json);
+            if(!Array.isArray(incoming.elements))throw new Error("Invalid preset");
+            if(action==="add"){
+              this.mutate(p=>{
+                for(const element of incoming.elements){
+                  element.id=this.mintId(element.type || "elem");p.elements.push(element);
+                }
+              });
+            } else {
+              incoming.name=incoming.name || item.title || item.name;
+              incoming.preset_file=item.name;
+              this.flushPending();this.write(incoming);this.build();
+            }
+          }
         });
-        const entries = [];
-        for (const k of keys) {
-          entries.push([k, null]);
-          for (const n of groups.get(k)) entries.push([n, "load:" + n]);
-        }
-        entries.push(["merge into the current stack", null]);
-        for (const k of keys) {
-          for (const n of groups.get(k)) entries.push(["+ " + n, "add:" + n]);
-        }
-        popupMenu(e, entries,
-          async (pick) => {
-            const [action, name] = [pick.slice(0, pick.indexOf(":")), pick.slice(pick.indexOf(":") + 1)];
-            try {
-              const rr = await api.fetchApi(
-                `/flarecore/preset/${encodeURIComponent(name)}`);
-              const dd = await rr.json();
-              if (dd.json && this.widget && action === "add") {
-                const incoming = JSON.parse(dd.json);
-                this.mutate((p) => {
-                  for (const el of incoming.elements || []) {
-                    el.id = this.mintId(el.type || "elem");
-                    p.elements.push(el);
-                  }
-                });
-              } else if (dd.json && this.widget) {
-                this.snapshot(false);
-                this.widget.value = dd.json;
-                this.lastText = dd.json;
-                this.build();
-              } else if (dd.error) {
-                loadBtn.textContent = "load failed";
-                setTimeout(() => { loadBtn.textContent = "presets ▾"; }, 1800);
-              }
-            } catch (err) { console.error("flarecore preset load", err); }
-          });
-      } catch (err) { console.error("flarecore presets", err); }
+      } catch(err) {
+        loadBtn.title="Could not open preset gallery. Restart ComfyUI after updating and retry.";
+        console.error("flarecore presets",err);
+      } finally {loadBtn.disabled=false;}
     };
 
     const saveBtn = document.createElement("button");
     saveBtn.className = "fcore-btn";
     saveBtn.textContent = "save…";
+    saveBtn.title = "Save this flare group's preset. Save the workflow to retain all groups and source settings.";
     saveBtn.onclick = async () => {
-      const name = prompt("Preset name:", "my_flare");
+      this.flushPending();
+      const name = prompt("Preset name:", this.read()?.name || "my_flare");
       if (!name) return;
       const post = (overwrite) => api.fetchApi("/flarecore/save_preset", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, json: this.widget?.value || "", overwrite }),
+        body: JSON.stringify({ name, json: JSON.stringify({...this.read(), name}), overwrite }),
       });
       try {
         let d = await (await post(false)).json();
@@ -1740,6 +1778,7 @@ class FlareEditor {
           }
         }
         saveBtn.textContent = d.saved ? "saved ✓" : (d.error ? "not saved" : "save…");
+        if(d.saved)this.mutate(p=>{p.name=name;p.preset_file=d.saved.replace(/\.json$/,"");});
         if (d.error && !d.saved) console.warn("flarecore save:", d.error);
       } catch { saveBtn.textContent = "error"; }
       setTimeout(() => { saveBtn.textContent = "save…"; }, 1800);
@@ -1782,6 +1821,7 @@ class FlareEditor {
       bar.appendChild(badge);
     }
     this.root.appendChild(bar);
+    this.root.appendChild(this.buildGroups());
     this.root.appendChild(this.buildSourceRow());
     if (!preset) return;
 
@@ -1794,18 +1834,19 @@ class FlareEditor {
     gLab.appendChild(infoIcon(TIPS["master"]));
     const gRange = document.createElement("input");
     gRange.type = "range"; gRange.min = 0; gRange.max = 3; gRange.step = 0.01;
-    gRange.value = g.intensity ?? 1;
+    gRange.value = g.master ?? 1;
+    gRange.setAttribute("aria-label", "Master brightness and size");
     const gNum = document.createElement("input");
     gNum.type = "number"; gNum.min = 0; gNum.max = 3; gNum.step = 0.01;
     gNum.value = Number(gRange.value).toFixed(2);
     gRange.addEventListener("input", () => {
       gNum.value = Number(gRange.value).toFixed(2);
-      this.mutateQuiet((p) => { p.global.intensity = Number(gRange.value); });
+      this.mutateQuiet((p) => { p.global.master = Number(gRange.value); });
     });
     gNum.addEventListener("change", () => {
       const v = Math.min(3, Math.max(0, Number(gNum.value) || 0));
       gNum.value = v.toFixed(2); gRange.value = v;
-      this.mutateQuiet((p) => { p.global.intensity = v; });
+      this.mutateQuiet((p) => { p.global.master = v; });
     });
     const aLab = document.createElement("label");
     aLab.textContent = "aspect";
@@ -1853,6 +1894,8 @@ class FlareEditor {
         lens.appendChild(col);
       };
       gslider("fringe", "fringe", [0, 1, 0.01], 0);
+      gslider("base brightness", "intensity", [0, 3, 0.01], 1);
+      gslider("base size", "scale", [.01, 3, .01], 1);
       gslider("flicker", "flicker_amount", [0, 1, 0.01], 0);
       gslider("flicker speed", "flicker_speed", [0, 5, 0.05], 1);
       gslider("edge fade start", "edge_fade_start", [0, 2, 0.01], 0);
@@ -1881,6 +1924,53 @@ class FlareEditor {
     }
   }
 
+  changeGroups(change) {
+    this.flushPending();
+    if(!sceneDocument(this.node))return;
+    const document=ensureGroups(sceneDocument(this.node),this.node);
+    change(document);
+    this.writeDocument(document);this.expanded.clear();this.previewIndex=null;
+    selectGroupResult(this.node,document);this.build();
+  }
+
+  buildGroups() {
+    const row=document.createElement('div');row.className='fcore-groups';
+    const scene=sceneDocument(this.node),selected=activeGroup(scene);
+    if(!scene){row.textContent='Fix the preset JSON before editing flare groups.';return row;}
+    const title=document.createElement('div');title.className='fcore-group-title';
+    title.textContent='FLARE GROUPS · settings below apply only to the selected group';row.append(title);
+    if(scene.groups && (!Array.isArray(scene.groups) || scene.groups.some(g=>!g?.preset))){
+      row.textContent='Invalid flare groups. Correct the scene JSON or use Undo.';return row;
+    }
+    const groups=scene?.groups || [{id:'single',name:'Flare 1',enabled:true}];
+    for(const group of groups){
+      const button=document.createElement('button');button.className='fcore-btn'+(!selected||selected.id===group.id?' active':'');
+      button.textContent=(group.enabled===false?'○ ':'● ')+group.name;button.setAttribute('aria-pressed',String(!selected||selected.id===group.id));
+      button.onclick=()=>{if(selected && selected.id!==group.id)this.changeGroups(d=>{d.active_group=group.id;});};row.append(button);
+    }
+    const add=document.createElement('button');add.className='fcore-btn';add.textContent='+ Flare';add.disabled=groups.length>=16;
+    add.onclick=()=>this.changeGroups(d=>{
+      const id=newGroupId(d);d.groups.push({id,name:`Flare ${d.groups.length+1}`,enabled:true,
+        preset:{schema_version:1,name:'Choose a preset',global:{},elements:[]},
+        source:{...clone(activeGroup(d).source),position_mode:'manual',use_lights_input:false,light_x:.7,light_y:.3}});
+      d.active_group=id;
+    });
+    const duplicate=document.createElement('button');duplicate.className='fcore-btn';duplicate.textContent='Duplicate flare';duplicate.disabled=groups.length>=16;
+    duplicate.onclick=()=>this.changeGroups(d=>{
+      const copy=clone(activeGroup(d));copy.id=newGroupId(d);copy.name+=' copy';
+      for(const element of copy.preset.elements || [])element.id=this.mintId(element.type || 'elem');
+      d.groups.push(copy);d.active_group=copy.id;
+    });
+    const rename=document.createElement('button');rename.className='fcore-btn';rename.textContent='Rename';
+    rename.onclick=()=>{const name=prompt('Flare group name:',selected?.name || 'Flare 1');if(name?.trim())this.changeGroups(d=>{activeGroup(d).name=name.trim();});};
+    const enabled=document.createElement('label'),check=document.createElement('input');check.type='checkbox';check.checked=selected?.enabled!==false;
+    check.onchange=()=>this.changeGroups(d=>{activeGroup(d).enabled=check.checked;});enabled.append(check,' Enabled');
+    const remove=document.createElement('button');remove.className='fcore-btn';remove.textContent='Remove flare';remove.disabled=groups.length<=1;
+    remove.title='Remove the selected group. Undo restores it.';
+    remove.onclick=()=>this.changeGroups(d=>{d.groups=d.groups.filter(g=>g.id!==activeGroup(d).id);d.active_group=d.groups[0].id;});
+    row.append(add,duplicate,rename,enabled,remove);return row;
+  }
+
   // The light-source row: one dropdown, and only the controls that mode
   // actually uses. Bound to the NODE's widgets, not the preset.
   buildSourceRow() {
@@ -1888,7 +1978,14 @@ class FlareEditor {
     row.className = "fcore-global src";
     const mode = getStr(this.node, "position_mode") || "manual";
 
-    if (this.node.inputs?.some(input=>input.name === "lights" && input.link != null)) {
+    const group=activeGroup(sceneDocument(this.node));
+    const connected=this.node.inputs?.some(input=>input.name === "lights" && input.link != null);
+    if(group && connected){
+      const label=document.createElement('label'),check=document.createElement('input');check.type='checkbox';
+      check.checked=group.source?.use_lights_input===true;check.onchange=()=>{setGroupSource(this.node,'use_lights_input',check.checked);this.build();};
+      label.append(check,' Use connected lights for this group');row.append(label);
+    }
+    if (connected && (!group || group.source?.use_lights_input===true)) {
       const message=document.createElement("div");message.className="fcore-hint";
       message.textContent="External lights connected. Positions come from that input; disconnect it to use the source controls. Your source settings are preserved.";
       row.append(message);return row;
@@ -1962,6 +2059,11 @@ class FlareEditor {
       tuningGrid.appendChild(col);
     };
 
+    if(group){
+      nodeSlider('light X','light_x',[-1,2,.001]);nodeSlider('light Y','light_y',[-1,2,.001]);
+      nodeSlider('anchor X','flare_x',[-1,2,.001]);nodeSlider('anchor Y','flare_y',[-1,2,.001]);
+    }
+
     if (mode === "detect" || mode === "detect_with_manual_offset") {
       nodeSlider("threshold", "detect_threshold", [0, 1, 0.01]);
       nodeSlider("max lights", "detect_max_lights", [1, 16, 1]);
@@ -1977,7 +2079,7 @@ class FlareEditor {
       nodeSlider("smoothing", "track_smoothing", [0, 0.98, 0.01]);
       nodeSlider("max jump", "track_max_jump", [0.01, 0.5, 0.01]);
       nodeSlider("travel", "light_travel", [0, 1, 0.01]);
-      nodeSlider("scene lock", "scene_lock", [0, 1, 0.01]);
+      if (mode !== "lock") nodeSlider("scene lock", "scene_lock", [0, 1, 0.01]);
       if (mode !== "lock") {
         nodeSlider("hold", "track_hold", [0, 60, 1]);
         nodeSlider("fade", "track_fade", [1, 60, 1]);
@@ -2029,7 +2131,44 @@ class FlareEditor {
       row.append(count, clear);
     }
 
-    if (!tuningGrid.childElementCount) tuning.remove();
+    const visibilityCol = document.createElement("label");
+    visibilityCol.className = "fcore-col";
+    visibilityCol.textContent = "Obstruction";
+    const visibilitySelect = document.createElement("select");
+    visibilitySelect.className = "fcore-src-sel";
+    for (const [value, title] of [["hybrid", "Image + depth (recommended)"],
+      ["image", "Image visibility"], ["depth", "Depth only (legacy)"], ["off", "Off"]]) {
+      const option = document.createElement("option"); option.value = value; option.textContent = title;
+      visibilitySelect.append(option);
+    }
+    visibilitySelect.value = getStr(this.node, "visibility_mode") || "hybrid";
+    visibilitySelect.title = "Measures visible source energy, not tracker confidence. Image visibility needs a clear reference in the clip and also responds to exposure changes.";
+    visibilitySelect.onchange = () => { setStr(this.node, "visibility_mode", visibilitySelect.value); this.node.setDirtyCanvas(true, false); };
+    visibilityCol.append(visibilitySelect); tuningGrid.append(visibilityCol);
+    nodeSlider("source radius", "occlusion_radius", [.001, .15, .001]);
+    nodeSlider("visibility smoothing", "occlusion_smooth", [0, 1, .01]);
+    if(group){
+      const advanced=document.createElement('details');advanced.className='fcore-source-tuning';
+      const heading=document.createElement('summary');heading.textContent='Group depth, colour and seed';advanced.append(heading);
+      const grid=document.createElement('div');grid.className='fcore-source-grid';advanced.append(grid);row.append(advanced);
+      for(const [label,name,spec,fallback] of [
+        ['light depth','light_depth',[0,1,.01],.1],['depth blur','depth_blur',[0,.1,.001],0],
+        ['depth smoothing','depth_temporal_smooth',[0,1,.01],0],['scene colour','scene_color',[0,1,.01],0],
+        ['mask falloff','mask_falloff',[.01,2,.01],.35],['seed','seed',[0,2147483647,1],0]]){
+        grid.append(sliderCol(label,getVal(this.node,name,fallback),spec,v=>setVal(this.node,name,v)));
+      }
+      const invert=document.createElement('label'),check=document.createElement('input');check.type='checkbox';
+      check.checked=!!getVal(this.node,'invert_depth',0);check.onchange=()=>setGroupSource(this.node,'invert_depth',check.checked);
+      invert.append(check,' Invert depth');grid.append(invert);
+      const normalise=document.createElement('select');normalise.className='fcore-src-sel';normalise.setAttribute('aria-label','Group depth normalisation');
+      for(const value of ['as_is','per_frame','per_batch']){const option=document.createElement('option');option.value=value;option.textContent=value.replaceAll('_',' ');normalise.append(option);}
+      normalise.value=getStr(this.node,'depth_normalize') || 'as_is';normalise.onchange=()=>setStr(this.node,'depth_normalize',normalise.value);grid.append(normalise);
+    }
+    if (this.node._fcSourceStatus) {
+      const status=document.createElement("div");status.className="fcore-hint";
+      status.setAttribute("role","status");status.textContent=this.node._fcSourceStatus;
+      tuningGrid.append(status);
+    }
 
     // After a render in any tracked mode the light's path is known. Baking
     // it turns the track into a drawn path the picker can edit point by
@@ -3000,6 +3139,12 @@ app.registerExtension({
       // NOT sent as ui.images so ComfyUI does not also paint a preview
       // image under the node
       const src = message?.fc_light_src?.[0];
+      if(message?.fc_groups?.[0])this._fcGroupResults=message.fc_groups[0];
+      const sourceStatus = message?.fc_source_status?.[0];
+      if (sourceStatus) {
+        this._fcSourceStatus=sourceStatus;
+        this._fcEditor?.build();
+      }
       if (src) {
         this._fcLightSrc = src;
         this._fcPicker?.draw();

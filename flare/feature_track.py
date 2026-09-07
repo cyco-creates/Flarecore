@@ -301,24 +301,25 @@ def track_feature(clip: torch.Tensor, u: float, v: float,
     """
     if clip.shape[0] == 0:
         return []
-    luma = _luma(clip).float()
+    luma = _luma(clip.float()).nan_to_num()
     frames, height, width = luma.shape
-    half = max(2, int(feature)) // 2
+    half = max(1, min(max(2, int(feature)) // 2, (min(height, width)-1)//2))
     reach = max(2, int(search))
 
     px = float(u) * width
     py = float(v) * height
     px = min(max(px, 0.0), float(width - 1))
     py = min(max(py, 0.0), float(height - 1))
-    y0 = max(0, min(height - 2 * half, int(round(py)) - half))
-    x0 = max(0, min(width - 2 * half, int(round(px)) - half))
-    template = luma[0, y0:y0 + 2 * half, x0:x0 + 2 * half].clone()
+    template = _window(luma[0], px, py, half).clone()
 
     out = [{"u": px / width, "v": py / height, "confidence": 1.0}]
     vx = vy = 0.0
+    lost = False
     for i in range(1, frames):
         prev, cur = luma[i - 1], luma[i]
-        nx, ny, ok = _lk_step(prev, cur, px, py, half, LK_LEVELS, LK_ITERS)
+        # Once lost, the previous frame contains the occluder, not our
+        # feature. Running LK on it would confidently start tracking a tree.
+        nx, ny, ok = (px, py, False) if lost else _lk_step(prev, cur, px, py, half, LK_LEVELS, LK_ITERS)
         fb = math.inf
         if ok:
             bx, by, ok2 = _lk_step(cur, prev, nx, ny, half, LK_LEVELS, LK_ITERS)
@@ -333,6 +334,7 @@ def track_feature(clip: torch.Tensor, u: float, v: float,
                 nx = 0.5 * (nx + found[0]); ny = 0.5 * (ny + found[1])
             vx, vy = nx - px, ny - py
             px, py = nx, ny
+            lost = False
             conf = max(fb_conf, max(ncc, 0.0))
             # A window that overhangs the frame edge is matching replicated
             # border pixels, not picture. Say so: a feature walking out of
@@ -350,6 +352,7 @@ def track_feature(clip: torch.Tensor, u: float, v: float,
             nx, ny, score = found
             vx, vy = nx - px, ny - py
             px, py = nx, ny
+            lost = False
             out.append({"u": px / width, "v": py / height, "confidence": score})
             continue
 
@@ -357,6 +360,7 @@ def track_feature(clip: torch.Tensor, u: float, v: float,
         # correlation seen, scaled well under the trust floor -- a 0.4 peak
         # in the noise must never read as a 0.4-confident position.
         px, py, vx, vy = _coast(px, py, vx, vy, width, height)
+        lost = True
         seen = max(found[2], 0.0) if found else 0.0
         out.append({"u": px / width, "v": py / height,
                     "confidence": min(0.5 * seen, MIN_CONFIDENCE - 0.05)})

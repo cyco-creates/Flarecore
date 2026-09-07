@@ -1,0 +1,80 @@
+<!doctype html><meta charset="utf-8"><title>Flarecore preset gallery QA</title>
+<style>body{background:#101014;color:#ddd;font:13px sans-serif;margin:20px}#host{max-width:1100px}#checks{margin-bottom:12px}pre{white-space:pre-wrap}button{height:44px;max-height:44px;overflow:hidden}</style>
+<button id="checks">Run gallery checks</button><button id="groups">Run group checks</button><pre id="status">Ready</pre><div id="host" class="fcore"></div>
+<script type="module">
+const index=await fetch('/flarecore/presets').then(r=>r.json()).then(d=>d.index);
+let source=await fetch('../web/flarecore_ui.js').then(r=>r.text());
+source=source.replace(/import \{ app \} from [^;]+;/,'const app={registerExtension(){}};')
+ .replace(/import \{ api \} from [^;]+;/,'const api={fetchApi:(...args)=>fetch(...args),apiURL:p=>p};')
+ .replace(/import \{ createMotionPanel \} from [^;]+;/,`import {createMotionPanel} from '${new URL('../web/flarecore_motion.js',location.href)}';`)
+ .replace(/import \{ openPresetGallery \} from [^;]+;/,`import {openPresetGallery} from '${new URL('../web/flarecore_presets.js',location.href)}';`);
+source=source.replace('./flarecore_groups.js',new URL('../web/flarecore_groups.js',location.href).href);
+const blob=URL.createObjectURL(new Blob([source+'\nexport {FlareEditor,injectCSS,setVal,getVal};'],{type:'text/javascript'}));
+const {FlareEditor,injectCSS,setVal,getVal}=await import(blob);URL.revokeObjectURL(blob);injectCSS();
+const initial={schema_version:1,name:'My current flare',global:{intensity:.7,scale:.8},elements:[]};
+const widgets=[{name:'preset_json',value:JSON.stringify(initial)},{name:'position_mode',value:'manual'},{name:'visibility_mode',value:'hybrid'},{name:'occlusion_radius',value:.03},{name:'occlusion_smooth',value:.3}];
+const node={widgets,setDirtyCanvas(){}};
+const editor=Object.create(FlareEditor.prototype);
+Object.assign(editor,{node,root:document.querySelector('#host'),history:[],future:[],expanded:new Set(),libraryFiles:[],previewIndex:null});editor.build();
+node._fcEditor=editor;
+document.querySelector('#checks').onclick=async()=>{
+ const assert=(v,m)=>{if(!v)throw Error(m)};
+ const until=async(test)=>{for(let i=0;i<100;i++){if(test())return;await new Promise(r=>setTimeout(r,30));}throw Error('UI timed out');};
+ try{
+ editor.writeDocument(initial);editor.build();
+ const before=widgets[0].value;
+ document.querySelector('.fcore-preset-button').click();await until(()=>document.querySelector('dialog'));
+ const cards=[...document.querySelectorAll('.fcore-preset-card')];assert(cards.length===index.length,'All presets listed');
+ assert(cards.every(c=>c.getBoundingClientRect().height>140),'Host button CSS must not crop cards');
+ assert(cards.every(c=>c.querySelector('small').getBoundingClientRect().bottom<=c.getBoundingClientRect().bottom),'Category labels visible');
+ const category=document.querySelector('[aria-label="Preset category"]');category.value=index[0].category;category.dispatchEvent(new Event('change'));
+ assert([...document.querySelectorAll('.fcore-preset-card small')].every(c=>c.textContent===category.value),'Category filtering');
+ category.value='';category.dispatchEvent(new Event('change'));
+ document.querySelectorAll('.fcore-preset-card')[1].dispatchEvent(new Event('pointerenter'));assert(widgets[0].value===before,'Hover must not modify preset');
+ assert(document.querySelector('.fcore-preset-preview h3').textContent===(index[1].title||index[1].name),'Hover changes large preview');
+ const galleryCards=[...document.querySelectorAll('.fcore-preset-card')];
+ galleryCards[1].click();
+ galleryCards[2].dispatchEvent(new Event('pointerenter'));galleryCards[2].focus();
+ assert(document.querySelector('.fcore-preset-preview h3').textContent===(index[1].title||index[1].name),'Click pins preview against hover and focus');
+ assert(galleryCards[1].classList.contains('preview-selected'),'Pinned thumbnail highlighted');
+ category.value=index[2].category;category.dispatchEvent(new Event('change'));
+ document.querySelector('.fcore-preset-card')?.dispatchEvent(new Event('pointerenter'));
+ assert(document.querySelector('.fcore-preset-preview h3').textContent===(index[1].title||index[1].name),'Filtering preserves pinned preview');
+ category.value='';category.dispatchEvent(new Event('change'));
+ const refreshed=[...document.querySelectorAll('.fcore-preset-card')];
+ assert(refreshed[1].getAttribute('aria-pressed')==='true','Pinned state survives redraw');
+ refreshed[2].click();refreshed[0].dispatchEvent(new Event('pointerenter'));
+ assert(document.querySelector('.fcore-preset-preview h3').textContent===(index[2].title||index[2].name),'Another click replaces pinned preview');
+ refreshed[1].click();assert(widgets[0].value===before,'Pinning must not load or modify preset');
+ [...document.querySelectorAll('dialog button')].find(b=>b.textContent==='Load preset').click();await until(()=>!document.querySelector('dialog'));
+ assert(document.querySelector('.fcore-preset-button').textContent.includes(index[1].title||index[1].name),'Selection visible');
+ editor.undo();assert(editor.read().name==='My current flare','Undo restores preset and title');
+ editor.redo();assert(editor.read().preset_file===index[1].name,'Redo restores selected file');
+ const master=document.querySelector('[aria-label="Master brightness and size"]');master.value=.4;master.dispatchEvent(new Event('input'));editor.flushPending();
+ assert(editor.read().global.master===.4,'Master persisted');
+ document.querySelector('.fcore-preset-button').click();await until(()=>document.querySelector('dialog'));
+ assert(document.querySelector('.fcore-preset-card.selected'),'Selection highlighted on reopening');
+ const search=document.querySelector('dialog input');search.value='no such preset xyz';search.dispatchEvent(new Event('input'));assert(document.querySelector('.fcore-preset-grid').textContent.includes('No matching'),'Empty search state');
+ document.querySelector('dialog').close();
+ document.querySelector('#status').textContent='PASS: gallery, hover isolation, click-pinned preview, focus/filter stability, explicit load, persistent selection, undo/redo, linked master, search.';
+ }catch(e){document.querySelector('#status').textContent='FAIL: '+e.message;throw e;}
+};
+document.querySelector('#groups').onclick=()=>{
+ const assert=(v,m)=>{if(!v)throw Error(m);};
+ const click=text=>[...document.querySelectorAll('button')].find(b=>b.textContent===text).click();
+ try{
+ editor.writeDocument(initial);editor.build();
+ click('Duplicate flare');let d=JSON.parse(widgets[0].value);assert(d.groups.length===2,'Duplicate creates two groups');
+ editor.mutate(p=>{p.global.master=.25;p.global.aspect=2;});setVal(node,'light_x',.82);
+ d=JSON.parse(widgets[0].value);assert(d.groups[0].preset.global.master===undefined,'Master isolated');
+ assert(d.groups[1].source.light_x===.82 && d.groups[0].source.light_x!==.82,'Position isolated');
+ click('● Flare 1');assert(editor.read().global.intensity===.7 && editor.read().global.aspect===undefined,'Selection restores independent globals');
+ click('● Flare 1 copy');assert(editor.read().global.master===.25 && getVal(node,'light_x',0)===.82,'Switch retains settings');
+ click('+ Flare');d=JSON.parse(widgets[0].value);assert(d.groups.length===3 && editor.read().elements.length===0,'New empty flare');
+ click('Remove flare');assert(JSON.parse(widgets[0].value).groups.length===2,'Remove selected group');
+ editor.undo();assert(JSON.parse(widgets[0].value).groups.length===3,'Undo restores whole group');
+ const saved=widgets[0].value;editor.build();assert(widgets[0].value===saved,'Rebuild preserves serialized scene');
+ document.querySelector('#status').textContent='PASS: duplication, independent source/master/aspect, selection, add/remove, whole-scene undo and reload.';
+ }catch(e){document.querySelector('#status').textContent='FAIL: '+e.message;throw e;}
+};
+</script>

@@ -24,44 +24,11 @@ the camera. Use flare.depth.condition_depth to bring other sources into range.
 import math
 
 import torch
-
-from .elements import _smoothstep
+import torch.nn.functional as F
 
 # Depth margin by which a sample must beat the light to count as occluding.
 # Guards against depth-map noise and soft edges around the light.
 DEFAULT_MARGIN = 0.1
-
-# Occlusion ramps over this range of blocked-sample fraction.
-_FRACTION_LO = 0.15
-_FRACTION_HI = 0.85
-
-
-def _disk_offsets(n: int = 48) -> list[tuple[float, float]]:
-    """Fixed golden-spiral sample offsets within the unit disk."""
-    golden = math.pi * (3.0 - math.sqrt(5.0))
-    pts = []
-    for i in range(n):
-        r = math.sqrt((i + 0.5) / n)
-        a = i * golden
-        pts.append((r * math.cos(a), r * math.sin(a)))
-    return pts
-
-
-_OFFSETS = _disk_offsets()
-
-# The offsets never change; upload them to each device once, not per call —
-# on video batches that is one H2D copy per light per frame otherwise.
-_OFFSETS_CACHE: dict = {}
-
-
-def _offsets_on(device) -> torch.Tensor:
-    key = str(device)
-    hit = _OFFSETS_CACHE.get(key)
-    if hit is None:
-        hit = torch.tensor(_OFFSETS, device=device, dtype=torch.float32)
-        _OFFSETS_CACHE[key] = hit
-    return hit
-
 
 def occlusion_factor(depth: torch.Tensor, u: float, v: float,
                      radius: float = 0.02, invert: bool = False,
@@ -87,17 +54,25 @@ def occlusion_factor(depth: torch.Tensor, u: float, v: float,
 
     # Gather every disk sample in one indexed read: keeps this to a single
     # device sync per light instead of one per sample.
-    offs = _offsets_on(depth.device)
+    # Dense regular coverage avoids missing a narrow branch between 48
+    # sparse rays. Threshold before bilinear sampling: averaging depth first
+    # can turn a thin foreground object into distant sky.
+    samples_wide = min(129, max(9, 2 * math.ceil(radius * height) + 1))
+    axis = torch.linspace(-1, 1, samples_wide, device=depth.device)
+    yy, xx = torch.meshgrid(axis, axis, indexing="ij")
+    disk = xx.square() + yy.square() <= 1.0
+    offs = torch.stack((xx[disk], yy[disk]), -1)
     su = u + offs[:, 0] * radius / aspect
     sv = v + offs[:, 1] * radius
     # A sample outside the map is unknown, not occluding. Clamping it into
     # the map judged a light above the frame by whatever lined the top edge
     # -- a canopy of branches blacked out an off-frame sun entirely.
     inside = ((su >= 0.0) & (su < 1.0) & (sv >= 0.0) & (sv < 1.0)).to(torch.float32)
-    px = (su * width).long().clamp(0, width - 1)
-    py = (sv * height).long().clamp(0, height - 1)
-    samples = depth[py, px]
-
-    nearer = (samples > (light_depth + margin)).to(torch.float32)
+    grid = torch.stack((su*2-1, sv*2-1), -1)[None,None]
+    foreground = (depth > light_depth + margin).float()[None,None]
+    nearer = F.grid_sample(foreground, grid, align_corners=False,
+                           padding_mode="border")[0,0,0]
     fraction = (nearer * inside).sum() / inside.sum().clamp(min=1.0)
-    return _smoothstep(_FRACTION_LO, _FRACTION_HI, fraction).item()
+    # Coverage is already an area fraction; a 15% dead zone erased fine
+    # branches, and a second smoothstep distorted their actual coverage.
+    return fraction.clamp(0,1).item()

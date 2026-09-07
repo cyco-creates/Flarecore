@@ -21,6 +21,7 @@ from .motion import MOTION_TARGETS, MOTION_DRIVERS
 SCHEMA_VERSION = 1
 
 GLOBAL_DEFAULTS = {
+    "master": 1.0,         # linked energy and size; independent base values remain intact
     "intensity": 1.0,
     "scale": 1.0,
     "aspect": 1.0,          # >1 widens every element (anamorphic squeeze look)
@@ -160,7 +161,7 @@ ELEMENT_TYPE_OVERRIDES = {
 ELEMENT_TYPES = tuple(sorted(PARAM_DEFAULTS.keys()))
 
 _TOP_LEVEL_KEYS = {"schema_version", "name", "author", "category",
-                   "subcategory", "global", "elements"}
+                   "subcategory", "global", "elements", "preset_file"}
 
 # How a preset files itself in the library. The editor's preset menu groups
 # by these, so a browsable library is a property of the presets themselves
@@ -559,6 +560,8 @@ def validate_preset(raw: dict) -> dict:
         )
 
     raw_global = raw.get("global", {})
+    if "preset_file" in raw:
+        out["preset_file"] = str(raw["preset_file"])
     if not isinstance(raw_global, dict):
         raise ValueError("preset key 'global' must be an object")
     for key, value in raw_global.items():
@@ -568,6 +571,7 @@ def validate_preset(raw: dict) -> dict:
         out["global"][key] = value
     g = out["global"]
     g["intensity"] = _require_number(g["intensity"], "global.intensity", lo=0.0, hi=1000.0)
+    g["master"] = _require_number(g["master"], "global.master", lo=0.0, hi=100.0)
     g["scale"] = _require_number(g["scale"], "global.scale", lo=1e-6, hi=100.0)
     g["aspect"] = _require_number(g["aspect"], "global.aspect", lo=0.2, hi=5.0)
     g["tint"] = _require_vec(g["tint"], "global.tint", 3, lo=0.0, hi=100.0)
