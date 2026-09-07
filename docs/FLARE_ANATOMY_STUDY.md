@@ -1,7 +1,5 @@
 # Flare anatomy and adaptive optics study
 
-Reference: [Lens Distortions lens-flare gallery](https://lensdistortions.com/vfx/?category=Lens%20Flares), inspected 2026-09-07.
-
 ## Evidence and scope
 
 This is a visual breakdown of **all 30 featured poster previews on the first
