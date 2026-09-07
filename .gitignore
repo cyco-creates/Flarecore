@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+tests/out/
+.venv/
+
+# Local credentials, exports, and test/development state
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.log
+*.bak
+*.bak[0-9]*
+.qa-*/
+dist/
+private/
+.DS_Store
+Thumbs.db

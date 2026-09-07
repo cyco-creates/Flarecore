@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "name": "Film Halation",
+  "author": "flarecore",
+  "category": "Scenario",
+  "global": {
+    "intensity": 1.0,
+    "scale": 1.0,
+    "aspect": 1.0,
+    "tint": [
+      1.0,
+      0.97,
+      0.94
+    ],
+    "seed": 12,
+    "fringe": 0.05
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "label": "burned-in core",
+      "id": "fh_core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.08,
+      "intensity": 3.8,
+      "irregular": 0.15,
+      "color": [
+        1.0,
+        0.98,
+        0.94
+      ],
+      "params": {
+        "softness": 0.35,
+        "falloff": 2.2
+      }
+    },
+    {
+      "type": "glow",
+      "label": "red halation halo (light scattered back off the base through the emulsion)",
+      "id": "fh_halo",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.34,
+      "intensity": 0.9,
+      "irregular": 0.15,
+      "blur": 0.12,
+      "color": [
+        1.0,
+        0.3,
+        0.12
+      ],
+      "params": {
+        "softness": 0.55,
+        "falloff": 1.6
+      }
+    },
+    {
+      "type": "iris",
+      "label": "orange halation rim (red layer sits furthest from the light)",
+      "id": "fh_rim",
+      "slot": "ghosts",
+      "offset": 0.0,
+      "scale": 0.24,
+      "intensity": 0.7,
+      "irregular": 0.15,
+      "blur": 0.2,
+      "color": [
+        1.0,
+        0.45,
+        0.15
+      ],
+      "params": {
+        "blades": 32,
+        "edge_softness": 0.55,
+        "hollow": 0.45
+      }
+    },
+    {
+      "type": "ring",
+      "label": "soft outer halation ring",
+      "id": "fh_ring",
+      "slot": "rings",
+      "offset": 0.0,
+      "scale": 0.4,
+      "intensity": 0.22,
+      "irregular": 0.15,
+      "blur": 0.25,
+      "color": [
+        1.0,
+        0.35,
+        0.1
+      ],
+      "params": {
+        "radius": 1.0,
+        "thickness": 0.35
+      }
+    },
+    {
+      "type": "glow",
+      "label": "warm emulsion bloom",
+      "id": "fh_bloom",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.9,
+      "intensity": 0.12,
+      "irregular": 0.15,
+      "blur": 0.2,
+      "color": [
+        1.0,
+        0.7,
+        0.5
+      ],
+      "params": {
+        "softness": 0.8,
+        "falloff": 1.2
+      }
+    },
+    {
+      "type": "glow",
+      "label": "gate-weave veil (slight organic drift)",
+      "id": "fh_veil",
+      "slot": "glows",
+      "offset": 0.05,
+      "scale": 2.0,
+      "intensity": 0.02,
+      "irregular": 0.15,
+      "blur": 0.4,
+      "color": [
+        1.0,
+        0.8,
+        0.65
+      ],
+      "params": {
+        "softness": 1.1,
+        "falloff": 0.9
+      }
+    }
+  ]
+}

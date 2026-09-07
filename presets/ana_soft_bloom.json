@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "name": "Anamorphic Soft Bloom",
+  "author": "flarecore",
+  "category": "Anamorphic",
+  "global": {
+    "tint": [
+      0.95,
+      0.98,
+      1.06
+    ],
+    "seed": 11,
+    "fringe": 0.06,
+    "aspect": 1.35
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "core",
+      "label": "core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.07,
+      "intensity": 3.2,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "params": {
+        "softness": 0.28,
+        "falloff": 2.3
+      }
+    },
+    {
+      "type": "glow",
+      "id": "halo",
+      "label": "halo",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.62,
+      "intensity": 1.8,
+      "color": [
+        0.62,
+        0.78,
+        1.0
+      ],
+      "irregular": 0.2,
+      "params": {
+        "softness": 0.6,
+        "falloff": 1.3
+      }
+    },
+    {
+      "type": "glow",
+      "id": "veil",
+      "label": "veil",
+      "slot": "glows",
+      "offset": 0.1,
+      "scale": 2.6,
+      "intensity": 0.0075,
+      "color": [
+        0.42,
+        0.55,
+        1.0
+      ],
+      "blur": 0.3,
+      "irregular": 0.3,
+      "params": {
+        "softness": 1.0,
+        "falloff": 0.8
+      }
+    },
+    {
+      "type": "streak",
+      "id": "streak",
+      "label": "streak",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.16,
+      "auto_rotate": false,
+      "color": [
+        0.12,
+        0.32,
+        1.0
+      ],
+      "blur": 0.08,
+      "irregular": 0.2,
+      "params": {
+        "length": 1.1,
+        "thickness": 0.007,
+        "curve": 0.0,
+        "dash": 0.0
+      }
+    },
+    {
+      "type": "iris",
+      "id": "ovals",
+      "label": "oval pair",
+      "slot": "ghosts",
+      "offset": 0.22,
+      "count": 2,
+      "spread": 0.09,
+      "scale": 0.05,
+      "stretch": [
+        2.1,
+        1.0
+      ],
+      "intensity": 0.0,
+      "color": [
+        0.25,
+        0.45,
+        1.0
+      ],
+      "blur": 0.12,
+      "count_scale_step": 0.72,
+      "auto_rotate": false,
+      "trigger": {
+        "mode": "light",
+        "inner": 0.25,
+        "outer": 0.55,
+        "falloff": "smooth",
+        "brightness": 0.55
+      },
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.55
+      }
+    },
+    {
+      "type": "iris",
+      "id": "chain",
+      "label": "ghost chain",
+      "slot": "ghosts",
+      "offset": 1.35,
+      "count": 3,
+      "spread": 0.4,
+      "scale": 0.04,
+      "count_scale_step": 1.18,
+      "count_falloff": 0.85,
+      "intensity": 0.07,
+      "color": [
+        0.35,
+        0.5,
+        1.0
+      ],
+      "dispersion": 0.4,
+      "blur": 0.08,
+      "irregular": 0.3,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.5,
+        "hollow": 0.0
+      }
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "name": "Spherical Designed Blue Tele",
+  "author": "flarecore",
+  "category": "Spherical",
+  "subcategory": "Focal variants",
+  "global": {
+    "tint": [
+      0.93,
+      0.97,
+      1.1
+    ],
+    "seed": 132,
+    "fringe": 0.1,
+    "scale": 1.9
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "core",
+      "label": "core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.05,
+      "intensity": 4.0,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "params": {
+        "softness": 0.28,
+        "falloff": 2.3
+      }
+    },
+    {
+      "type": "glow",
+      "id": "halo",
+      "label": "halo",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.34,
+      "intensity": 0.9,
+      "color": [
+        0.8,
+        0.9,
+        1.0
+      ],
+      "irregular": 0.2,
+      "params": {
+        "softness": 0.45,
+        "falloff": 1.5
+      }
+    },
+    {
+      "type": "glint",
+      "id": "spokes",
+      "label": "spokes",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.4,
+      "intensity": 0.3,
+      "color": [
+        1.0,
+        0.95,
+        0.88
+      ],
+      "blur": 0.04,
+      "irregular": 0.3,
+      "params": {
+        "points": 8,
+        "length": 0.22,
+        "thickness": 0.007,
+        "length_jitter": 0.6
+      }
+    },
+    {
+      "type": "iris",
+      "id": "softdiscs",
+      "label": "soft blue discs",
+      "slot": "ghosts",
+      "offset": 1.35,
+      "count": 3,
+      "spread": 0.13,
+      "scale": 0.05,
+      "intensity": 0.35,
+      "count_scale_step": 1.55,
+      "count_falloff": 0.8,
+      "color": [
+        0.15,
+        0.35,
+        1.0
+      ],
+      "blur": 0.14,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.45
+      }
+    },
+    {
+      "type": "iris",
+      "id": "comet",
+      "label": "lit-edge comet",
+      "slot": "ghosts",
+      "offset": 2.2,
+      "scale": 0.16,
+      "intensity": 0.3,
+      "color": [
+        0.2,
+        0.45,
+        1.0
+      ],
+      "blur": 0.18,
+      "shade": 0.95,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.4
+      }
+    },
+    {
+      "type": "glow",
+      "id": "cometcusp",
+      "label": "comet cusp",
+      "slot": "glows",
+      "offset": 2.05,
+      "scale": 0.012,
+      "intensity": 0.8,
+      "color": [
+        0.5,
+        0.95,
+        1.0
+      ],
+      "blur": 0.04,
+      "params": {
+        "softness": 0.35,
+        "falloff": 2.4
+      }
+    },
+    {
+      "type": "glow",
+      "id": "veildisc",
+      "label": "blue veil",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 1.5,
+      "intensity": 0.016,
+      "color": [
+        0.2,
+        0.4,
+        1.0
+      ],
+      "blur": 0.35,
+      "params": {
+        "softness": 0.85,
+        "falloff": 1.0
+      }
+    },
+    {
+      "type": "glow",
+      "id": "flood",
+      "label": "blue flood",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 3.4,
+      "intensity": 0.016,
+      "color": [
+        0.18,
+        0.38,
+        1.0
+      ],
+      "blur": 0.5,
+      "params": {
+        "softness": 1.0,
+        "falloff": 0.7
+      }
+    },
+    {
+      "type": "glow",
+      "id": "violet",
+      "label": "violet cores",
+      "slot": "glows",
+      "offset": 1.35,
+      "count": 3,
+      "spread": 0.13,
+      "scale": 0.012,
+      "intensity": 0.6,
+      "color": [
+        0.7,
+        0.4,
+        1.0
+      ],
+      "blur": 0.05,
+      "count_falloff": 0.8,
+      "params": {
+        "softness": 0.4,
+        "falloff": 2.2
+      }
+    }
+  ]
+}

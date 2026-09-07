@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "name": "Anamorphic Clean Modern",
+  "author": "flarecore",
+  "category": "Anamorphic",
+  "global": {
+    "tint": [
+      0.97,
+      0.99,
+      1.04
+    ],
+    "seed": 5
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "core",
+      "label": "core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.05,
+      "intensity": 3.6,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "params": {
+        "softness": 0.28,
+        "falloff": 2.3
+      }
+    },
+    {
+      "type": "glow",
+      "id": "halo",
+      "label": "halo",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.36,
+      "intensity": 0.8,
+      "color": [
+        0.8,
+        0.9,
+        1.0
+      ],
+      "irregular": 0.2,
+      "params": {
+        "softness": 0.5,
+        "falloff": 1.5
+      }
+    },
+    {
+      "type": "streak",
+      "id": "streak",
+      "label": "streak",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.12,
+      "auto_rotate": false,
+      "color": [
+        0.35,
+        0.55,
+        1.0
+      ],
+      "blur": 0.06,
+      "irregular": 0.2,
+      "params": {
+        "length": 1.6,
+        "thickness": 0.004,
+        "curve": 0.0,
+        "dash": 0.0
+      }
+    },
+    {
+      "type": "iris",
+      "id": "g1",
+      "label": "faint ghost",
+      "slot": "ghosts",
+      "offset": 1.5,
+      "scale": 0.05,
+      "intensity": 0.05,
+      "color": [
+        0.3,
+        0.5,
+        1.0
+      ],
+      "blur": 0.15,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.6
+      }
+    },
+    {
+      "type": "iris",
+      "id": "g2",
+      "label": "faint ghost far",
+      "slot": "ghosts",
+      "offset": 2.1,
+      "scale": 0.035,
+      "intensity": 0.03,
+      "color": [
+        0.35,
+        0.5,
+        1.0
+      ],
+      "blur": 0.15,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.6
+      }
+    }
+  ]
+}

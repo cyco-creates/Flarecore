@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "name": "Underwater Caustic",
+  "author": "flarecore",
+  "category": "Scenario",
+  "global": {
+    "intensity": 1.0,
+    "scale": 1.0,
+    "aspect": 1.0,
+    "tint": [
+      0.75,
+      0.95,
+      1.0
+    ],
+    "seed": 66,
+    "fringe": 0.1
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "label": "diffused sun core (water column scatter)",
+      "id": "uw_core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.14,
+      "intensity": 2.6,
+      "blur": 0.08,
+      "color": [
+        0.85,
+        1.0,
+        1.0
+      ],
+      "params": {
+        "softness": 0.45,
+        "falloff": 1.7
+      }
+    },
+    {
+      "type": "glow",
+      "label": "cyan bloom",
+      "id": "uw_bloom",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.6,
+      "intensity": 0.7,
+      "irregular": 0.3,
+      "blur": 0.15,
+      "color": [
+        0.4,
+        0.9,
+        1.0
+      ],
+      "params": {
+        "softness": 0.6,
+        "falloff": 1.2
+      }
+    },
+    {
+      "type": "glow",
+      "label": "deep water veil",
+      "id": "uw_veil",
+      "slot": "glows",
+      "offset": 0.2,
+      "scale": 2.4,
+      "intensity": 0.05,
+      "irregular": 0.3,
+      "blur": 0.4,
+      "color": [
+        0.2,
+        0.6,
+        0.9
+      ],
+      "params": {
+        "softness": 1.1,
+        "falloff": 0.85
+      }
+    },
+    {
+      "type": "texture",
+      "label": "surface caustic net (refracted through the rippling surface)",
+      "id": "uw_caustic_plate",
+      "slot": "caustics",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.5,
+      "auto_rotate": false,
+      "fill_frame": true,
+      "screen_space": true,
+      "light_mask": 0.7,
+      "mask_scene": 0.3,
+      "mask_floor": 0.2,
+      "blur": 0.12,
+      "color": [
+        0.6,
+        0.95,
+        1.0
+      ],
+      "params": {
+        "file": "caustics/water_caustic.png",
+        "channel": "auto"
+      }
+    },
+    {
+      "type": "texture",
+      "label": "caustic fold around the sun",
+      "id": "uw_caustic_fold",
+      "slot": "caustics",
+      "offset": 0.1,
+      "scale": 0.7,
+      "intensity": 0.35,
+      "irregular": 0.3,
+      "blur": 0.15,
+      "color": [
+        0.7,
+        1.0,
+        1.0
+      ],
+      "params": {
+        "file": "caustics/caustic_fold.png",
+        "channel": "auto"
+      }
+    },
+    {
+      "type": "texture",
+      "label": "second caustic fold, trailing",
+      "id": "uw_caustic_fold2",
+      "slot": "caustics",
+      "offset": 0.8,
+      "scale": 0.5,
+      "intensity": 0.18,
+      "rotation": 60.0,
+      "blur": 0.2,
+      "color": [
+        0.5,
+        0.9,
+        1.0
+      ],
+      "params": {
+        "file": "caustics/caustic_fold_02.png",
+        "channel": "auto"
+      }
+    },
+    {
+      "type": "orbs",
+      "label": "soft suspended particles (backscatter bokeh)",
+      "id": "uw_orbs",
+      "slot": "ghosts",
+      "scale": 1.0,
+      "intensity": 0.1,
+      "blur": 0.2,
+      "color": [
+        0.7,
+        0.95,
+        1.0
+      ],
+      "params": {
+        "count": 40,
+        "size": 0.07,
+        "size_jitter": 0.8,
+        "spread": 1.5,
+        "edge_softness": 0.6,
+        "illumination": 0.7,
+        "shape": "disc",
+        "blades": 6
+      }
+    },
+    {
+      "type": "iris",
+      "label": "soft round ghost pair",
+      "id": "uw_ghost",
+      "slot": "ghosts",
+      "offset": 1.3,
+      "count": 2,
+      "spread": 0.5,
+      "scale": 0.16,
+      "count_scale_step": 1.3,
+      "count_falloff": 0.7,
+      "intensity": 0.07,
+      "irregular": 0.35,
+      "dispersion": 0.5,
+      "blur": 0.3,
+      "color": [
+        0.5,
+        0.9,
+        1.0
+      ],
+      "params": {
+        "blades": 24,
+        "edge_softness": 0.8
+      }
+    },
+    {
+      "type": "glint",
+      "label": "wobbly god rays",
+      "id": "uw_rays",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 1.1,
+      "intensity": 0.2,
+      "irregular": 0.8,
+      "blur": 0.25,
+      "color": [
+        0.7,
+        0.95,
+        1.0
+      ],
+      "params": {
+        "points": 12,
+        "length": 0.9,
+        "thickness": 0.02,
+        "length_jitter": 0.8
+      }
+    }
+  ]
+}

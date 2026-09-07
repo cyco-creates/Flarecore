@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "name": "Anamorphic Coated Clear",
+  "author": "flarecore",
+  "category": "Anamorphic",
+  "subcategory": "Coating variants",
+  "global": {
+    "tint": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "seed": 34,
+    "aspect": 1.6,
+    "fringe": 0.1
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "core",
+      "label": "core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.05,
+      "intensity": 4.0,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "params": {
+        "softness": 0.28,
+        "falloff": 2.3
+      }
+    },
+    {
+      "type": "glow",
+      "id": "halo",
+      "label": "halo",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.32,
+      "intensity": 1.0,
+      "color": [
+        0.55,
+        0.9,
+        1.0
+      ],
+      "irregular": 0.2,
+      "params": {
+        "softness": 0.45,
+        "falloff": 1.5
+      }
+    },
+    {
+      "type": "glint",
+      "id": "spokes",
+      "label": "spokes",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.4,
+      "intensity": 0.35,
+      "color": [
+        0.8,
+        0.9,
+        1.0
+      ],
+      "blur": 0.04,
+      "irregular": 0.45,
+      "params": {
+        "points": 16,
+        "length": 0.3,
+        "thickness": 0.006,
+        "length_jitter": 0.6
+      }
+    },
+    {
+      "type": "streak",
+      "id": "hairline",
+      "label": "vertical hairline",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.09,
+      "auto_rotate": false,
+      "rotation": 90.0,
+      "color": [
+        0.88,
+        0.93,
+        1.0
+      ],
+      "blur": 0.05,
+      "params": {
+        "length": 1.2,
+        "thickness": 0.004
+      }
+    },
+    {
+      "type": "glow",
+      "id": "edgetop",
+      "label": "edge hotspot top",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.035,
+      "intensity": 0.35,
+      "auto_rotate": false,
+      "color": [
+        0.88,
+        0.93,
+        1.0
+      ],
+      "blur": 0.08,
+      "stretch": [
+        0.35,
+        1.6
+      ],
+      "pin": [
+        null,
+        -1.0
+      ],
+      "params": {
+        "softness": 0.35,
+        "falloff": 2.0
+      }
+    },
+    {
+      "type": "glow",
+      "id": "edgebot",
+      "label": "edge hotspot bottom",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.035,
+      "intensity": 0.28,
+      "auto_rotate": false,
+      "color": [
+        0.88,
+        0.93,
+        1.0
+      ],
+      "blur": 0.08,
+      "stretch": [
+        0.35,
+        1.6
+      ],
+      "pin": [
+        null,
+        1.0
+      ],
+      "params": {
+        "softness": 0.35,
+        "falloff": 2.0
+      }
+    },
+    {
+      "type": "glow",
+      "id": "companion",
+      "label": "companion",
+      "slot": "glows",
+      "offset": 0.07,
+      "scale": 0.02,
+      "intensity": 0.6,
+      "color": [
+        0.88,
+        0.93,
+        1.0
+      ],
+      "blur": 0.05,
+      "params": {
+        "softness": 0.35,
+        "falloff": 2.4
+      }
+    },
+    {
+      "type": "glow",
+      "id": "veil",
+      "label": "veil",
+      "slot": "glows",
+      "offset": 0.1,
+      "scale": 2.4,
+      "intensity": 0.0027,
+      "color": [
+        0.5,
+        0.62,
+        1.0
+      ],
+      "blur": 0.3,
+      "irregular": 0.3,
+      "params": {
+        "softness": 1.0,
+        "falloff": 0.8
+      }
+    },
+    {
+      "type": "texture",
+      "id": "cornerfan",
+      "label": "corner fan",
+      "slot": "caustics",
+      "offset": -0.25,
+      "scale": 0.8,
+      "intensity": 0.0,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "blur": 0.03,
+      "irregular": 0.0,
+      "trigger": {
+        "mode": "border",
+        "source": "light",
+        "inner": 0.0,
+        "outer": 0.62,
+        "falloff": "smooth",
+        "brightness": 0.8
+      },
+      "params": {
+        "file": "caustics/prismatic_fan.png",
+        "channel": "auto"
+      }
+    },
+    {
+      "type": "glow",
+      "id": "haze",
+      "label": "grey haze",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 1.4,
+      "intensity": 0.007,
+      "color": [
+        0.8,
+        0.85,
+        0.95
+      ],
+      "blur": 0.4,
+      "params": {
+        "softness": 0.9,
+        "falloff": 0.9
+      }
+    }
+  ]
+}

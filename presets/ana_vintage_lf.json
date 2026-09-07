@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "name": "Anamorphic Vintage",
+  "author": "flarecore",
+  "category": "Anamorphic",
+  "global": {
+    "tint": [
+      1.0,
+      0.97,
+      1.03
+    ],
+    "seed": 51,
+    "aspect": 1.55,
+    "fringe": 0.16
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "core",
+      "label": "core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.06,
+      "intensity": 3.8,
+      "color": [
+        1.0,
+        0.95,
+        0.88
+      ],
+      "params": {
+        "softness": 0.28,
+        "falloff": 2.3
+      }
+    },
+    {
+      "type": "glow",
+      "id": "halo",
+      "label": "halo",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.45,
+      "intensity": 1.2,
+      "color": [
+        0.7,
+        0.62,
+        1.0
+      ],
+      "irregular": 0.2,
+      "params": {
+        "softness": 0.55,
+        "falloff": 1.5
+      }
+    },
+    {
+      "type": "glint",
+      "id": "warmside",
+      "label": "warm side",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.45,
+      "color": [
+        1.0,
+        0.55,
+        0.2
+      ],
+      "blur": 0.06,
+      "irregular": 0.5,
+      "auto_rotate": false,
+      "params": {
+        "points": 1,
+        "length": 2.6,
+        "thickness": 0.012,
+        "length_jitter": 0.0
+      }
+    },
+    {
+      "type": "glint",
+      "id": "coolside",
+      "label": "cool side",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.4,
+      "rotation": 180.0,
+      "color": [
+        0.45,
+        0.35,
+        1.0
+      ],
+      "blur": 0.06,
+      "irregular": 0.5,
+      "auto_rotate": false,
+      "params": {
+        "points": 1,
+        "length": 2.6,
+        "thickness": 0.012,
+        "length_jitter": 0.0
+      }
+    },
+    {
+      "type": "spectral",
+      "id": "ringdisc",
+      "label": "spectral disc",
+      "slot": "rings",
+      "offset": 1.75,
+      "scale": 0.085,
+      "intensity": 0.32,
+      "blur": 0.08,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "dispersion": 2.2,
+      "dispersion_samples": 9,
+      "params": {
+        "shape": "ring",
+        "radius": 0.85,
+        "thickness": 0.22
+      }
+    },
+    {
+      "type": "iris",
+      "id": "discfill",
+      "label": "disc fill",
+      "slot": "ghosts",
+      "offset": 1.75,
+      "scale": 0.085,
+      "intensity": 0.08,
+      "color": [
+        0.3,
+        0.45,
+        1.0
+      ],
+      "blur": 0.12,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.7
+      }
+    },
+    {
+      "type": "hoop",
+      "id": "caustic",
+      "label": "corner caustic",
+      "slot": "hoops",
+      "offset": 2.6,
+      "scale": 0.95,
+      "intensity": 0.0,
+      "color": [
+        1.0,
+        0.62,
+        0.2
+      ],
+      "blur": 0.05,
+      "irregular": 0.5,
+      "trigger": {
+        "mode": "border",
+        "source": "light",
+        "inner": 0.0,
+        "outer": 0.5,
+        "falloff": "smooth",
+        "brightness": 0.5
+      },
+      "params": {
+        "radius": 0.8,
+        "thickness": 0.022,
+        "angular_falloff": 0.15,
+        "completion": 95.0,
+        "completion_feather": 0.55
+      }
+    },
+    {
+      "type": "glint",
+      "id": "spokes",
+      "label": "spokes",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.45,
+      "intensity": 0.3,
+      "color": [
+        1.0,
+        0.95,
+        0.88
+      ],
+      "blur": 0.04,
+      "irregular": 0.6,
+      "params": {
+        "points": 22,
+        "length": 0.3,
+        "thickness": 0.005,
+        "length_jitter": 0.6
+      }
+    },
+    {
+      "type": "glow",
+      "id": "purpledash",
+      "label": "purple dashes",
+      "slot": "glows",
+      "offset": 0.35,
+      "count": 3,
+      "spread": 0.22,
+      "scale": 0.016,
+      "intensity": 0.3,
+      "color": [
+        0.55,
+        0.42,
+        0.95
+      ],
+      "blur": 0.06,
+      "count_falloff": 0.7,
+      "params": {
+        "softness": 0.4,
+        "falloff": 2.2
+      }
+    },
+    {
+      "type": "glow",
+      "id": "veil",
+      "label": "veil",
+      "slot": "glows",
+      "offset": 0.1,
+      "scale": 2.6,
+      "intensity": 0.00675,
+      "color": [
+        0.55,
+        0.42,
+        0.95
+      ],
+      "blur": 0.3,
+      "irregular": 0.3,
+      "params": {
+        "softness": 1.0,
+        "falloff": 0.8
+      }
+    }
+  ]
+}

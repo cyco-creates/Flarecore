@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><title>FlareCore editor layout QA</title>
+<style>body{margin:20px;background:#101014;color:#ddd;font:13px sans-serif}h1{font-size:20px}#host{max-width:1100px;height:auto!important}#host .fcore-row{min-width:0}#status{margin:12px 0;color:#e8a33d}select,button{font:inherit}#width{margin-bottom:14px}</style>
+<h1>FlareCore · Element settings</h1>
+<p>Actual editor controls and host stylesheet. Changes affect only this test element.</p>
+<label>Panel width <select id="width"><option>1100</option><option>700</option><option>420</option><option>320</option></select></label>
+<div id="status" role="status">No edits yet</div><div id="host" class="fcore"><div class="fcore-row" id="panel"></div></div>
+<script type="module">
+import {responseProfile} from '../web/flarecore_motion.js';
+const contract=await fetch('../docs/motion_previews/motion_contract.json').then(r=>r.json());
+let source=await fetch('../web/flarecore_ui.js').then(r=>r.text());
+source=source.replace(/import \{ app \} from [^;]+;/,'const app={registerExtension(){}};')
+  .replace(/import \{ api \} from [^;]+;/,'const api={};')
+  .replace(/import \{ createMotionPanel \} from [^;]+;/,
+    `import {createMotionPanel as panel} from '${new URL('../web/flarecore_motion.js',location.href)}';
+     const createMotionPanel=(e,c,unused,s)=>panel(e,c,()=>Promise.resolve(${JSON.stringify(contract)}),s);`);
+const blob=URL.createObjectURL(new Blob([source+'\nexport {FlareEditor,injectCSS};'],{type:'text/javascript'}));
+const {FlareEditor,injectCSS}=await import(blob);URL.revokeObjectURL(blob);injectCSS();
+let preset={elements:[{id:'qa',type:'iris',motion:responseProfile('ghost','iris'),params:{blades:6}}]},changes=0;
+const editor=Object.create(FlareEditor.prototype);
+Object.assign(editor,{node:{},previewIndex:null,mutate(fn){fn(preset);changed();build();},mutateQuiet(fn){fn(preset);changed();},flushPending(){},build});
+function changed(){document.querySelector('#status').textContent=`Saved edit ${++changes}`;}
+function build(){document.querySelector('#panel').replaceChildren(editor.buildAdvanced(preset.elements[0],0));}
+document.querySelector('#width').onchange=e=>document.querySelector('#host').style.width=e.target.value+'px';
+build();
+</script>

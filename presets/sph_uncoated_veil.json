@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "name": "Spherical Uncoated Veil",
+  "author": "flarecore",
+  "category": "Spherical",
+  "global": {
+    "tint": [
+      1.0,
+      0.98,
+      1.02
+    ],
+    "seed": 91,
+    "fringe": 0.2
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "core",
+      "label": "core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.065,
+      "intensity": 3.4,
+      "color": [
+        1.0,
+        0.95,
+        0.88
+      ],
+      "params": {
+        "softness": 0.28,
+        "falloff": 2.3
+      }
+    },
+    {
+      "type": "glow",
+      "id": "halo",
+      "label": "halo",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.55,
+      "intensity": 0.9,
+      "color": [
+        0.72,
+        0.8,
+        1.0
+      ],
+      "irregular": 0.2,
+      "params": {
+        "softness": 0.7,
+        "falloff": 1.1
+      }
+    },
+    {
+      "type": "glow",
+      "id": "veil",
+      "label": "veil",
+      "slot": "glows",
+      "offset": 0.1,
+      "scale": 3.0,
+      "intensity": 0.00825,
+      "color": [
+        0.6,
+        0.7,
+        1.0
+      ],
+      "blur": 0.4,
+      "irregular": 0.3,
+      "params": {
+        "softness": 1.0,
+        "falloff": 0.8
+      }
+    },
+    {
+      "type": "glint",
+      "id": "spokes",
+      "label": "spokes",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.55,
+      "intensity": 0.4,
+      "color": [
+        1.0,
+        0.95,
+        0.88
+      ],
+      "blur": 0.04,
+      "irregular": 0.35,
+      "params": {
+        "points": 14,
+        "length": 0.34,
+        "thickness": 0.006,
+        "length_jitter": 0.6
+      }
+    },
+    {
+      "type": "ring",
+      "id": "bigring",
+      "label": "big ring",
+      "slot": "rings",
+      "offset": 1.6,
+      "count": 2,
+      "spread": 0.45,
+      "scale": 0.52,
+      "count_scale_step": 1.22,
+      "count_falloff": 0.55,
+      "intensity": 0.07,
+      "color": [
+        0.4,
+        0.6,
+        1.0
+      ],
+      "blur": 0.08,
+      "irregular": 0.4,
+      "params": {
+        "radius": 0.9,
+        "thickness": 0.018
+      }
+    },
+    {
+      "type": "iris",
+      "id": "chain",
+      "label": "ghost chain",
+      "slot": "ghosts",
+      "offset": 1.25,
+      "count": 3,
+      "spread": 0.4,
+      "scale": 0.05,
+      "count_scale_step": 0.78,
+      "count_falloff": 0.85,
+      "intensity": 0.2,
+      "color": [
+        0.25,
+        0.42,
+        1.0
+      ],
+      "dispersion": 0.4,
+      "blur": 0.08,
+      "irregular": 0.3,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.5,
+        "hollow": 0.0
+      }
+    },
+    {
+      "type": "glow",
+      "id": "hotdot",
+      "label": "hot dot",
+      "slot": "glows",
+      "offset": 1.25,
+      "scale": 0.007,
+      "intensity": 1.2,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "blur": 0.02,
+      "params": {
+        "softness": 0.3,
+        "falloff": 2.6
+      }
+    },
+    {
+      "type": "iris",
+      "id": "magenta",
+      "label": "magenta hollow",
+      "slot": "ghosts",
+      "offset": 2.15,
+      "scale": 0.065,
+      "intensity": 0.28,
+      "color": [
+        0.9,
+        0.35,
+        0.85
+      ],
+      "blur": 0.1,
+      "dispersion": 0.6,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.35,
+        "hollow": 0.62
+      }
+    },
+    {
+      "type": "texture",
+      "id": "cornerfan",
+      "label": "corner fan",
+      "slot": "caustics",
+      "offset": -0.25,
+      "scale": 0.85,
+      "intensity": 0.0,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "blur": 0.03,
+      "irregular": 0.0,
+      "trigger": {
+        "mode": "border",
+        "source": "light",
+        "inner": 0.0,
+        "outer": 0.62,
+        "falloff": "smooth",
+        "brightness": 0.85
+      },
+      "params": {
+        "file": "caustics/prismatic_fan.png",
+        "channel": "auto"
+      }
+    }
+  ]
+}

@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "name": "Anamorphic Crescent",
+  "author": "flarecore",
+  "category": "Anamorphic",
+  "global": {
+    "tint": [
+      0.97,
+      0.99,
+      1.04
+    ],
+    "seed": 61,
+    "aspect": 1.6,
+    "fringe": 0.12
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "core",
+      "label": "core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.05,
+      "intensity": 4.2,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "params": {
+        "softness": 0.28,
+        "falloff": 2.3
+      }
+    },
+    {
+      "type": "glow",
+      "id": "halo",
+      "label": "halo",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.3,
+      "intensity": 0.9,
+      "color": [
+        0.55,
+        0.9,
+        1.0
+      ],
+      "irregular": 0.2,
+      "params": {
+        "softness": 0.42,
+        "falloff": 1.5
+      }
+    },
+    {
+      "type": "glint",
+      "id": "spokes",
+      "label": "spokes",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.45,
+      "intensity": 0.35,
+      "color": [
+        0.8,
+        0.9,
+        1.0
+      ],
+      "blur": 0.04,
+      "irregular": 0.6,
+      "params": {
+        "points": 50,
+        "length": 0.22,
+        "thickness": 0.004,
+        "length_jitter": 0.6
+      }
+    },
+    {
+      "type": "ring",
+      "id": "crescent",
+      "label": "crescent",
+      "slot": "rings",
+      "offset": 1.15,
+      "scale": 0.34,
+      "intensity": 0.3,
+      "color": [
+        1.0,
+        0.88,
+        0.62
+      ],
+      "dispersion": 0.55,
+      "dispersion_samples": 7,
+      "blur": 0.07,
+      "irregular": 0.55,
+      "shade": 0.4,
+      "params": {
+        "radius": 0.92,
+        "thickness": 0.13,
+        "crescent": 0.55,
+        "crescent_feather": 0.2
+      }
+    },
+    {
+      "type": "ring",
+      "id": "crescent2",
+      "label": "crescent echo",
+      "slot": "rings",
+      "offset": 1.45,
+      "scale": 0.44,
+      "intensity": 0.07,
+      "color": [
+        0.7,
+        0.82,
+        1.0
+      ],
+      "dispersion": 0.4,
+      "blur": 0.16,
+      "irregular": 0.5,
+      "shade": 0.35,
+      "params": {
+        "radius": 0.95,
+        "thickness": 0.09,
+        "crescent": 0.62,
+        "crescent_feather": 0.28
+      }
+    },
+    {
+      "type": "streak",
+      "id": "streak",
+      "label": "streak",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.4,
+      "auto_rotate": false,
+      "color": [
+        0.12,
+        0.32,
+        1.0
+      ],
+      "blur": 0.03,
+      "irregular": 0.2,
+      "params": {
+        "length": 6.0,
+        "thickness": 0.0035,
+        "curve": 0.0,
+        "dash": 0.0
+      }
+    },
+    {
+      "type": "glint",
+      "id": "hairray",
+      "label": "hair ray",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 1.2,
+      "intensity": 0.1,
+      "rotation": 32.0,
+      "color": [
+        0.5,
+        0.7,
+        1.0
+      ],
+      "blur": 0.05,
+      "params": {
+        "points": 1,
+        "length": 1.4,
+        "thickness": 0.005,
+        "length_jitter": 0.0
+      }
+    },
+    {
+      "type": "glow",
+      "id": "veil",
+      "label": "veil",
+      "slot": "glows",
+      "offset": 0.1,
+      "scale": 2.4,
+      "intensity": 0.003,
+      "color": [
+        0.5,
+        0.6,
+        1.0
+      ],
+      "blur": 0.3,
+      "irregular": 0.3,
+      "params": {
+        "softness": 1.0,
+        "falloff": 0.8
+      }
+    }
+  ]
+}

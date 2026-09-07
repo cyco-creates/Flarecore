@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "name": "Headlight Bloom",
+  "author": "flarecore",
+  "category": "Scenario",
+  "global": {
+    "intensity": 1.0,
+    "scale": 1.0,
+    "aspect": 1.15,
+    "tint": [
+      1.0,
+      0.98,
+      0.95
+    ],
+    "seed": 44,
+    "fringe": 0.08,
+    "edge_fade_start": 0.2,
+    "edge_fade_range": 0.6
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "label": "hot lamp core",
+      "id": "hb_core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.08,
+      "intensity": 5.0,
+      "color": [
+        1.0,
+        0.99,
+        0.97
+      ],
+      "params": {
+        "softness": 0.3,
+        "falloff": 2.4
+      }
+    },
+    {
+      "type": "glow",
+      "label": "double wide bloom (two lamps blur into one pool)",
+      "id": "hb_bloom",
+      "slot": "glows",
+      "offset": -0.03,
+      "count": 2,
+      "spread": 0.06,
+      "scale": 0.5,
+      "count_scale_step": 1.4,
+      "count_falloff": 0.6,
+      "intensity": 1.0,
+      "irregular": 0.2,
+      "blur": 0.08,
+      "color": [
+        1.0,
+        0.95,
+        0.85
+      ],
+      "params": {
+        "softness": 0.55,
+        "falloff": 1.3
+      }
+    },
+    {
+      "type": "streak",
+      "label": "strong horizontal streak (wet windscreen smear)",
+      "id": "hb_streak",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.9,
+      "auto_rotate": false,
+      "irregular": 0.25,
+      "blur": 0.04,
+      "color": [
+        1.0,
+        0.95,
+        0.85
+      ],
+      "params": {
+        "length": 2.4,
+        "thickness": 0.01
+      }
+    },
+    {
+      "type": "streak",
+      "label": "streak haze",
+      "id": "hb_streakhaze",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.14,
+      "auto_rotate": false,
+      "blur": 0.3,
+      "color": [
+        1.0,
+        0.9,
+        0.75
+      ],
+      "params": {
+        "length": 1.6,
+        "thickness": 0.06
+      }
+    },
+    {
+      "type": "glint",
+      "label": "8-point starburst (even blade count, opposed spikes)",
+      "id": "hb_star",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.9,
+      "intensity": 0.7,
+      "rotation": 22.5,
+      "irregular": 0.15,
+      "blur": 0.02,
+      "color": [
+        1.0,
+        0.97,
+        0.9
+      ],
+      "params": {
+        "points": 8,
+        "length": 0.9,
+        "thickness": 0.006,
+        "length_jitter": 0.2
+      }
+    },
+    {
+      "type": "iris",
+      "label": "faint ghost pair",
+      "id": "hb_ghosts",
+      "slot": "ghosts",
+      "offset": 1.2,
+      "count": 2,
+      "spread": 0.4,
+      "scale": 0.1,
+      "count_scale_step": 1.4,
+      "count_falloff": 0.75,
+      "intensity": 0.09,
+      "irregular": 0.25,
+      "dispersion": 0.5,
+      "blur": 0.1,
+      "color": [
+        0.85,
+        0.92,
+        1.0
+      ],
+      "params": {
+        "blades": 8,
+        "edge_softness": 0.5
+      }
+    },
+    {
+      "type": "glow",
+      "label": "edge flood (lamp sweeps the frame edge)",
+      "id": "hb_edge",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 1.6,
+      "intensity": 0.0,
+      "auto_rotate": false,
+      "stretch": [
+        1.0,
+        0.1
+      ],
+      "blur": 0.15,
+      "color": [
+        1.0,
+        0.9,
+        0.75
+      ],
+      "trigger": {
+        "mode": "border",
+        "source": "light",
+        "inner": -0.1,
+        "outer": 0.4,
+        "falloff": "smooth",
+        "brightness": 0.5,
+        "scale": 0.4,
+        "color": [
+          1.0,
+          0.85,
+          0.6
+        ]
+      },
+      "params": {
+        "softness": 0.9,
+        "falloff": 1.1
+      }
+    }
+  ]
+}

@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "name": "Stage Spot",
+  "author": "flarecore",
+  "category": "Scenario",
+  "global": {
+    "intensity": 1.0,
+    "scale": 1.0,
+    "aspect": 1.0,
+    "tint": [
+      0.95,
+      0.98,
+      1.0
+    ],
+    "seed": 13,
+    "fringe": 0.1,
+    "flicker_amount": 0.35,
+    "flicker_speed": 1.4
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "label": "hot core",
+      "id": "ss_core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.06,
+      "intensity": 5.0,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "params": {
+        "softness": 0.3,
+        "falloff": 2.5
+      }
+    },
+    {
+      "type": "glow",
+      "label": "cold bloom",
+      "id": "ss_bloom",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.45,
+      "intensity": 1.3,
+      "irregular": 0.2,
+      "color": [
+        0.72,
+        0.85,
+        1.0
+      ],
+      "params": {
+        "softness": 0.5,
+        "falloff": 1.5
+      }
+    },
+    {
+      "type": "glint",
+      "label": "sparkle",
+      "id": "ss_sparkle",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.38,
+      "intensity": 0.45,
+      "irregular": 0.8,
+      "blur": 0.03,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "params": {
+        "points": 90,
+        "length": 0.5,
+        "thickness": 0.002,
+        "length_jitter": 0.85
+      }
+    },
+    {
+      "type": "glint",
+      "label": "shimmer",
+      "id": "ss_shimmer",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.7,
+      "intensity": 0.16,
+      "irregular": 0.6,
+      "blur": 0.1,
+      "color": [
+        0.85,
+        0.92,
+        1.0
+      ],
+      "params": {
+        "points": 14,
+        "length": 0.5,
+        "thickness": 0.012,
+        "length_jitter": 0.7
+      }
+    },
+    {
+      "type": "streak",
+      "label": "cross streak",
+      "id": "ss_cross",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 0.9,
+      "intensity": 0.18,
+      "irregular": 0.4,
+      "auto_rotate": false,
+      "rotation": 45,
+      "blur": 0.05,
+      "color": [
+        0.8,
+        0.9,
+        1.0
+      ],
+      "params": {
+        "length": 1.2,
+        "thickness": 0.006,
+        "count": 2
+      }
+    },
+    {
+      "type": "iris",
+      "label": "spot ghosts",
+      "id": "ss_ghosts",
+      "slot": "ghosts",
+      "offset": 1.2,
+      "count": 4,
+      "spread": 0.3,
+      "scale": 0.06,
+      "count_scale_step": 1.35,
+      "count_falloff": 0.8,
+      "intensity": 0.12,
+      "irregular": 0.3,
+      "dispersion": 0.5,
+      "blur": 0.08,
+      "color": [
+        0.7,
+        0.85,
+        1.0
+      ],
+      "params": {
+        "blades": 6,
+        "edge_softness": 0.45
+      }
+    },
+    {
+      "type": "iris",
+      "label": "center flash",
+      "id": "ss_flash",
+      "slot": "ghosts",
+      "offset": 1.0,
+      "scale": 0.5,
+      "intensity": 0.0,
+      "blur": 0.25,
+      "color": [
+        0.85,
+        0.92,
+        1.0
+      ],
+      "trigger": {
+        "mode": "center",
+        "source": "light",
+        "inner": 0.0,
+        "outer": 0.45,
+        "falloff": "smooth",
+        "brightness": 0.35,
+        "scale": 0.4,
+        "color": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "params": {
+        "blades": 24,
+        "edge_softness": 0.9
+      }
+    },
+    {
+      "type": "ring",
+      "label": "thin ring",
+      "id": "ss_ring",
+      "slot": "rings",
+      "offset": 0.5,
+      "scale": 0.5,
+      "intensity": 0.07,
+      "irregular": 0.5,
+      "dispersion": 0.6,
+      "blur": 0.03,
+      "color": [
+        0.8,
+        0.88,
+        1.0
+      ],
+      "params": {
+        "radius": 1.0,
+        "thickness": 0.02
+      }
+    }
+  ]
+}

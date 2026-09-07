@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "name": "Spherical Golden Vintage",
+  "author": "flarecore",
+  "category": "Spherical",
+  "global": {
+    "tint": [
+      1.04,
+      0.98,
+      0.9
+    ],
+    "seed": 141,
+    "fringe": 0.12
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "core",
+      "label": "core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.05,
+      "intensity": 4.0,
+      "color": [
+        1.0,
+        0.95,
+        0.88
+      ],
+      "params": {
+        "softness": 0.28,
+        "falloff": 2.3
+      }
+    },
+    {
+      "type": "glow",
+      "id": "halo",
+      "label": "halo",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.36,
+      "intensity": 1.0,
+      "color": [
+        1.0,
+        0.9,
+        0.75
+      ],
+      "irregular": 0.2,
+      "params": {
+        "softness": 0.5,
+        "falloff": 1.5
+      }
+    },
+    {
+      "type": "glint",
+      "id": "spokes",
+      "label": "spokes",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.5,
+      "intensity": 0.35,
+      "color": [
+        1.0,
+        0.95,
+        0.88
+      ],
+      "blur": 0.04,
+      "irregular": 0.5,
+      "params": {
+        "points": 20,
+        "length": 0.34,
+        "thickness": 0.005,
+        "length_jitter": 0.6
+      }
+    },
+    {
+      "type": "iris",
+      "id": "bubbles",
+      "label": "amber bubbles",
+      "slot": "ghosts",
+      "offset": 1.0,
+      "count": 4,
+      "spread": 0.32,
+      "scale": 0.13,
+      "intensity": 0.22,
+      "count_scale_step": 1.32,
+      "count_falloff": 0.78,
+      "color": [
+        1.0,
+        0.78,
+        0.35
+      ],
+      "blur": 0.07,
+      "dispersion": 0.5,
+      "irregular": 0.25,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.28,
+        "hollow": 0.55
+      }
+    },
+    {
+      "type": "iris",
+      "id": "bubblefill",
+      "label": "bubble fill",
+      "slot": "ghosts",
+      "offset": 1.0,
+      "count": 4,
+      "spread": 0.32,
+      "scale": 0.13,
+      "intensity": 0.05,
+      "count_scale_step": 1.32,
+      "count_falloff": 0.78,
+      "color": [
+        1.0,
+        0.8,
+        0.45
+      ],
+      "blur": 0.2,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.7
+      }
+    },
+    {
+      "type": "glow",
+      "id": "yellowbead",
+      "label": "yellow bead",
+      "slot": "glows",
+      "offset": 0.13,
+      "scale": 0.006,
+      "intensity": 1.4,
+      "color": [
+        1.0,
+        0.85,
+        0.12
+      ],
+      "blur": 0.02,
+      "params": {
+        "softness": 0.3,
+        "falloff": 2.8
+      }
+    },
+    {
+      "type": "iris",
+      "id": "beadcup",
+      "label": "bead cup",
+      "slot": "ghosts",
+      "offset": 0.13,
+      "scale": 0.028,
+      "intensity": 0.3,
+      "color": [
+        1.0,
+        0.78,
+        0.35
+      ],
+      "blur": 0.06,
+      "params": {
+        "blades": 64,
+        "edge_softness": 0.45
+      }
+    },
+    {
+      "type": "ring",
+      "id": "greyring",
+      "label": "grey rings",
+      "slot": "rings",
+      "offset": 1.5,
+      "scale": 0.85,
+      "intensity": 0.045,
+      "color": [
+        0.55,
+        0.65,
+        0.9
+      ],
+      "blur": 0.1,
+      "params": {
+        "radius": 0.92,
+        "thickness": 0.02
+      }
+    },
+    {
+      "type": "texture",
+      "id": "cornerfan",
+      "label": "corner fan",
+      "slot": "caustics",
+      "offset": -0.25,
+      "scale": 0.85,
+      "intensity": 0.0,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "blur": 0.03,
+      "irregular": 0.0,
+      "trigger": {
+        "mode": "border",
+        "source": "light",
+        "inner": 0.0,
+        "outer": 0.62,
+        "falloff": "smooth",
+        "brightness": 0.38
+      },
+      "params": {
+        "file": "caustics/prismatic_fan.png",
+        "channel": "auto"
+      }
+    },
+    {
+      "type": "glow",
+      "id": "veil",
+      "label": "veil",
+      "slot": "glows",
+      "offset": 0.1,
+      "scale": 2.6,
+      "intensity": 0.0045,
+      "color": [
+        0.9,
+        0.8,
+        0.75
+      ],
+      "blur": 0.3,
+      "irregular": 0.3,
+      "params": {
+        "softness": 1.0,
+        "falloff": 0.8
+      }
+    }
+  ]
+}

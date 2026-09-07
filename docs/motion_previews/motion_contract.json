@@ -1,0 +1,174 @@
+{
+  "targets": {
+    "opacity": {
+      "label": "Opacity / energy",
+      "min": 0.0,
+      "max": 8.0,
+      "neutral": 1.0,
+      "mode": "multiply"
+    },
+    "scale": {
+      "label": "Size",
+      "min": 0.05,
+      "max": 8.0,
+      "neutral": 1.0,
+      "mode": "multiply"
+    },
+    "stretch_x": {
+      "label": "Width",
+      "min": 0.05,
+      "max": 8.0,
+      "neutral": 1.0,
+      "mode": "multiply"
+    },
+    "stretch_y": {
+      "label": "Height",
+      "min": 0.05,
+      "max": 8.0,
+      "neutral": 1.0,
+      "mode": "multiply"
+    },
+    "rotation": {
+      "label": "Rotation (degrees)",
+      "min": -720.0,
+      "max": 720.0,
+      "neutral": 0.0,
+      "mode": "add"
+    },
+    "offset": {
+      "label": "Axis position",
+      "min": -4.0,
+      "max": 4.0,
+      "neutral": 0.0,
+      "mode": "add"
+    },
+    "shift_x": {
+      "label": "Horizontal shift",
+      "min": -4.0,
+      "max": 4.0,
+      "neutral": 0.0,
+      "mode": "add"
+    },
+    "shift_y": {
+      "label": "Vertical shift",
+      "min": -4.0,
+      "max": 4.0,
+      "neutral": 0.0,
+      "mode": "add"
+    },
+    "blur": {
+      "label": "Softness",
+      "min": 0.0,
+      "max": 1.0,
+      "neutral": 0.0,
+      "mode": "replace"
+    },
+    "dispersion": {
+      "label": "Color separation",
+      "min": 0.0,
+      "max": 8.0,
+      "neutral": 0.0,
+      "mode": "replace"
+    },
+    "shade": {
+      "label": "Lit-edge shading",
+      "min": -1.0,
+      "max": 1.0,
+      "neutral": 0.0,
+      "mode": "replace"
+    },
+    "crescent": {
+      "label": "Barrel clipping",
+      "min": 0.0,
+      "max": 0.98,
+      "neutral": 0.0,
+      "mode": "param",
+      "types": [
+        "iris",
+        "ring",
+        "hoop",
+        "spectral"
+      ]
+    },
+    "roundness": {
+      "label": "Aperture roundness",
+      "min": 0.0,
+      "max": 1.0,
+      "neutral": 0.0,
+      "mode": "param",
+      "types": [
+        "iris",
+        "spectral"
+      ]
+    },
+    "curve": {
+      "label": "Streak bow",
+      "min": -1.0,
+      "max": 1.0,
+      "neutral": 0.0,
+      "mode": "param",
+      "types": [
+        "streak"
+      ]
+    },
+    "color_r": {
+      "label": "Red transmission",
+      "min": 0.0,
+      "max": 4.0,
+      "neutral": 1.0,
+      "mode": "multiply"
+    },
+    "color_g": {
+      "label": "Green transmission",
+      "min": 0.0,
+      "max": 4.0,
+      "neutral": 1.0,
+      "mode": "multiply"
+    },
+    "color_b": {
+      "label": "Blue transmission",
+      "min": 0.0,
+      "max": 4.0,
+      "neutral": 1.0,
+      "mode": "multiply"
+    }
+  },
+  "drivers": {
+    "radius": {
+      "label": "Source distance from optical center",
+      "min": 0.0,
+      "max": 3.0,
+      "hint": "Half-frame-height units; independent of the editable flare anchor."
+    },
+    "x": {
+      "label": "Source horizontal position",
+      "min": -1.5,
+      "max": 1.5,
+      "hint": "-1 left edge, 0 center, +1 right edge."
+    },
+    "y": {
+      "label": "Source vertical position",
+      "min": -1.5,
+      "max": 1.5,
+      "hint": "-1 top edge, 0 center, +1 bottom edge."
+    },
+    "edge": {
+      "label": "Source distance inside frame edge",
+      "min": -0.5,
+      "max": 1.0,
+      "hint": "0 at nearest edge, positive inside, negative outside; half-height units."
+    },
+    "brightness": {
+      "label": "Source brightness",
+      "min": 0.0,
+      "max": 2.0,
+      "hint": "Input brightness before occlusion, edge fade and flicker."
+    },
+    "occlusion": {
+      "label": "Source occlusion",
+      "min": 0.0,
+      "max": 1.0,
+      "hint": "0 visible; 1 completely occluded."
+    }
+  }
+}

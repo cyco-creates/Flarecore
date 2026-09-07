@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "name": "Cine Blue",
+  "author": "flarecore",
+  "category": "Anamorphic",
+  "global": {
+    "tint": [
+      0.96,
+      0.99,
+      1.05
+    ],
+    "seed": 3,
+    "aspect": 1.5,
+    "fringe": 0.08
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "core",
+      "label": "core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.05,
+      "intensity": 4.2,
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "params": {
+        "softness": 0.28,
+        "falloff": 2.3
+      }
+    },
+    {
+      "type": "glow",
+      "id": "halo",
+      "label": "halo",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.34,
+      "intensity": 1.1,
+      "color": [
+        0.55,
+        0.9,
+        1.0
+      ],
+      "irregular": 0.2,
+      "params": {
+        "softness": 0.45,
+        "falloff": 1.5
+      }
+    },
+    {
+      "type": "streak",
+      "id": "streak",
+      "label": "streak",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.55,
+      "auto_rotate": false,
+      "color": [
+        0.12,
+        0.32,
+        1.0
+      ],
+      "blur": 0.03,
+      "irregular": 0.15,
+      "params": {
+        "length": 6.0,
+        "thickness": 0.0035,
+        "curve": 0.0,
+        "dash": 0.0
+      }
+    },
+    {
+      "type": "hoop",
+      "id": "frontdisc",
+      "label": "front element",
+      "slot": "hoops",
+      "offset": 1.45,
+      "scale": 0.34,
+      "intensity": 0.035,
+      "color": [
+        0.4,
+        0.55,
+        1.0
+      ],
+      "blur": 0.22,
+      "irregular": 0.4,
+      "params": {
+        "radius": 0.92,
+        "thickness": 0.2,
+        "angular_falloff": 0.25
+      }
+    },
+    {
+      "type": "orbs",
+      "id": "rimdust",
+      "label": "rim dust",
+      "slot": "ghosts",
+      "offset": 1.45,
+      "scale": 0.34,
+      "intensity": 0.05,
+      "blur": 0.04,
+      "screen_space": false,
+      "auto_rotate": false,
+      "params": {
+        "count": 150,
+        "size": 0.028,
+        "size_jitter": 0.8,
+        "spread": 0.92,
+        "ring": 0.85,
+        "ring_width": 0.22,
+        "spectral": 0.3,
+        "illumination": 3.0,
+        "edge_softness": 0.6
+      }
+    },
+    {
+      "type": "glow",
+      "id": "edgetop",
+      "label": "edge hotspot top",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.035,
+      "intensity": 0.45,
+      "auto_rotate": false,
+      "color": [
+        0.55,
+        0.9,
+        1.0
+      ],
+      "blur": 0.08,
+      "stretch": [
+        0.35,
+        1.6
+      ],
+      "pin": [
+        null,
+        -1.0
+      ],
+      "params": {
+        "softness": 0.35,
+        "falloff": 2.0
+      }
+    },
+    {
+      "type": "glow",
+      "id": "edgebot",
+      "label": "edge hotspot bottom",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.035,
+      "intensity": 0.22,
+      "auto_rotate": false,
+      "color": [
+        0.55,
+        0.9,
+        1.0
+      ],
+      "blur": 0.08,
+      "stretch": [
+        0.35,
+        1.6
+      ],
+      "pin": [
+        null,
+        1.0
+      ],
+      "params": {
+        "softness": 0.35,
+        "falloff": 2.0
+      }
+    },
+    {
+      "type": "glow",
+      "id": "veil",
+      "label": "veil",
+      "slot": "glows",
+      "offset": 0.1,
+      "scale": 2.4,
+      "intensity": 0.003,
+      "color": [
+        0.5,
+        0.62,
+        1.0
+      ],
+      "blur": 0.3,
+      "irregular": 0.3,
+      "params": {
+        "softness": 1.0,
+        "falloff": 0.8
+      }
+    }
+  ]
+}

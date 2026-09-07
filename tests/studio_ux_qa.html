@@ -1,0 +1,39 @@
+<!doctype html><meta charset="utf-8"><title>FlareCore Studio UX QA</title>
+<style>body{margin:20px;background:#101014;color:#ddd;font:13px sans-serif}h1{font-size:20px}#source{max-width:1000px}#forge{width:460px;height:680px;max-width:100%}pre{white-space:pre-wrap}button{cursor:pointer}</style>
+<h1>Studio UX workbench</h1><button id="checks">Run source checks</button><pre id="result">Ready</pre>
+<h2>Light source</h2><div id="source"></div><h2>Element Forge</h2><div id="forge"></div>
+<script type="module">
+const bank=await fetch('../prompts/element_prompts.json').then(r=>r.json());
+const styles=await fetch('../prompts/element_styles.json').then(r=>r.json());
+let source=await fetch('../web/flarecore_ui.js').then(r=>r.text());
+source=source.replace(/import \{ app \} from [^;]+;/,'const app={registerExtension(){}};')
+ .replace(/import \{ api \} from [^;]+;/,`const api={fetchApi:async()=>({json:async()=>(${JSON.stringify({bank,styles})})})};`)
+ .replace(/import \{ createMotionPanel \} from [^;]+;/,`import {createMotionPanel} from '${new URL('../web/flarecore_motion.js',location.href)}';`);
+const blob=URL.createObjectURL(new Blob([source+'\nexport {FlareEditor,setupForgePanel,injectCSS,sourceFamily,MODE_DEFAULTS};'],{type:'text/javascript'}));
+const {FlareEditor,setupForgePanel,injectCSS,sourceFamily,MODE_DEFAULTS}=await import(blob);URL.revokeObjectURL(blob);injectCSS();
+const values={position_mode:'manual',track_smoothing:.321,track_points:'',light_path:'',anchor_path:''};
+for(const settings of Object.values(MODE_DEFAULTS)) for(const [k,v] of Object.entries(settings)) if(!(k in values))values[k]=v;
+const node={widgets:Object.entries(values).map(([name,value])=>({name,value})),setDirtyCanvas(){}};
+const editor=Object.create(FlareEditor.prototype);Object.assign(editor,{node,build(){document.querySelector('#source').replaceChildren(this.buildSourceRow());}});editor.build();
+document.querySelector('#checks').onclick=()=>{
+ const assert=(v,msg)=>{if(!v)throw Error(msg);};let count=0;
+ try{
+ for(const mode of ['manual','detect','detect_with_manual_offset','track','lock','track_dots','follow','point_track','path']){
+   node.widgets.find(w=>w.name==='position_mode').value=mode;editor.build();
+   const root=document.querySelector('#source'),sel=root.querySelector('select[aria-label="Light source"]');
+   assert(sel.options.length===6,'Six primary source options');assert(sel.value===sourceFamily(mode),mode+' restored family');
+   if(mode==='lock')assert(![...root.querySelectorAll('.fcore-col>label')].some(l=>/^(hold|fade)/.test(l.textContent)),'Lock hides unused hold/fade');
+   if(mode==='point_track')assert(root.textContent.includes('smoothing'),'Feature smoothing exposed');
+   if(['lock','track_dots','track'].includes(mode))assert(root.querySelector('[aria-label="Tracking method"]').value===mode,'Tracking variant preserved');
+   sel.value='detect';sel.dispatchEvent(new Event('change'));assert(node.widgets.find(w=>w.name==='track_smoothing').value===.321,'Changing modes preserves tuning');count++;
+ }
+ node.inputs=[{name:'lights',link:1}];editor.build();
+ assert(document.querySelector('#source').textContent.includes('External lights connected'),'External override is explained');
+ assert(!document.querySelector('#source select'),'Inactive source controls hidden');
+ node.inputs=[];editor.build();
+ document.querySelector('#result').textContent=`PASS: ${count} modes restore correctly; six primary choices; unused controls hidden; tuning preserved; external override explained.`;
+ }catch(e){document.querySelector('#result').textContent='FAIL: '+e.message;throw e;}
+};
+class ForgeNode{constructor(){this.widgets=[{name:'element',value:'glows/soft_glow'},{name:'custom_prompt',value:'My saved custom prompt'},{name:'extra_style',value:''}];this.size=[460,680];}setDirtyCanvas(){}setSize(size){this.size=size;}addDOMWidget(name,type,root){document.querySelector('#forge').append(root);const w={name,type,element:root};this.widgets.push(w);return w;}}
+setupForgePanel(ForgeNode);const forge=new ForgeNode();forge.onNodeCreated();
+</script>

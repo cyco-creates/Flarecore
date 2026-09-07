@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "name": "Trigger Showcase",
+  "author": "flarecore",
+  "category": "Utility",
+  "global": {
+    "intensity": 1.0,
+    "scale": 1.0,
+    "aspect": 1.35,
+    "tint": [
+      0.98,
+      0.99,
+      1.0
+    ],
+    "seed": 33,
+    "fringe": 0.18,
+    "flicker_amount": 0.12,
+    "flicker_speed": 1.0,
+    "edge_fade_start": 0.25,
+    "edge_fade_range": 0.55
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "label": "core",
+      "id": "tg_core",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.075,
+      "intensity": 4.2,
+      "color": [
+        1.0,
+        0.99,
+        0.96
+      ],
+      "params": {
+        "softness": 0.3,
+        "falloff": 2.3
+      }
+    },
+    {
+      "type": "glow",
+      "label": "bloom",
+      "id": "tg_bloom",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 0.5,
+      "intensity": 0.9,
+      "irregular": 0.25,
+      "color": [
+        0.85,
+        0.92,
+        1.0
+      ],
+      "params": {
+        "softness": 0.5,
+        "falloff": 1.5
+      }
+    },
+    {
+      "type": "streak",
+      "label": "streak",
+      "id": "tg_streak",
+      "slot": "streaks",
+      "offset": 0.0,
+      "scale": 1.0,
+      "intensity": 0.4,
+      "auto_rotate": false,
+      "irregular": 0.3,
+      "blur": 0.04,
+      "color": [
+        0.7,
+        0.84,
+        1.0
+      ],
+      "params": {
+        "length": 2.2,
+        "thickness": 0.006
+      }
+    },
+    {
+      "type": "glint",
+      "label": "rays",
+      "id": "tg_rays",
+      "slot": "rays",
+      "offset": 0.0,
+      "scale": 0.5,
+      "intensity": 0.3,
+      "irregular": 0.55,
+      "blur": 0.04,
+      "color": [
+        0.95,
+        0.97,
+        1.0
+      ],
+      "params": {
+        "points": 40,
+        "length": 0.35,
+        "thickness": 0.003,
+        "length_jitter": 0.8
+      }
+    },
+    {
+      "type": "iris",
+      "label": "ghost chain",
+      "id": "tg_ghosts",
+      "slot": "ghosts",
+      "offset": 1.1,
+      "count": 4,
+      "spread": 0.3,
+      "scale": 0.08,
+      "count_scale_step": 1.25,
+      "count_falloff": 0.85,
+      "intensity": 0.13,
+      "irregular": 0.3,
+      "dispersion": 0.5,
+      "blur": 0.08,
+      "color": [
+        0.72,
+        0.86,
+        1.0
+      ],
+      "params": {
+        "blades": 7,
+        "edge_softness": 0.5
+      }
+    },
+    {
+      "type": "glow",
+      "label": "BORDER gleam",
+      "id": "tg_border",
+      "slot": "glows",
+      "offset": 0.0,
+      "scale": 1.5,
+      "intensity": 0.0,
+      "auto_rotate": false,
+      "stretch": [
+        1.0,
+        0.045
+      ],
+      "blur": 0.1,
+      "color": [
+        1.0,
+        0.62,
+        0.3
+      ],
+      "trigger": {
+        "mode": "border",
+        "source": "light",
+        "inner": -0.05,
+        "outer": 0.4,
+        "falloff": "smooth",
+        "brightness": 0.32,
+        "scale": 0.5,
+        "rotation": 0.0,
+        "color": [
+          1.0,
+          0.45,
+          0.2
+        ]
+      },
+      "params": {
+        "softness": 0.9,
+        "falloff": 1.2
+      }
+    },
+    {
+      "type": "iris",
+      "label": "CENTER flash",
+      "id": "tg_center",
+      "slot": "ghosts",
+      "offset": 0.0,
+      "scale": 0.62,
+      "intensity": 0.0,
+      "auto_rotate": false,
+      "blur": 0.1,
+      "dispersion": 2.2,
+      "color": [
+        0.8,
+        0.9,
+        1.0
+      ],
+      "trigger": {
+        "mode": "center",
+        "source": "light",
+        "inner": 0.0,
+        "outer": 0.4,
+        "falloff": "smooth",
+        "brightness": 0.5,
+        "scale": 0.55,
+        "rotation": 0.0,
+        "color": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "params": {
+        "blades": 28,
+        "edge_softness": 0.35,
+        "hollow": 0.72
+      },
+      "dispersion_samples": 9
+    },
+    {
+      "type": "glint",
+      "label": "LIGHT proximity spark",
+      "id": "tg_near",
+      "slot": "rays",
+      "offset": 0.55,
+      "count": 3,
+      "spread": 0.5,
+      "scale": 0.12,
+      "intensity": 0.0,
+      "irregular": 0.7,
+      "blur": 0.02,
+      "color": [
+        1.0,
+        0.95,
+        0.85
+      ],
+      "trigger": {
+        "mode": "light",
+        "source": "element",
+        "inner": 0.05,
+        "outer": 0.75,
+        "falloff": "smooth",
+        "brightness": 0.9,
+        "scale": 0.6,
+        "rotation": 45.0,
+        "color": [
+          1.0,
+          0.9,
+          0.7
+        ]
+      },
+      "params": {
+        "points": 6,
+        "length": 0.55,
+        "thickness": 0.006,
+        "length_jitter": 0.5
+      }
+    }
+  ]
+}
