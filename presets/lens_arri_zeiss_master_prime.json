@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "name": "ARRI ZEISS Master Prime · inspired",
+  "author": "Flarecore · independent artistic lens study",
+  "category": "Spherical",
+  "subcategory": "Lens inspired · Modern",
+  "global": {
+    "seed": 902,
+    "aspect": 1,
+    "fringe": 0.018,
+    "edge_fade_start": 0.1,
+    "edge_fade_range": 0.65,
+    "flicker_amount": 0
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "source_core",
+      "label": "source core",
+      "slot": "glows",
+      "scale": 0.0225,
+      "intensity": 3.2,
+      "color": [
+        0.95,
+        0.98,
+        1
+      ],
+      "params": {
+        "softness": 0.24,
+        "falloff": 2.4
+      }
+    },
+    {
+      "type": "glow",
+      "id": "source_inner_light",
+      "label": "source inner light",
+      "slot": "glows",
+      "scale": 0.06525,
+      "intensity": 0.42,
+      "color": [
+        1,
+        0.98,
+        0.94
+      ],
+      "params": {
+        "softness": 0.48,
+        "falloff": 1.95
+      }
+    },
+    {
+      "type": "glow",
+      "id": "source_envelope",
+      "label": "source envelope",
+      "slot": "glows",
+      "scale": 0.15444,
+      "intensity": 0.0525,
+      "color": [
+        0.95,
+        0.98,
+        1
+      ],
+      "irregular": 0.1,
+      "params": {
+        "softness": 0.65,
+        "falloff": 1.8
+      }
+    },
+    {
+      "type": "glint",
+      "id": "fine_source_rays",
+      "label": "fine source rays",
+      "slot": "rays",
+      "scale": 0.34,
+      "intensity": 0.058300000000000005,
+      "color": [
+        0.95,
+        0.98,
+        1
+      ],
+      "irregular": 0.22,
+      "rotation": 24,
+      "params": {
+        "points": 10,
+        "length": 0.2725,
+        "thickness": 0.004,
+        "length_jitter": 0.68
+      }
+    },
+    {
+      "type": "iris",
+      "id": "reflection_1",
+      "label": "reflection 1",
+      "slot": "ghosts",
+      "scale": 0.017,
+      "intensity": 0.01,
+      "color": [
+        0.18,
+        0.8,
+        0.65
+      ],
+      "offset": 0.68,
+      "stretch": [
+        1,
+        1
+      ],
+      "rotation": 7,
+      "blur": 0.015,
+      "shade": 0.12,
+      "params": {
+        "blades": 9,
+        "roundness": 0.32,
+        "edge_softness": 0.12
+      }
+    },
+    {
+      "type": "iris",
+      "id": "reflection_2",
+      "label": "reflection 2",
+      "slot": "ghosts",
+      "scale": 0.057,
+      "intensity": 0.007,
+      "color": [
+        0.78,
+        0.84,
+        1
+      ],
+      "offset": 1.64,
+      "stretch": [
+        1,
+        1
+      ],
+      "rotation": 24,
+      "blur": 0.027,
+      "shade": 0.3,
+      "params": {
+        "blades": 64,
+        "roundness": 0.32,
+        "edge_softness": 0.175
+      }
+    },
+    {
+      "type": "glow",
+      "id": "broad_veiling_light",
+      "label": "broad veiling light",
+      "slot": "glows",
+      "scale": 2,
+      "intensity": 0.0007,
+      "color": [
+        0.95,
+        0.98,
+        1
+      ],
+      "offset": 0.12,
+      "params": {
+        "softness": 0.9,
+        "falloff": 1.1
+      },
+      "trigger": {
+        "mode": "border",
+        "source": "light",
+        "inner": 0,
+        "outer": 0.6,
+        "falloff": "smooth",
+        "brightness": 0.000455
+      }
+    }
+  ]
+}

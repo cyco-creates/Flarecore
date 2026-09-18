@@ -60,7 +60,7 @@ class TestFlareRender:
             "FlareElementSave", "FlareGeneratorSelect",
         }
         assert PKG.WEB_DIRECTORY == "./web"
-        assert FlareRender.CATEGORY == "flare"
+        assert FlareRender.CATEGORY == "Flarecore"
         assert FlareRender.RETURN_TYPES == ("IMAGE", "IMAGE", "MASK")
         it = FlareRender.INPUT_TYPES()
         assert "image" in it["required"]
@@ -219,7 +219,7 @@ class TestFlareDepthAdapter:
 
     def test_registration_contract(self):
         cls = PKG.NODE_CLASS_MAPPINGS["FlareDepthAdapter"]
-        assert cls.CATEGORY == "flare"
+        assert cls.CATEGORY == "Flarecore"
         assert cls.RETURN_TYPES == ("IMAGE", "MASK")
         assert "depth" in cls.INPUT_TYPES()["required"]
 
@@ -327,6 +327,7 @@ class TestChunkedRendering:
             assert torch.isfinite(fp).all()
 
     @pytest.mark.parametrize("mode,extra", [
+        ("manual", {}), ("detect_with_manual_offset", {"light_x": 0.6, "light_y": 0.4}),
         ("detect", {}), ("track", {}), ("lock", {}), ("track_dots", {}),
         ("follow", {"light_x": 0.6, "light_y": -0.1}),
         ("point_track", {"track_points": "0.5,0.5"}),

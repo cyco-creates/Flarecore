@@ -1,0 +1,1733 @@
+{
+  "schema_version": 1,
+  "name": "Cooke Anamorphic SF 32mm T2.8 · study",
+  "author": "Flarecore",
+  "category": "Anamorphic",
+  "subcategory": "Reference studies · Anamorphic",
+  "elements": [
+    {
+      "type": "glow",
+      "label": "Source · white core",
+      "offset": 0,
+      "scale": 0.1,
+      "intensity": 0.15,
+      "color": [
+        1,
+        1,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.38,
+        "falloff": 2.1
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "cooke_anamorphic_sf-00",
+      "stretch": [
+        1.8,
+        0.7
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Source · scatter halo",
+      "offset": 0,
+      "scale": 0.5583760000000001,
+      "intensity": 0.004032000000000001,
+      "color": [
+        18.656792373657225,
+        20.932010955810547,
+        22.752185821533203
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.35,
+        "falloff": 1.65,
+        "scatter": 0
+      },
+      "irregular": 0.22,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "cooke_anamorphic_sf-01",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Source · fine diffraction",
+      "offset": 0,
+      "scale": 1,
+      "intensity": 0.055999999999999994,
+      "color": [
+        0.85,
+        0.95,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "file": "glows/study_photographic_scatter.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "rotation": 0,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "cooke_anamorphic_sf-02",
+      "blur": 0.015,
+      "stretch": [
+        1.3,
+        0.65
+      ],
+      "shade": 0
+    },
+    {
+      "type": "glint",
+      "label": "Source · long rays",
+      "offset": 0,
+      "scale": 0.32000000000000006,
+      "intensity": 0.000552,
+      "color": [
+        6.56,
+        7.36,
+        8
+      ],
+      "auto_rotate": false,
+      "params": {
+        "points": 4,
+        "length": 0.7,
+        "thickness": 0.004,
+        "length_jitter": 0.6,
+        "ray_falloff": 1.7,
+        "fan": 0.008,
+        "ray_taper": 0.8
+      },
+      "irregular": 0.5,
+      "rotation": 0,
+      "slot": "rays",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "cooke_anamorphic_sf-03",
+      "blur": 0.035,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "streak",
+      "label": "Blue primary streak",
+      "offset": -0.14,
+      "scale": 0.2649790000000001,
+      "intensity": 0.0135,
+      "color": [
+        1.8707218454704284,
+        8.503360291557312,
+        34.01344116622925
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.009,
+        "curve": 0.03
+      },
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "cooke_anamorphic_sf-04",
+      "stretch": [
+        0.7462000000000001,
+        1.2862
+      ]
+    },
+    {
+      "type": "streak",
+      "label": "Blue reflected streak",
+      "offset": 0.74,
+      "scale": 0.2016,
+      "intensity": 0.09309999999999997,
+      "color": [
+        0.12348659179363825,
+        0.561304081870297,
+        2.245216327481188
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.025,
+        "curve": 0.03
+      },
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -1.5
+              ],
+              [
+                1.5,
+                1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0
+      ],
+      "id": "cooke_anamorphic_sf-05",
+      "irregular": 0.85,
+      "stretch": [
+        0.91,
+        1.18
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Flattened blue ghost 1",
+      "offset": 0.28,
+      "scale": 0.059059,
+      "intensity": 0.5120000000000001,
+      "color": [
+        0.002330502445549812,
+        0.010593506527950668,
+        0.04237402611180267
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        4.1,
+        0.944
+      ],
+      "params": {
+        "file": "ghosts/smeared_disc.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -1.5
+              ],
+              [
+                1.5,
+                1.5
+              ]
+            ],
+            "interpolation": "linear"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.4
+              ],
+              [
+                0.45,
+                1.4
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.7,
+                1.1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0.025
+      ],
+      "id": "cooke_anamorphic_sf-06",
+      "shade": 0,
+      "blur": 0.035
+    },
+    {
+      "type": "iris",
+      "label": "Flattened blue ghost 1 · rim",
+      "offset": 0.28,
+      "scale": 0.059059,
+      "intensity": 0.0024000000000000007,
+      "color": [
+        0.24377276350368904,
+        1.1080573260198656,
+        4.4322293040794625
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        4.1,
+        0.944
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.8,
+        "density_bias": 0.7,
+        "hollow": 0,
+        "coma": 0.75
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -1.5
+              ],
+              [
+                1.5,
+                1.5
+              ]
+            ],
+            "interpolation": "linear"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.4
+              ],
+              [
+                0.45,
+                1.4
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.7,
+                1.1
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0.2
+              ],
+              [
+                1.3,
+                0.75
+              ],
+              [
+                2.4,
+                0.75
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0.025
+      ],
+      "id": "cooke_anamorphic_sf-07",
+      "blur": 0.035
+    },
+    {
+      "type": "texture",
+      "label": "Flattened blue ghost 2",
+      "offset": 0.42,
+      "scale": 0.0537264,
+      "intensity": 0.5120000000000001,
+      "color": [
+        0.09046728963901683,
+        0.41121237692464957,
+        1.6448459657261358
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        3.0594200000000003,
+        0.85904
+      ],
+      "params": {
+        "file": "ghosts/smeared_disc.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -1.5
+              ],
+              [
+                1.5,
+                1.5
+              ]
+            ],
+            "interpolation": "linear"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.4
+              ],
+              [
+                0.45,
+                1.4
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.7,
+                1.1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0.025
+      ],
+      "id": "cooke_anamorphic_sf-08",
+      "shade": 0,
+      "blur": 0.035
+    },
+    {
+      "type": "iris",
+      "label": "Flattened blue ghost 2 · rim",
+      "offset": 0.42,
+      "scale": 0.0537264,
+      "intensity": 0.0024000000000000007,
+      "color": [
+        0.0048702121352954255,
+        0.02213732788770648,
+        0.08854931155082592
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        3.0594200000000003,
+        0.85904
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.8,
+        "density_bias": 0.7,
+        "hollow": 0,
+        "coma": 0.75
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -1.5
+              ],
+              [
+                1.5,
+                1.5
+              ]
+            ],
+            "interpolation": "linear"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.4
+              ],
+              [
+                0.45,
+                1.4
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.7,
+                1.1
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0.2
+              ],
+              [
+                1.3,
+                0.75
+              ],
+              [
+                2.4,
+                0.75
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0.025
+      ],
+      "id": "cooke_anamorphic_sf-09",
+      "blur": 0.035
+    },
+    {
+      "type": "texture",
+      "label": "Flattened blue ghost 3",
+      "offset": 0.66,
+      "scale": 0.056639999999999996,
+      "intensity": 0.5120000000000001,
+      "color": [
+        0.00471029734850713,
+        0.021410442493214228,
+        0.08564176997285691
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        4.837999999999999,
+        0.85904
+      ],
+      "params": {
+        "file": "ghosts/smeared_disc.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -1.5
+              ],
+              [
+                1.5,
+                1.5
+              ]
+            ],
+            "interpolation": "linear"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.4
+              ],
+              [
+                0.45,
+                1.4
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.7,
+                1.1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0.025
+      ],
+      "id": "cooke_anamorphic_sf-10",
+      "shade": 0,
+      "blur": 0.035
+    },
+    {
+      "type": "iris",
+      "label": "Flattened blue ghost 3 · rim",
+      "offset": 0.66,
+      "scale": 0.056639999999999996,
+      "intensity": 0.0024000000000000007,
+      "color": [
+        0.3651045680774847,
+        1.6595662185340214,
+        6.6382665869714845
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        4.837999999999999,
+        0.85904
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.8,
+        "density_bias": 0.7,
+        "hollow": 0,
+        "coma": 0.75
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -1.5
+              ],
+              [
+                1.5,
+                1.5
+              ]
+            ],
+            "interpolation": "linear"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.4
+              ],
+              [
+                0.45,
+                1.4
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.7,
+                1.1
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0.2
+              ],
+              [
+                1.3,
+                0.75
+              ],
+              [
+                2.4,
+                0.75
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0.025
+      ],
+      "id": "cooke_anamorphic_sf-11",
+      "blur": 0.035
+    },
+    {
+      "type": "texture",
+      "label": "Quiet upright ghost 1",
+      "offset": 1.35,
+      "scale": 0.09,
+      "intensity": 0.009360000000000002,
+      "color": [
+        1.76,
+        4.96,
+        8
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        0.55,
+        2.2399999999999998
+      ],
+      "params": {
+        "file": "ghosts/smeared_disc.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.45
+              ],
+              [
+                0.45,
+                1.1
+              ],
+              [
+                0.9,
+                0.55
+              ],
+              [
+                1.6,
+                0.1
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "cooke_anamorphic_sf-12",
+      "shade": 0,
+      "blur": 0.1
+    },
+    {
+      "type": "iris",
+      "label": "Quiet upright ghost 1 · rim",
+      "offset": 1.35,
+      "scale": 0.09,
+      "intensity": 0.00078,
+      "color": [
+        1.76,
+        4.96,
+        8
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        0.55,
+        1.6
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94,
+        "coma": 0.65
+      },
+      "irregular": 0.6,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.45
+              ],
+              [
+                0.45,
+                1.1
+              ],
+              [
+                0.9,
+                0.55
+              ],
+              [
+                1.6,
+                0.1
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "cooke_anamorphic_sf-13",
+      "blur": 0.1
+    },
+    {
+      "type": "texture",
+      "label": "Quiet upright ghost 2",
+      "offset": 1.56,
+      "scale": 0.14,
+      "intensity": 0.009360000000000002,
+      "color": [
+        1.76,
+        4.96,
+        8
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        0.55,
+        2.2399999999999998
+      ],
+      "params": {
+        "file": "ghosts/smeared_disc.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.45
+              ],
+              [
+                0.45,
+                1.1
+              ],
+              [
+                0.9,
+                0.55
+              ],
+              [
+                1.6,
+                0.1
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "cooke_anamorphic_sf-14",
+      "shade": 0,
+      "blur": 0.1
+    },
+    {
+      "type": "iris",
+      "label": "Quiet upright ghost 2 · rim",
+      "offset": 1.56,
+      "scale": 0.14,
+      "intensity": 0.00078,
+      "color": [
+        1.76,
+        4.96,
+        8
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        0.55,
+        1.6
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94,
+        "coma": 0.65
+      },
+      "irregular": 0.6,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.45
+              ],
+              [
+                0.45,
+                1.1
+              ],
+              [
+                0.9,
+                0.55
+              ],
+              [
+                1.6,
+                0.1
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "cooke_anamorphic_sf-15",
+      "blur": 0.1
+    },
+    {
+      "type": "streak",
+      "label": "Layered blue skirt 1",
+      "offset": 0.6900000000000001,
+      "scale": 0.20616959999999998,
+      "intensity": 0.1875,
+      "color": [
+        0.0714580749095825,
+        0.428748449457495,
+        3.5729062744015465
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.024,
+        "curve": 0.03
+      },
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -1.5
+              ],
+              [
+                1.5,
+                1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0.025
+      ],
+      "id": "cooke_anamorphic_sf-16",
+      "irregular": 0.7,
+      "stretch": [
+        0.91,
+        0.8200000000000001
+      ]
+    },
+    {
+      "type": "streak",
+      "label": "Layered blue skirt 2",
+      "offset": 0.55,
+      "scale": 0.17524416000000004,
+      "intensity": 0.09,
+      "color": [
+        0.08981964744060564,
+        0.5389172560682742,
+        4.490975457701327
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.024,
+        "curve": 0.03
+      },
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -1.5
+              ],
+              [
+                1.5,
+                1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0.052
+      ],
+      "id": "cooke_anamorphic_sf-17",
+      "irregular": 0.7,
+      "stretch": [
+        1,
+        1.18
+      ]
+    },
+    {
+      "type": "streak",
+      "label": "Layered blue skirt 3",
+      "offset": 0.55,
+      "scale": 0.16874944,
+      "intensity": 0.03375,
+      "color": [
+        0.26339051572706,
+        1.5803430943623598,
+        13.169525786352999
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.024,
+        "curve": 0.03
+      },
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -1.5
+              ],
+              [
+                1.5,
+                1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0.085
+      ],
+      "id": "cooke_anamorphic_sf-18",
+      "irregular": 0.7,
+      "stretch": [
+        1,
+        1.2862
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Subtle blue veiling",
+      "offset": 0.81,
+      "scale": 2.9499999999999997,
+      "intensity": 0.0018,
+      "color": [
+        1.3185691575602687,
+        4.61499205146094,
+        8.241057234751679
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.8,
+        "falloff": 2
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "cooke_anamorphic_sf-19",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "streak",
+      "label": "Source · vertical blue glint",
+      "offset": 0,
+      "scale": 0.33579000000000003,
+      "intensity": 0.004,
+      "color": [
+        1.2177924347044669,
+        2.6385496350669646,
+        4.059307603580719
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.008,
+        "curve": 0.03
+      },
+      "rotation": 90,
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "cooke_anamorphic_sf-20",
+      "stretch": [
+        1,
+        1
+      ]
+    }
+  ],
+  "global": {
+    "seed": 2709,
+    "edge_fade_start": 0.25,
+    "edge_fade_range": 0.65
+  }
+}

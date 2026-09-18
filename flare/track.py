@@ -402,6 +402,9 @@ def track_lights(detections: list[list[dict]], smoothing: float = 0.65,
 
     # zero-phase position smoothing per track: stills detector jitter
     # without the lag a causal filter would add
+    for frame in out:
+        for light in frame:
+            light['source_u'], light['source_v'] = light['u'], light['v']
     if smoothing > 0.0:
         by_tid: dict[int, list[dict]] = {}
         for frame in out:

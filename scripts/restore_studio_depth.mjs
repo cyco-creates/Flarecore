@@ -1,0 +1,30 @@
+// Restore the still-image bench without rewriting presets or other benches.
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const file=path.join(root,'example_workflows/flarecore_studio.json');
+const doc=JSON.parse(fs.readFileSync(file,'utf8'));
+const render=doc.nodes.find(n=>n.id===15 && n.type==='FlareRender');
+const source=doc.nodes.find(n=>n.id===14 && n.type==='LoadImage');
+const template=doc.nodes.find(n=>n.type==='DepthAnythingV2Preprocessor');
+if(!render || !source || !template) throw Error('Unexpected studio layout; no changes made.');
+const depthSlot=render.inputs.findIndex(i=>i.name==='depth');
+if(depthSlot<0) throw Error('Missing depth socket.');
+if(render.inputs[depthSlot].link==null) {
+  const node=structuredClone(template);
+  const id=Math.max(doc.last_node_id,...doc.nodes.map(n=>n.id))+1;
+  const link=Math.max(doc.last_link_id,...doc.links.map(l=>l[0]))+1;
+  node.id=id;node.title='Depth · Flare Lab';node.pos=[source.pos[0],source.pos[1]+source.size[1]+65];
+  node.size=[300,100];node.mode=render.mode;node.order=source.order+1;
+  node.inputs[0].link=link;node.outputs[0].links=[link+1];
+  source.outputs[0].links.push(link);render.inputs[depthSlot].link=link+1;
+  doc.nodes.push(node);
+  doc.links.push([link,source.id,0,id,0,'IMAGE'],[link+1,id,0,render.id,depthSlot,'IMAGE']);
+  doc.last_node_id=id;doc.last_link_id=link+1;
+  const note=doc.nodes.find(n=>n.id===21);
+  note.widgets_values[0]='FLARE LAB — STILL IMAGES\n\n1. Load an image, then run once to populate the picker.\n2. Drag the orange light and cyan flare anchor.\n3. Choose a preset, then tune position / size / opacity on each element row.\n4. Expand a row for grouped shape, placement, repetition, masking and optical-response controls.\n5. Save your preset when ready. Composite, flare pass and alpha previews are on the right.\n\nDEPTH OCCLUSION\nThe image also feeds Depth Anything V2 below the loader, connected to Flare Render’s depth input. Requires comfyui_controlnet_aux and its depth model (same as Video Lab). Adjust light depth / invert depth in the render settings. Disconnect depth for a depth-free render.\n\nOptical response animates each element as the light moves. Legacy trigger rules remain available in their own section.\n\nPanels hide below roughly 50% canvas zoom.';
+  note.size=[340,480];
+  fs.writeFileSync(file,JSON.stringify(doc,null,2)+'\n');
+  console.log(`Restored depth node ${id}, links ${link}/${link+1}.`);
+} else console.log('Depth is already connected; unchanged.');

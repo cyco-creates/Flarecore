@@ -1,0 +1,162 @@
+[
+  {
+    "type": "iris",
+    "id": "rounded_nine_blade",
+    "label": "rounded nine blade",
+    "slot": "ghosts",
+    "scale": 0.58,
+    "color": [
+      0.68,
+      0.82,
+      1
+    ],
+    "intensity": 0.28,
+    "irregular": 0.12,
+    "params": {
+      "blades": 9,
+      "roundness": 0.65,
+      "edge_softness": 0.12
+    }
+  },
+  {
+    "type": "iris",
+    "id": "barrel_clipped_amber",
+    "label": "barrel clipped amber",
+    "slot": "ghosts",
+    "scale": 0.58,
+    "color": [
+      1,
+      0.68,
+      0.36
+    ],
+    "intensity": 0.3,
+    "irregular": 0.16,
+    "shade": 0.45,
+    "params": {
+      "blades": 7,
+      "roundness": 0.4,
+      "crescent": 0.58,
+      "crescent_feather": 0.16
+    }
+  },
+  {
+    "type": "iris",
+    "id": "soft_aperture_rim",
+    "label": "soft aperture rim",
+    "slot": "ghosts",
+    "scale": 0.58,
+    "color": [
+      0.58,
+      0.9,
+      0.78
+    ],
+    "intensity": 0.32,
+    "dispersion": 0.12,
+    "params": {
+      "blades": 6,
+      "roundness": 0.3,
+      "hollow": 0.86,
+      "edge_softness": 0.1
+    }
+  },
+  {
+    "type": "glow",
+    "id": "neutral_scatter_halo",
+    "label": "neutral scatter halo",
+    "slot": "glows",
+    "scale": 0.38,
+    "color": [
+      1,
+      0.95,
+      0.85
+    ],
+    "intensity": 0.8,
+    "irregular": 0.16,
+    "params": {
+      "softness": 0.35,
+      "falloff": 1.85
+    }
+  },
+  {
+    "type": "streak",
+    "id": "fine_bowed_streak",
+    "label": "fine bowed streak",
+    "slot": "streaks",
+    "scale": 0.25,
+    "color": [
+      0.45,
+      0.65,
+      1
+    ],
+    "intensity": 0.65,
+    "irregular": 0.2,
+    "auto_rotate": false,
+    "params": {
+      "length": 1,
+      "thickness": 0.009,
+      "curve": 0.16
+    }
+  },
+  {
+    "type": "glint",
+    "id": "single_soft_ray",
+    "label": "single soft ray",
+    "slot": "rays",
+    "scale": 0.3,
+    "color": [
+      1,
+      0.88,
+      0.7
+    ],
+    "intensity": 0.65,
+    "auto_rotate": false,
+    "params": {
+      "points": 1,
+      "length": 0.55,
+      "thickness": 0.01,
+      "length_jitter": 0
+    }
+  },
+  {
+    "type": "ring",
+    "id": "broken_coating_arc",
+    "label": "broken coating arc",
+    "slot": "rings",
+    "scale": 0.65,
+    "color": [
+      0.6,
+      0.78,
+      1
+    ],
+    "intensity": 0.4,
+    "irregular": 0.3,
+    "dispersion": 0.2,
+    "dispersion_samples": 7,
+    "params": {
+      "radius": 0.72,
+      "thickness": 0.022,
+      "completion": 235,
+      "completion_feather": 0.4
+    }
+  },
+  {
+    "type": "hoop",
+    "id": "soft_asymmetric_hoop",
+    "label": "soft asymmetric hoop",
+    "slot": "hoops",
+    "scale": 0.62,
+    "color": [
+      1,
+      0.73,
+      0.5
+    ],
+    "intensity": 0.3,
+    "irregular": 0.25,
+    "params": {
+      "radius": 0.65,
+      "thickness": 0.14,
+      "angular_falloff": 0.7,
+      "crescent": 0.45
+    }
+  }
+]

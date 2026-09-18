@@ -123,6 +123,45 @@ def test_workflows_exist_and_are_registered():
     assert WORKFLOW_DIR.name == "example_workflows"
 
 
+def test_studio_depth_is_connected_in_both_labs():
+    doc = json.loads((WORKFLOW_DIR / "flarecore_studio.json").read_text(encoding="utf-8"))
+    nodes = {n["id"]: n for n in doc["nodes"]}
+    links = {link[0]: link for link in doc["links"]}
+    assert len(nodes) == len(doc["nodes"])
+    assert len(links) == len(doc["links"])
+    for name in ("FLARE LAB", "VIDEO LAB"):
+        group = next(g for g in doc["groups"] if g["title"] == name)
+        x, y, w, h = group["bounding"]
+        inside = lambda n: x <= n["pos"][0] < x+w and y <= n["pos"][1] < y+h
+        render = next(n for n in nodes.values() if n["type"] == "FlareRender" and inside(n))
+        depth_input = next(i for i in render["inputs"] if i["name"] == "depth")
+        depth = nodes[links[depth_input["link"]][1]]
+        assert depth["type"] == "DepthAnythingV2Preprocessor"
+        assert inside(depth) and depth["mode"] == render["mode"]
+        image_input = next(i for i in render["inputs"] if i["name"] == "image")
+        assert links[depth["inputs"][0]["link"]][1:3] == links[image_input["link"]][1:3]
+    for link_id, source, slot, target, target_slot, kind in doc["links"]:
+        assert link_id in nodes[source]["outputs"][slot]["links"]
+        assert nodes[target]["inputs"][target_slot]["link"] == link_id
+
+
+def test_studio_notes_and_forge_layout():
+    doc = json.loads((WORKFLOW_DIR / "flarecore_studio.json").read_text(encoding="utf-8"))
+    for node in doc["nodes"]:
+        if node["type"] == "Note":
+            assert node["widgets_values_named"]["text"] == node["widgets_values"][0]
+            assert node.get("title")
+    forge_ids = {1, 10, 11, 12, 13, 30, 34, 35}
+    nodes = [n for n in doc["nodes"] if n["id"] in forge_ids]
+    gx, gy, gw, gh = next(g["bounding"] for g in doc["groups"] if g["title"] == "ELEMENT FORGE")
+    for i, a in enumerate(nodes):
+        x, y = a["pos"]; w, h = a["size"]
+        assert gx <= x and gy <= y and x+w <= gx+gw and y+h <= gy+gh
+        for b in nodes[i+1:]:
+            bx, by = b["pos"]; bw, bh = b["size"]
+            assert x+w <= bx or bx+bw <= x or y+h <= by or by+bh <= y
+
+
 @pytest.mark.parametrize("path", workflows(), ids=lambda p: p.name)
 def test_subgraph_definitions_ship_live_nodes(path):
     """A subgraph definition freezes the mode its nodes had when it was made.

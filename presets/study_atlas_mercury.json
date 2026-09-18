@@ -1,0 +1,1005 @@
+{
+  "schema_version": 1,
+  "name": "Atlas Mercury 54mm T2.8 · study",
+  "author": "Flarecore",
+  "category": "Anamorphic",
+  "subcategory": "Reference studies · Anamorphic",
+  "elements": [
+    {
+      "type": "glow",
+      "label": "Source · white core",
+      "offset": 0,
+      "scale": 0.1,
+      "intensity": 0.15,
+      "color": [
+        1,
+        1,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.38,
+        "falloff": 2.1
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_mercury-00",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Source · scatter halo",
+      "offset": 0,
+      "scale": 0.4732,
+      "intensity": 0.19353599999999999,
+      "color": [
+        0.9978640740354061,
+        1.1195548416254522,
+        1.2169076759004591
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.35,
+        "falloff": 1.65,
+        "scatter": 0
+      },
+      "irregular": 0.22,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_mercury-01",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Source · fine diffraction",
+      "offset": 0,
+      "scale": 1,
+      "intensity": 0.7,
+      "color": [
+        0.85,
+        0.95,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "file": "glows/study_photographic_scatter.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "rotation": 13,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_mercury-02",
+      "blur": 0.015,
+      "stretch": [
+        1,
+        1
+      ],
+      "shade": 0
+    },
+    {
+      "type": "glint",
+      "label": "Source · long rays",
+      "offset": 0,
+      "scale": 0.32000000000000006,
+      "intensity": 0.000576,
+      "color": [
+        6.56,
+        7.36,
+        8
+      ],
+      "auto_rotate": false,
+      "params": {
+        "points": 12,
+        "length": 0.65,
+        "thickness": 0.004,
+        "length_jitter": 0.6,
+        "ray_falloff": 1.7,
+        "fan": 0.008,
+        "ray_taper": 0.8
+      },
+      "irregular": 0.5,
+      "rotation": 23,
+      "slot": "rays",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_mercury-03",
+      "blur": 0.035,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "streak",
+      "label": "Fine gold primary streak",
+      "offset": 0,
+      "scale": 4.5017000000000005,
+      "intensity": 0.105,
+      "color": [
+        2.1851910512522053,
+        1.0488917046010584,
+        0.21851950621385632
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.004,
+        "curve": 0.03
+      },
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_mercury-04",
+      "stretch": [
+        1,
+        1.18
+      ]
+    },
+    {
+      "type": "streak",
+      "label": "Dim lower reflected streak",
+      "offset": 1.7,
+      "scale": 1.8,
+      "intensity": 0.006,
+      "color": [
+        0.957838,
+        2.69936,
+        4.353807
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.016,
+        "curve": 0.03
+      },
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                1.5
+              ],
+              [
+                1.5,
+                -1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0
+      ],
+      "id": "atlas_mercury-05",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Blue source scatter",
+      "offset": -0.07,
+      "scale": 1.092,
+      "intensity": 0.035750000000000004,
+      "color": [
+        1.2803598007983104,
+        3.608286055224384,
+        5.819816838945084
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.6,
+        "falloff": 2
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_mercury-06",
+      "stretch": [
+        1.2862,
+        0.7462000000000001
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Large upper amber pupil",
+      "offset": 1.52,
+      "scale": 0.45920000000000005,
+      "intensity": 0.028,
+      "color": [
+        1.6734104902968407,
+        0.8032366940116883,
+        0.3179475024933815
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1.1,
+        0.95
+      ],
+      "params": {
+        "file": "ghosts/smeared_disc.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -2.625
+              ],
+              [
+                1.5,
+                2.625
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0
+      ],
+      "id": "atlas_mercury-07",
+      "shade": 0
+    },
+    {
+      "type": "iris",
+      "label": "Large upper amber pupil · rim",
+      "offset": 1.52,
+      "scale": 0.45920000000000005,
+      "intensity": 0.000525,
+      "color": [
+        1.410486578662634,
+        0.6770338990888595,
+        0.26799267394423487
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1.1,
+        0.95
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94,
+        "coma": 0.25
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -2.625
+              ],
+              [
+                1.5,
+                2.625
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0
+      ],
+      "id": "atlas_mercury-08"
+    },
+    {
+      "type": "texture",
+      "label": "Lower rose reflection",
+      "offset": 1.8099999999999998,
+      "scale": 0.3186,
+      "intensity": 0.00315,
+      "color": [
+        13.515989990234376,
+        6.335620307922363,
+        10.559367179870605
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        2.2,
+        0.65
+      ],
+      "params": {
+        "file": "ghosts/smeared_disc.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_mercury-09",
+      "shade": 0,
+      "blur": 0.1
+    },
+    {
+      "type": "iris",
+      "label": "Lower rose reflection · rim",
+      "offset": 1.8099999999999998,
+      "scale": 0.3186,
+      "intensity": 0.00003150000000000001,
+      "color": [
+        13.515989990234376,
+        6.335620307922363,
+        10.559367179870605
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        2.2,
+        0.65
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_mercury-10",
+      "blur": 0.1
+    },
+    {
+      "type": "iris",
+      "label": "Small opposite cyan point",
+      "offset": 1.48,
+      "scale": 0.024,
+      "intensity": 0.3375,
+      "color": [
+        0.020304,
+        0.05722,
+        0.09229
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.25,
+        "surface_detail": 0.55,
+        "density_bias": 0.48
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_mercury-11",
+      "shade": 0.35
+    },
+    {
+      "type": "iris",
+      "label": "Small opposite cyan point · rim",
+      "offset": 1.48,
+      "scale": 0.024,
+      "intensity": 0.084375,
+      "color": [
+        0.134381,
+        0.378711,
+        0.610824
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_mercury-12"
+    },
+    {
+      "type": "iris",
+      "label": "Far white point",
+      "offset": 2.12,
+      "scale": 0.014,
+      "intensity": 0.7500000000000001,
+      "color": [
+        0.05648,
+        0.05648,
+        0.05648
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.25,
+        "surface_detail": 0.55,
+        "density_bias": 0.48
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_mercury-13",
+      "shade": 0.35
+    },
+    {
+      "type": "iris",
+      "label": "Far white point · rim",
+      "offset": 2.12,
+      "scale": 0.014,
+      "intensity": 0.07500000000000001,
+      "color": [
+        0.124435,
+        0.124435,
+        0.124435
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_mercury-14"
+    }
+  ],
+  "global": {
+    "seed": 2709,
+    "edge_fade_start": 0.25,
+    "edge_fade_range": 0.65
+  }
+}

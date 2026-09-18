@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "reviewed": "2026-09-08",
+  "scope": "15 independent artistic flare interpretations inspired by commercial cinema lens families. No proprietary prescriptions, calibrated spectra, brand endorsement, lens image formation, bokeh simulation or measured matching. All dimensions, ghost placements, palettes and intensity values are authored. Uses the artistic Flarecore engine, not Lens Lab's PBRT 22 mm prescription.",
+  "presets": [
+    {
+      "file": "presets/lens_arri_signature_prime.json",
+      "name": "ARRI Signature Prime · inspired",
+      "category": "Spherical",
+      "subcategory": "Lens inspired · Modern",
+      "source": "https://www.arri.com/en/company/press/press-releases-2020/the-full-range-of-arri-signature-prime-lenses-are-now-available-and-shipping",
+      "basis": "ARRI describes soft, delicate flares. This restrained warm core and sparse ghost layout is an authored interpretation."
+    },
+    {
+      "file": "presets/lens_arri_zeiss_master_prime.json",
+      "name": "ARRI ZEISS Master Prime · inspired",
+      "category": "Spherical",
+      "subcategory": "Lens inspired · Modern",
+      "source": "https://www.arri.com/en/camera-systems/cine-lenses/master-prime-lenses/master-prime-lenses",
+      "basis": "The manufacturer emphasizes reduced flare and high contrast. This deliberately quiet preset is not designed to resemble a flare-heavy vintage lens."
+    },
+    {
+      "file": "presets/lens_zeiss_supreme_radiance.json",
+      "name": "ZEISS Supreme Prime Radiance · inspired",
+      "category": "Spherical",
+      "subcategory": "Lens inspired · Modern",
+      "source": "https://lenspire.zeiss.com/cine/en/article/from-ghostbuster-to-ghostfather",
+      "basis": "ZEISS describes controlled blue flares from T* blue coatings. Ghost sizes, spacing and response here are artistic, not a recovered prescription."
+    },
+    {
+      "file": "presets/lens_cooke_s8i_ff.json",
+      "name": "Cooke S8-i FF · inspired",
+      "category": "Spherical",
+      "subcategory": "Lens inspired · Modern",
+      "source": "https://cookeoptics.com/lens/s8-i-ff/",
+      "basis": "Cooke emphasizes optimized contrast and an organic, film-inspired image. The warm neutral flare palette is a design choice; no measured S8/i flare hue is claimed."
+    },
+    {
+      "file": "presets/lens_panavision_primo.json",
+      "name": "Panavision Primo · inspired",
+      "category": "Spherical",
+      "subcategory": "Lens inspired · Modern",
+      "source": "https://www.panavision.com/camera-and-optics/optics/product-detail/sl-primo",
+      "basis": "Panavision describes negligible veiling glare and ghosting. This is a subtle, high-contrast interpretation, not a colorful ghost-chain showcase."
+    },
+    {
+      "file": "presets/lens_leitz_hugo.json",
+      "name": "Leitz HUGO · inspired",
+      "category": "Spherical",
+      "subcategory": "Lens inspired · Character",
+      "source": "https://www.leitz-cine.com/product/hugo",
+      "basis": "Leitz describes lower contrast and artful flares with Leica M heritage. The amber/rose palette and arc layout are authored choices."
+    },
+    {
+      "file": "presets/lens_cooke_panchro_classic.json",
+      "name": "Cooke Panchro-i Classic FF · inspired",
+      "category": "Spherical",
+      "subcategory": "Lens inspired · Character",
+      "source": "https://cookeoptics.com/lens/cooke-panchro-classic-i-ff/",
+      "basis": "A modern recreation of the classic look, with flare control emphasized by Cooke. Warmer softness here is deliberately more restrained than the enhanced-flare studies."
+    },
+    {
+      "file": "presets/lens_canon_sumire.json",
+      "name": "Canon Sumire Prime · inspired",
+      "category": "Spherical",
+      "subcategory": "Lens inspired · Character",
+      "source": "https://www.usa.canon.com/content/dam/canon-assets/brochures/pro/Broadcast-and-Cinema-Lens-Catalog-2021.pdf",
+      "basis": "Canon describes a nuanced wide-aperture look, warm colors and an eleven-blade iris. The gentle round ghosts are authored; this preset does not simulate focus falloff or skin rendering."
+    },
+    {
+      "file": "presets/lens_panavision_spf.json",
+      "name": "Panavision SPF Flare Lenses · inspired",
+      "category": "Spherical",
+      "subcategory": "Lens inspired · Character",
+      "source": "https://www.panavision.com/camera-and-optics/optics/product-detail/spf-flare-lenses",
+      "basis": "Panavision describes modified coatings/internal features for increased flare and lower contrast. This reproduces only a flare-layer interpretation, not the lenses' resolution or full-image response."
+    },
+    {
+      "file": "presets/lens_panavision_c_series.json",
+      "name": "Panavision C Series · inspired",
+      "category": "Anamorphic",
+      "subcategory": "Lens inspired · Anamorphic",
+      "source": "https://www.panavision.com/camera-and-optics/optics/product-detail/c-c-series",
+      "basis": "Panavision describes pronounced anamorphic flare and organic character. Blue streaks and asymmetric ovals here are one interpretation, not a universal color for every C Series lens."
+    },
+    {
+      "file": "presets/lens_cooke_anamorphic_sf.json",
+      "name": "Cooke Anamorphic-i SF · inspired",
+      "category": "Anamorphic",
+      "subcategory": "Lens inspired · Anamorphic",
+      "source": "https://cookeoptics.com/news-and-events/an-introduction-to-anamorphic-lenses/",
+      "basis": "Cooke's SF variants enhance flare; the manufacturer discusses streaks and elliptical orbs. This pale warm streak/oval mixture is an artistic study, not a specified S35 or full-frame prescription."
+    },
+    {
+      "file": "presets/lens_arri_master_anamorphic_flare.json",
+      "name": "ARRI Master Anamorphic Flare Set · inspired",
+      "category": "Anamorphic",
+      "subcategory": "Lens inspired · Anamorphic",
+      "source": "https://www.arri.com/en/cine-lenses/arri-zeiss-fujinon-lenses/master-anamorphics",
+      "basis": "ARRI offers front/rear flare sets changing flare, ghosting and veiling glare. This represents an enhanced-flare interpretation, not a measured front/rear combination."
+    },
+    {
+      "file": "presets/lens_atlas_orion.json",
+      "name": "Atlas Orion · inspired",
+      "category": "Anamorphic",
+      "subcategory": "Lens inspired · Anamorphic",
+      "source": "https://atlaslensco.com/products/orion-series-anamorphic-lenses",
+      "basis": "Atlas describes controlled signature flare and vintage character. The blue treatment is an authored visual interpretation, not measured spectral data."
+    },
+    {
+      "file": "presets/lens_atlas_mercury.json",
+      "name": "Atlas Mercury · inspired",
+      "category": "Anamorphic",
+      "subcategory": "Lens inspired · Anamorphic",
+      "source": "https://atlaslensco.com/products/mercury-series-anamorphic-lenses?variant=47926393504002",
+      "basis": "Atlas explicitly describes sun-tinged golden flares for Mercury. Gold streaks are the reference; the 1.5x lens squeeze is not used as a false physical simulation parameter."
+    },
+    {
+      "file": "presets/lens_hawk_vlite_vintage74.json",
+      "name": "Hawk V-Lite Vintage 74 1.3x · inspired",
+      "category": "Anamorphic",
+      "subcategory": "Lens inspired · Anamorphic",
+      "source": "https://www.vantagefilm.com/en/products/hawk-enhanced-flares/hawk-1-3x",
+      "basis": "Vantage describes reduced contrast, enhanced flare and a 1970s feel for this 1.3x variant. The mixed palette and ghost geometry are artistic, not measured Hawk optics."
+    }
+  ]
+}

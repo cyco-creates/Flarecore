@@ -1,0 +1,145 @@
+{
+  "date": "2026-09-09",
+  "source": "https://lenses.cineflares.com/",
+  "method": "Independent procedural visual studies of labelled moving-source tests. Not commercial optical prescriptions or calibrated replicas.",
+  "reference_capture_count": 153,
+  "reference_valid_paired_frames": 152,
+  "notes": "One product slate excluded; references stay private outside repository. Pair04 filenames lead actual playback by 2 seconds and are not used for these fitted conditions.",
+  "studies": [
+    {
+      "file": "presets/study_kowa_cine_prominar.json",
+      "lens": "Kowa Cine Prominar",
+      "focal_mm": 25,
+      "t_stop": 4,
+      "pair": "pair01",
+      "side": "left",
+      "notes": "Gold front slivers, uneven microghost chain, overlapping rimmed rear discs and a blue outer reflection. T2.3 comparison kept separate; no aperture interpolation claimed."
+    },
+    {
+      "file": "presets/study_cooke_anamorphic_sf.json",
+      "lens": "Cooke Anamorphic SF",
+      "focal_mm": 32,
+      "t_stop": 2.8,
+      "pair": "pair01",
+      "side": "right",
+      "notes": "Blue narrow streak plus flattened reflected lobes at source height; faint upright ghosts below. Not a generic warm oval chain."
+    },
+    {
+      "file": "presets/study_arri_signature.json",
+      "lens": "ARRI Signature Prime",
+      "focal_mm": 35,
+      "t_stop": 2.8,
+      "pair": "pair03",
+      "side": "left",
+      "notes": "Quiet cool-white source, sparse blue ghosts and one small warm point; no large warm halo."
+    },
+    {
+      "file": "presets/study_zeiss_radiance.json",
+      "lens": "ZEISS Supreme Radiance",
+      "focal_mm": 35,
+      "t_stop": 2.8,
+      "pair": "pair03",
+      "side": "right",
+      "notes": "Large blue pupil before source, clustered blue opposite pupils and substantial blue veil. Shape clipping increases off-axis."
+    },
+    {
+      "file": "presets/study_atlas_orion.json",
+      "lens": "Atlas Orion",
+      "focal_mm": 50,
+      "t_stop": 2.8,
+      "pair": "pair05",
+      "side": "left",
+      "notes": "Fine long blue line and a separate weaker horizontal reflection below the source. No large amber ghost chain."
+    },
+    {
+      "file": "presets/study_panavision_c.json",
+      "lens": "Panavision C Series",
+      "focal_mm": 50,
+      "t_stop": 2.8,
+      "pair": "pair05",
+      "side": "right",
+      "notes": "Broad cool scatter, pale lavender line and a compact tilted opposite purple/cyan oval, unlike Orion."
+    },
+    {
+      "file": "presets/study_canon_k35.json",
+      "lens": "Canon K35",
+      "focal_mm": 50,
+      "t_stop": 2.8,
+      "pair": "pair07",
+      "side": "left",
+      "notes": "Rose front pupil, a blue/green/violet opposite cluster and clipped spectral far edge. Not uniformly amber."
+    },
+    {
+      "file": "presets/study_cooke_speed_panchro.json",
+      "lens": "Cooke Speed Panchro",
+      "focal_mm": 50,
+      "t_stop": 2.8,
+      "pair": "pair07",
+      "side": "right",
+      "notes": "Large gentle neutral/cool source, broad outer arc, almost no large ghost chain. This is not Panchro-i Classic FF."
+    },
+    {
+      "file": "presets/study_leitz_hugo.json",
+      "lens": "Leitz HUGO",
+      "focal_mm": 35,
+      "t_stop": 2.8,
+      "pair": "pair09",
+      "side": "left",
+      "notes": "Sparse green cusp inside a very faint blue pupil; small front amber arc, otherwise deep black."
+    },
+    {
+      "file": "presets/study_arri_master_prime.json",
+      "lens": "ARRI Master Prime",
+      "focal_mm": 35,
+      "t_stop": 2.8,
+      "pair": "pair09",
+      "side": "right",
+      "notes": "Very restrained white/cool source, nearly invisible green/blue reflections. Quiet is intentional."
+    },
+    {
+      "file": "presets/study_atlas_mercury.json",
+      "lens": "Atlas Mercury",
+      "focal_mm": 54,
+      "t_stop": 2.8,
+      "pair": "pair11",
+      "side": "left",
+      "notes": "Fine gold line, large clipped upper amber pupil and quiet lower blue/rose reflections."
+    },
+    {
+      "file": "presets/study_hawk_vlite_vintage74.json",
+      "lens": "Hawk V-Lite Vintage 74",
+      "focal_mm": 55,
+      "t_stop": 2.8,
+      "pair": "pair11",
+      "side": "right",
+      "notes": "Strong pale double streak, broad blue veil and an opposite rose textured oval. The site does not establish a 1.3x variant."
+    },
+    {
+      "file": "presets/study_panavision_primo_classic.json",
+      "lens": "Panavision Primo Classic",
+      "focal_mm": 50,
+      "t_stop": 2.8,
+      "pair": "pair13",
+      "side": "left",
+      "notes": "Bright front white pupils, opposite cyan/green oval and pink cusp, plus a broad clipped edge reflection."
+    },
+    {
+      "file": "presets/study_arri_master_anamorphic.json",
+      "lens": "ARRI Master Anamorphic",
+      "focal_mm": 50,
+      "t_stop": 2.8,
+      "pair": "pair13",
+      "side": "right",
+      "notes": "Quiet source with a weak displaced blue streak; this is the standard lens test, not an added Flare Set."
+    },
+    {
+      "file": "presets/study_zeiss_super_speed.json",
+      "lens": "ZEISS Super Speed",
+      "focal_mm": 50,
+      "t_stop": 2.8,
+      "pair": "pair15",
+      "side": "left",
+      "notes": "Triangular violet caustic inside a soft violet/amber pupil, far sliver and a clipped front white ghost. Standard coated test, not the uncoated variant."
+    }
+  ]
+}

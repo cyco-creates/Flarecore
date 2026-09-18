@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><title>FlareCore optical response QA</title>
+<style>body{margin:24px;background:#10151b;color:#e6edf3;font:14px system-ui}main{display:grid;grid-template-columns:minmax(320px,580px) minmax(240px,1fr);gap:24px}pre{white-space:pre-wrap;background:#182027;padding:20px;border-radius:8px}h1{font-size:23px}#status{color:#98dcbb;margin:12px 0}@media(max-width:760px){main{display:block}}</style>
+<h1>FlareCore · Optical response workbench</h1>
+<p>Isolated test of the same response panel used inside the stack editor.</p>
+<div id="status" role="status">No edits yet</div>
+<main><div id="panel"></div><aside><h2>Saved element response</h2><pre id="saved"></pre><img src="../docs/motion_previews/adaptive_contact_sheet.jpg" style="width:100%" alt="Adaptive preset contact sheet"></aside></main>
+<script type="module">
+import {createMotionPanel,responseProfile} from '../web/flarecore_motion.js';
+let element={type:'iris',motion:responseProfile('ghost','iris')};let changes=0;const uiState={};
+const contract=await fetch('../docs/motion_previews/motion_contract.json').then(r=>r.json());
+function build(){document.querySelector('#saved').textContent=JSON.stringify(element.motion,null,2);document.querySelector('#panel').replaceChildren(createMotionPanel(element,m=>{element.motion=m;document.querySelector('#status').textContent=`Saved edit ${++changes}`;build();},()=>Promise.resolve(contract),uiState));}
+build();
+</script>

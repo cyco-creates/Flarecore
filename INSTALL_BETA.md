@@ -1,57 +1,41 @@
-# FlareCore — beta install
-
-Procedural cine lens flares for ComfyUI, plus an element forge. This is an
-early build for testers; expect rough edges and please report what breaks.
+# Install Flarecore
 
 ## Install
 
-1. Unzip so the folder lands at:
+1. Copy or unzip the folder into:
    `ComfyUI/custom_nodes/comfyui-flarecore`
-   (the folder that contains `__init__.py`, `flare/`, `nodes/`, `web/`).
-2. Install the Python deps into ComfyUI's environment. On the portable
-   Windows build:
-   ```
+
+2. Install the requirements with the Python environment used by ComfyUI. On
+   the portable Windows build:
+
+   ```text
    python_embeded\python.exe -m pip install -r ComfyUI\custom_nodes\comfyui-flarecore\requirements.txt
    ```
-   (torch and numpy are already there in any ComfyUI; this really just
-   ensures Pillow is present.)
-3. Restart ComfyUI and hard-reload the browser (Ctrl+Shift+R) so the new
-   frontend loads.
 
-## Where to start
+3. Restart ComfyUI and hard-refresh the browser with `Ctrl+Shift+R`.
 
-- **Workflow → Browse Templates → flarecore → Flarecore Studio.** Three
-  benches in one graph — element forge, flare lab, video lab — with a
-  switch on the left; click a bench and the others mute.
-- The Flare Render node carries its own editor: a point picker and a stack
-  editor. Drop a **Flare Preset Loader**, pick a look, and the editor fills
-  in. Presets are grouped Anamorphic / Spherical / Scenario / Utility.
-- **flarecore_trigger_lab** is a self-contained demo — nothing to load,
-  just Queue it.
+## Open the Studio
 
-## The element forge
+Choose **Workflow → Browse Templates → flarecore → Flarecore Studio**. The
+workflow contains Flare Lab, Video Lab and Element Forge. Select the bench you
+want to use, load your own image or video, and queue the workflow.
 
-The forge makes new flare textures with an image model and files them in
-the library. It carries **two generators with a manual switch** (Flare
-Generator Select): `a` = the local **Krea2** chain, `b` = **GPT Image 2**.
-Only the selected one runs. GPT Image 2 is an OpenAI API node and needs you
-signed in to the Comfy API in your browser; the local Krea2 chain needs the
-Krea2 models. If you have neither, the ~200 shipped element textures still
-cover every family.
+For a smaller graph, connect:
 
-## Known alpha limitations
+`Load Image/Video → Flarecore · Render → Combine/Video Combine`
 
-- Saved presets and forged elements are written **inside this folder**
-  (`presets/`, `elements/`). If you reinstall by replacing the folder,
-  copy those two out first — they are not yet stored in ComfyUI's user
-  directory.
-- The GPT Image 2 branch only renders when you are logged in to the Comfy
-  API; there is no headless/API-key path yet.
-- Requires a recent ComfyUI frontend (subgraphs, DOM widgets). If the
-  editor panels look wrong, hard-reload before reporting.
+## Optional dependencies
 
-## Reporting
+Rendering does not require an image-generation model. Depth estimation,
+video loading and optional Krea2 or GPT Image 2 generator branches may require
+additional ComfyUI nodes, models or a provider login. You can disconnect any
+optional branch you do not need.
 
-Tell us the ComfyUI version, the preset or element involved, and whether a
-hard reload changed anything — a stale cached frontend is the most common
-false alarm.
+## Protect your saved work
+
+Saved presets and custom elements are stored in this extension folder under
+`presets/` and `elements/`. Back up those folders before replacing or updating
+the extension.
+
+If the editor looks incorrect after an update, save your workflow, restart
+ComfyUI and hard-refresh the browser before troubleshooting further.

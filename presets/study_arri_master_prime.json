@@ -1,0 +1,534 @@
+{
+  "schema_version": 1,
+  "name": "ARRI Master Prime 35mm T2.8 · study",
+  "author": "Flarecore",
+  "category": "Spherical",
+  "subcategory": "Reference studies · Spherical",
+  "elements": [
+    {
+      "type": "glow",
+      "label": "Source · white core",
+      "offset": 0,
+      "scale": 0.1,
+      "intensity": 0.15,
+      "color": [
+        1,
+        1,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.38,
+        "falloff": 2.1
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_master_prime-00",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Source · scatter halo",
+      "offset": 0,
+      "scale": 0.42640000000000006,
+      "intensity": 0.12902400000000003,
+      "color": [
+        1.1636233875694275,
+        1.3055282074546815,
+        1.4190530294904709
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.35,
+        "falloff": 1.65,
+        "scatter": 0
+      },
+      "irregular": 0.22,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_master_prime-01",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Source · fine diffraction",
+      "offset": 0,
+      "scale": 1,
+      "intensity": 0.7,
+      "color": [
+        0.85,
+        0.95,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "file": "glows/study_photographic_scatter.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "rotation": 13,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_master_prime-02",
+      "blur": 0.015,
+      "stretch": [
+        1,
+        1
+      ],
+      "shade": 0
+    },
+    {
+      "type": "glint",
+      "label": "Source · long rays",
+      "offset": 0,
+      "scale": 0.32000000000000006,
+      "intensity": 0.000456,
+      "color": [
+        5.141765,
+        5.76881,
+        6.270445
+      ],
+      "auto_rotate": false,
+      "params": {
+        "points": 12,
+        "length": 0.65,
+        "thickness": 0.004,
+        "length_jitter": 0.6,
+        "ray_falloff": 1.7,
+        "fan": 0.008,
+        "ray_taper": 0.8
+      },
+      "irregular": 0.5,
+      "rotation": 23,
+      "slot": "rays",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_master_prime-03",
+      "blur": 0.035,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "ring",
+      "label": "Very faint blue outer arc",
+      "offset": 1.07,
+      "scale": 2.2,
+      "intensity": 0.0012000000000000001,
+      "color": [
+        2.8700343848173695,
+        8.088278720848948,
+        13.04561084007895
+      ],
+      "auto_rotate": false,
+      "params": {
+        "radius": 1,
+        "thickness": 0.15,
+        "surface_detail": 0.12
+      },
+      "slot": "rings",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_master_prime-04",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "ring",
+      "label": "Near-invisible opposite pupil",
+      "offset": 1.9,
+      "scale": 0.34,
+      "intensity": 0.00030000000000000003,
+      "color": [
+        1.04,
+        4,
+        3.44
+      ],
+      "auto_rotate": false,
+      "params": {
+        "radius": 1,
+        "thickness": 0.13,
+        "surface_detail": 0.12
+      },
+      "slot": "rings",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                0.55
+              ],
+              [
+                2,
+                0.3
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "crescent",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0.35
+              ],
+              [
+                2.4,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_master_prime-05",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Tiny pale ghost",
+      "offset": 0.7,
+      "scale": 0.018,
+      "intensity": 0.006,
+      "color": [
+        0.468845,
+        1.321291,
+        2.131115
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.25,
+        "surface_detail": 0.55,
+        "density_bias": 0.48
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_master_prime-06",
+      "shade": 0.35
+    },
+    {
+      "type": "iris",
+      "label": "Tiny pale ghost · rim",
+      "offset": 0.7,
+      "scale": 0.018,
+      "intensity": 0.0006000000000000001,
+      "color": [
+        1.76,
+        4.96,
+        8
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_master_prime-07"
+    }
+  ],
+  "global": {
+    "seed": 2709,
+    "edge_fade_start": 0.25,
+    "edge_fade_range": 0.65
+  }
+}

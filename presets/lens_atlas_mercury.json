@@ -1,0 +1,326 @@
+{
+  "schema_version": 1,
+  "name": "Atlas Mercury · inspired",
+  "author": "Flarecore · independent artistic lens study",
+  "category": "Anamorphic",
+  "subcategory": "Lens inspired · Anamorphic",
+  "global": {
+    "seed": 914,
+    "aspect": 1,
+    "fringe": 0.018,
+    "edge_fade_start": 0.1,
+    "edge_fade_range": 0.65,
+    "flicker_amount": 0
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "source_core",
+      "label": "source core",
+      "slot": "glows",
+      "scale": 0.04,
+      "intensity": 3.2,
+      "color": [
+        1,
+        0.9,
+        0.72
+      ],
+      "params": {
+        "softness": 0.24,
+        "falloff": 2.4
+      }
+    },
+    {
+      "type": "glow",
+      "id": "source_inner_light",
+      "label": "source inner light",
+      "slot": "glows",
+      "scale": 0.116,
+      "intensity": 0.42,
+      "color": [
+        1,
+        0.98,
+        0.94
+      ],
+      "params": {
+        "softness": 0.48,
+        "falloff": 1.95
+      }
+    },
+    {
+      "type": "glow",
+      "id": "source_envelope",
+      "label": "source envelope",
+      "slot": "glows",
+      "scale": 0.2389,
+      "intensity": 0.231,
+      "color": [
+        1,
+        0.9,
+        0.72
+      ],
+      "irregular": 0.1,
+      "params": {
+        "softness": 0.65,
+        "falloff": 1.8
+      }
+    },
+    {
+      "type": "glint",
+      "id": "fine_source_rays",
+      "label": "fine source rays",
+      "slot": "rays",
+      "scale": 0.34,
+      "intensity": 0.09196000000000001,
+      "color": [
+        1,
+        0.9,
+        0.72
+      ],
+      "irregular": 0.22,
+      "rotation": 156,
+      "params": {
+        "points": 10,
+        "length": 0.349,
+        "thickness": 0.004,
+        "length_jitter": 0.68
+      }
+    },
+    {
+      "type": "streak",
+      "id": "horizontal_streak",
+      "label": "horizontal streak",
+      "slot": "streaks",
+      "scale": 1,
+      "intensity": 0.55,
+      "color": [
+        1,
+        0.59,
+        0.17
+      ],
+      "auto_rotate": false,
+      "blur": 0.01,
+      "irregular": 0.1,
+      "params": {
+        "length": 1.56,
+        "thickness": 0.0035,
+        "curve": 0.02
+      }
+    },
+    {
+      "type": "streak",
+      "id": "streak_scatter",
+      "label": "streak scatter",
+      "slot": "streaks",
+      "scale": 1,
+      "intensity": 0.052250000000000005,
+      "color": [
+        1,
+        0.59,
+        0.17
+      ],
+      "auto_rotate": false,
+      "blur": 0.05,
+      "params": {
+        "length": 1.092,
+        "thickness": 0.024,
+        "curve": 0.013000000000000001
+      }
+    },
+    {
+      "type": "iris",
+      "id": "reflection_1",
+      "label": "reflection 1",
+      "slot": "ghosts",
+      "scale": 0.041,
+      "intensity": 0.084,
+      "color": [
+        1,
+        0.67,
+        0.25
+      ],
+      "offset": 0.81,
+      "stretch": [
+        0.72,
+        1.22
+      ],
+      "rotation": 0,
+      "blur": 0.015,
+      "shade": 0.12,
+      "params": {
+        "blades": 64,
+        "roundness": 0.32,
+        "edge_softness": 0.12
+      },
+      "auto_rotate": false
+    },
+    {
+      "type": "iris",
+      "id": "reflection_2",
+      "label": "reflection 2",
+      "slot": "ghosts",
+      "scale": 0.12,
+      "intensity": 0.054,
+      "color": [
+        1,
+        0.51,
+        0.19
+      ],
+      "offset": 1.42,
+      "stretch": [
+        0.72,
+        1.22
+      ],
+      "rotation": 0,
+      "blur": 0.027,
+      "shade": 0.3,
+      "params": {
+        "blades": 64,
+        "roundness": 0.32,
+        "edge_softness": 0.175
+      },
+      "auto_rotate": false
+    },
+    {
+      "type": "iris",
+      "id": "reflection_3",
+      "label": "reflection 3",
+      "slot": "ghosts",
+      "scale": 0.24,
+      "intensity": 0.023,
+      "color": [
+        0.48,
+        0.68,
+        0.55
+      ],
+      "offset": 2.2,
+      "stretch": [
+        0.72,
+        1.22
+      ],
+      "rotation": 0,
+      "blur": 0.039,
+      "shade": 0.48,
+      "params": {
+        "blades": 64,
+        "roundness": 0.32,
+        "edge_softness": 0.23,
+        "crescent": 0.22,
+        "crescent_feather": 0.18
+      },
+      "auto_rotate": false
+    },
+    {
+      "type": "hoop",
+      "id": "peripheral_arc",
+      "label": "peripheral arc",
+      "slot": "hoops",
+      "scale": 0.791,
+      "intensity": 0.010349999999999998,
+      "color": [
+        0.48,
+        0.68,
+        0.55
+      ],
+      "offset": 2.11,
+      "blur": 0.08,
+      "shade": 0.55,
+      "rotation": 23,
+      "params": {
+        "radius": 0.85,
+        "thickness": 0.085,
+        "angular_falloff": 0.85,
+        "completion": 215,
+        "completion_feather": 0.65,
+        "crescent": 0.32,
+        "crescent_feather": 0.2
+      },
+      "trigger": {
+        "mode": "border",
+        "source": "light",
+        "inner": 0,
+        "outer": 0.65,
+        "falloff": "smooth",
+        "brightness": 0.009
+      }
+    },
+    {
+      "type": "glow",
+      "id": "broad_veiling_light",
+      "label": "broad veiling light",
+      "slot": "glows",
+      "scale": 2,
+      "intensity": 0.0045,
+      "color": [
+        1,
+        0.9,
+        0.72
+      ],
+      "offset": 0.12,
+      "params": {
+        "softness": 0.9,
+        "falloff": 1.1
+      },
+      "trigger": {
+        "mode": "border",
+        "source": "light",
+        "inner": 0,
+        "outer": 0.6,
+        "falloff": "smooth",
+        "brightness": 0.002925
+      }
+    },
+    {
+      "type": "streak",
+      "id": "faint_companion",
+      "label": "faint companion",
+      "slot": "streaks",
+      "scale": 1,
+      "intensity": 0.03,
+      "color": [
+        1,
+        0.59,
+        0.17
+      ],
+      "auto_rotate": false,
+      "shift": [
+        0,
+        0.14
+      ],
+      "blur": 0.025,
+      "params": {
+        "length": 0.468,
+        "thickness": 0.004,
+        "curve": 0.02
+      }
+    },
+    {
+      "type": "iris",
+      "id": "reflection_edge",
+      "label": "soft coating edge",
+      "slot": "ghosts",
+      "scale": 0.12,
+      "intensity": 0.0108,
+      "color": [
+        1,
+        0.51,
+        0.19
+      ],
+      "offset": 1.42,
+      "stretch": [
+        0.72,
+        1.22
+      ],
+      "rotation": 0,
+      "blur": 0.025,
+      "shade": 0.3,
+      "params": {
+        "blades": 64,
+        "roundness": 0.32,
+        "edge_softness": 0.2,
+        "hollow": 0.84
+      },
+      "auto_rotate": false
+    }
+  ]
+}

@@ -2,12 +2,17 @@
 // flarecore: the FlareRender interface — a point picker for the light and
 // flare anchor, and a stack editor over preset_json with an element gallery.
 //
-// The editor IS the interface: every node widget stays hidden until the ⚙
-// button reveals them. Both panels live in one extension so a single owner
+// The editor IS the interface: native widgets stay hidden; the ⚙ button opens
+// bounded controls mirroring their values. Both panels have a single owner for
 // controls widget order and node height.
 
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
+import { createMotionPanel } from "./flarecore_motion.js";
+import { openPresetGallery } from "./flarecore_presets.js";
+import { infoTag } from "./flarecore_help.js";
+import { renderMode, activeLookLabel, selectedLibraryPreset, applyLensSettings } from "./flarecore_render_mode.js";
+import { SOURCE_FIELDS, clone, sceneDocument, activeGroup, sourceValue, setGroupSource, ensureGroups, newGroupId, selectGroupResult } from "./flarecore_groups.js";
 
 /* ------------------------------------------------------------------ utils */
 
@@ -16,10 +21,35 @@ import { api } from "../../scripts/api.js";
 // them, so any other position shifts every real value on reload.
 const PANEL_WIDGETS = new Set(["flare_layout", "flare_editor"]);
 
-// Everything else on the node hides behind the ⚙ button — the picker and
-// the editor are the interface; the widgets are the escape hatch.
-// The two DOM panels ARE the interface and always show; everything else is
-// the escape hatch. Listing what stays rather than what hides means an input
+// These DOM widgets fill the node; they never have an independent width.
+// ComfyUI's DOM overlay prefers widget.width over node.width. A cached width
+// from a minimum-size/layout probe can therefore strand BOTH panels at that
+// smaller width while the node itself remains wide. Keep the overlay and
+// legacy computeSize callers on the same live, unscaled node width. Do not
+// subtract margins here: the DOM overlay applies the widget margin itself.
+function fitPanelWidth(widget, node, fallback, heightForWidth) {
+  const liveWidth = () => {
+    const width = Number(node.size?.[0]);
+    return Number.isFinite(width) && width > 0 ? width : fallback;
+  };
+  Object.defineProperty(widget, "width", {
+    configurable: true,
+    enumerable: true,
+    get: liveWidth,
+    // Layout integrations may cache a probe result here. This panel is
+    // full-width, so only resizing its owner changes its width.
+    set: () => {},
+  });
+  widget.computeSize = () => {
+    const width = liveWidth();
+    return [width, heightForWidth(width)];
+  };
+}
+
+
+// The two DOM panels are the interface. The cog exposes editable mirrors
+// inside the editor, never a second stack of native widgets underneath it.
+// Listing what stays rather than what hides means an input
 // appended later is hidden automatically instead of sitting on the node face
 // until someone remembers to add it here.
 function nodeWidgets(node) {
@@ -33,10 +63,11 @@ function nodeWidgets(node) {
 // being painted over the panels. Both are set: the flag for this frontend,
 // the type for older ones.
 function hideWidget(w) {
-  if (w._fcHidden) return;
-  w._fcHidden = true;
-  w._fcType = w.type;
-  w._fcCompute = w.computeSize;
+  if (!w._fcHidden) {
+    w._fcHidden = true;
+    w._fcType = w.type;
+    w._fcCompute = w.computeSize;
+  }
   w.hidden = true;
   w.type = "hidden";
   w.computeSize = () => [0, -4];
@@ -57,42 +88,46 @@ function showWidget(w) {
 // inside the node is measured by the layout every draw, so height =
 // node height - offset - margin tracks manual resizes exactly.
 function fitEditor(node) {
-  const ew = findWidget(node, "flare_editor");
-  if (!ew) return;
-  const y = Number.isFinite(ew.y) && ew.y > 0 ? ew.y : ew.last_y;
-  if (!Number.isFinite(y) || y <= 0) return;
-  node._fcEditorH = Math.max(280, node.size[1] - y - 12);
+  if (node._fcSizing || !findWidget(node, "flare_editor")) return;
+  // Solve from the current visible widgets, never last frame's widget.y.
+  // A stale y after the cog toggle used to feed the expanded height back
+  // into the next minimum-size calculation and grow the node repeatedly.
+  node._fcEditorH = 280;
+  const chrome = node.computeSize()[1] - 280;
+  node._fcEditorH = Math.max(280, node.size[1] - chrome);
 }
 
-function setAdvanced(node, visible) {
+function setAdvanced(node, visible, restoreHeight = null) {
   node._fcAdvanced = visible;
   // properties are serialized with the workflow, so the toggle survives
   // save/load — a plain JS field would silently reset to closed
   if (node.properties) node.properties.fc_advanced = visible;
-  for (const w of nodeWidgets(node)) {
-    (visible ? showWidget : hideWidget)(w);
+  // Advanced controls are DOM mirrors inside the editor's scroll area.
+  // Native widgets always stay hidden, so toggling cannot move the picker,
+  // expose widget sockets, or feed expanded heights back into node layout.
+  for (const w of nodeWidgets(node)) hideWidget(w);
+  if (Number.isFinite(restoreHeight) && restoreHeight > 0) {
+    node._fcSizing = true;
+    try { node.setSize([node.size[0], restoreHeight]); }
+    finally { node._fcSizing = false; }
   }
-  // grow when the widgets need more room, but never shrink a node the user
-  // deliberately made taller
-  const want = node.computeSize()[1];
-  if (node.size[1] < want) node.setSize([node.size[0], want]);
+  fitEditor(node);
   node.setDirtyCanvas(true, true);
-  // the editor's y-offset changes when widgets appear/disappear; refit
-  // once the next layout pass has measured it
-  setTimeout(() => { fitEditor(node); node.setDirtyCanvas(true, true); }, 80);
 }
 
 function findWidget(node, name) {
   return node.widgets?.find((w) => w.name === name);
 }
 function getVal(node, name, fallback) {
+  const grouped=sourceValue(node,name);if(grouped!==undefined)return Number(grouped);
   const w = findWidget(node, name);
   return w ? Number(w.value) : fallback;
 }
 function setVal(node, name, value) {
+  if(setGroupSource(node,name,value))return;
   const w = findWidget(node, name);
   if (w) {
-    w.value = Math.round(value * 1000) / 1000;
+    w.value = typeof value === 'number' ? Math.round(value * 1000) / 1000 : value;
     w.callback?.(w.value, app.canvas, node, null, null);
   }
 }
@@ -127,35 +162,33 @@ function elementThumbUrl(ref) {
 // panel says what this flare is actually doing instead of listing every
 // knob the node owns.
 const POSITION_MODES = [
-  ["manual", "manual — drag it on the picker"],
-  ["detect", "detect — brightest spot, per frame"],
-  ["detect_with_manual_offset", "detect + offset"],
-  ["track", "track — follow it through the clip"],
-  ["track_dots", "track dots — one flare per white dot"],
-  ["path", "path — draw the route"],
-  ["lock", "lock — solve the whole clip, no teleporting"],
-  ["point_track", "point track — follow features you place"],
-  ["follow", "follow — place the light, the camera carries it"],
+  ["manual", "Place light"],
+  ["detect", "Detect bright sources"],
+  ["track", "Track bright sources"],
+  ["follow", "Follow camera motion"],
+  ["point_track", "Track a chosen feature"],
+  ["path", "Draw / edit a path"],
 ];
 
-// The settings each light-source mode is best at, applied the moment the
-// mode is chosen. Found by measuring, on real footage, which values gave
-// the steadiest light: a clipped sky, a sun behind trees, a dot matte.
-// Choosing a mode is choosing a job; the job comes with its tools set.
+const sourceFamily = mode => mode === "detect_with_manual_offset" ? "detect"
+  : ["lock", "track_dots"].includes(mode) ? "track" : mode;
+
+// Starting values are explicit opt-in via Recommended settings. Switching
+// source jobs must not silently overwrite an artist's existing tuning.
 const MODE_DEFAULTS = {
   manual: {},
   detect: { detect_threshold: 0.6, detect_max_lights: 1, track_smoothing: 0.85,
-            light_travel: 1, scene_lock: 1 },
+            light_travel: 1, scene_lock: 1, search_radius: 0 },
   detect_with_manual_offset: { detect_threshold: 0.6, detect_max_lights: 1,
-            track_smoothing: 0.85, light_travel: 1, scene_lock: 1 },
+            track_smoothing: 0.85, light_travel: 1, scene_lock: 1, search_radius: 0 },
   track: { detect_threshold: 0.6, detect_max_lights: 1, track_smoothing: 0.85,
            track_max_jump: 0.1, light_travel: 1, track_hold: 3, track_fade: 4,
-           search_radius: 0, scene_lock: 1 },
+           search_radius: 0, scene_lock: 0 },
   track_dots: { detect_threshold: 0.5, detect_max_lights: 4, track_smoothing: 0.7,
                 track_max_jump: 0.08, light_travel: 1, track_hold: 3, track_fade: 4,
                 search_radius: 0, scene_lock: 0 },
   lock: { detect_threshold: 0.6, detect_max_lights: 1, track_smoothing: 0.9,
-          track_max_jump: 0.06, light_travel: 1, scene_lock: 1 },
+          track_max_jump: 0.06, light_travel: 1, scene_lock: 0, visibility_mode: "hybrid" },
   point_track: { track_feature: 32, track_search: 64, track_smoothing: 0.6,
                  light_travel: 1 },
   follow: { track_smoothing: 0.6, light_travel: 1 },
@@ -169,22 +202,18 @@ const MODE_HINT = {
     + "drag the light. For a still, or a clip with one clean source.",
   detect_with_manual_offset:
     "detection, shifted by how far the picker's light sits from centre.",
-  track: "detected once, then followed. Max jump is how far the light may "
+  track: "matches bright-source detections across frames. Max jump is how far the light may "
     + "travel per frame: lower it if the flare wanders between nearby "
     + "lights, raise it if the flare duplicates or drops out on fast moves.",
   track_dots: "white dots on a dark plate, one flare each, each keeping its "
     + "identity. The threshold is relative to the brightest dot in the clip. "
     + "Max lights is a cap, not a quota — a higher cap never invents flares.",
-  lock: "reads the whole clip before deciding, and picks the light path with "
-    + "the least total travel — a sun cannot jump to the far side of frame "
-    + "for a few frames and come back. Max jump is how far it may move "
-    + "between frames; smoothing irons out the rest.",
-  follow: "put the light where the source really is — drag it OUTSIDE the "
-    + "frame if the sun is above the edge — and it is carried by the camera's "
-    + "motion, read from the whole picture. Nothing is detected, so an "
-    + "off-frame sun, a clipped sky and a canopy full of branches cannot "
-    + "touch it. The steadiest option for any shot where the light is not a "
-    + "clean dot.",
+  lock: "recommended for a sun behind branches: tracks the luminous core, "
+    + "bridges hidden intervals and measures visibility separately. Place the light "
+    + "near your target and narrow search radius if there are rival highlights. "
+    + "Hidden positions are estimates; inspect the path before baking it.",
+  follow: "place the source, even outside the frame. Scene motion carries it "
+    + "through the clip without light detection. Needs trackable detail in the scene.",
   point_track: "place one tracker on a feature and the light follows it; add "
     + "a second and it becomes the anchor, so the flare axis takes their "
     + "rotation and scale too. Pick something with contrast — a blown "
@@ -242,11 +271,13 @@ function formatPath(pts) {
 }
 
 function getStr(node, name) {
+  const grouped=sourceValue(node,name);if(grouped!==undefined)return String(grouped);
   const w = findWidget(node, name);
   return w ? String(w.value ?? "") : "";
 }
 
 function setStr(node, name, value) {
+  if(setGroupSource(node,name,value))return;
   const w = findWidget(node, name);
   if (w) w.value = value;
 }
@@ -429,7 +460,7 @@ class PointPicker {
         }
       }
       const sr = getVal(this.node, "search_radius", 0);
-      if (sr > 0 && ["track", "track_dots", "lock"].includes(modeNow)) {
+      if (sr > 0 && ["detect", "detect_with_manual_offset", "track", "track_dots", "lock"].includes(modeNow)) {
         ctx.setLineDash([4, 4]);
         ctx.strokeStyle = "rgba(102,217,255,0.85)";
         ctx.lineWidth = 1.2;
@@ -446,7 +477,7 @@ class PointPicker {
     const linked = !!(li && li.link != null);
     const driven = linked || posMode !== "manual";
     const lightSrc = linked ? "lights input" : posMode;
-    const searchOn = !linked && ["track", "track_dots", "lock"].includes(posMode)
+    const searchOn = !linked && ["detect", "detect_with_manual_offset", "track", "track_dots", "lock"].includes(posMode)
       && getVal(this.node, "search_radius", 0) > 0;
     const followOn = !linked && posMode === "follow";
     // a baked two-tracker solve carries the anchor on a path of its own
@@ -459,7 +490,7 @@ class PointPicker {
       ctx.font = "10px sans-serif";
       ctx.fillText(
         linked
-          ? "light driven by the lights input — set the switch to manual to drag it"
+          ? "light driven by the lights input — disconnect it to use the source controls"
           : (posMode === "path"
             ? (anchorDriven
               ? "light and anchor follow their drawn paths"
@@ -467,7 +498,7 @@ class PointPicker {
             : followOn
               ? "drag the light to where the source really is, even outside the frame — the camera carries it"
               : searchOn
-                ? "tracking inside the ring — drag the light point to move it"
+                ? "searching inside the ring — drag the light point to move it"
                 : `light placed by ${lightSrc} — the anchor still drags`),
         r.x + 6, r.y + r.h - 5);
     }
@@ -576,6 +607,16 @@ class PointPicker {
 
     // light handle: a plain ring and dot — no sun-ray decoration, which
     // read as a rendered sun on the backdrop
+    const scene=sceneDocument(this.node),selected=activeGroup(scene);
+    for(const group of Array.isArray(scene?.groups) ? scene.groups : []){
+      if(group.id===selected?.id || group.enabled===false)continue;
+      const tracked=this.node._fcGroupResults?.[group.id]?.track?.[0];
+      const u=tracked?.[0] ?? group.source?.light_x ?? .25;
+      const v=tracked?.[1] ?? group.source?.light_y ?? .3;
+      const sx=r.x+u*r.w,sy=r.y+v*r.h;
+      ctx.strokeStyle='#999';ctx.fillStyle='#bbb';ctx.lineWidth=1;ctx.font='10px sans-serif';
+      ctx.beginPath();ctx.arc(sx,sy,6,0,Math.PI*2);ctx.stroke();ctx.fillText(group.name || 'Flare',sx+9,sy-7);
+    }
     ctx.strokeStyle = driven ? "#8a8a92" : "#ffb648";
     ctx.fillStyle = driven ? "rgba(138,138,146,0.16)" : "rgba(255,182,72,0.18)";
     ctx.lineWidth = 2;
@@ -811,8 +852,13 @@ function triggerFactor(trig, x, y, frameAspect, lx = 0, ly = 0) {
 const LENS_PLATE_SLOTS = new Set(["lens_dirt"]);
 function applyLensPlateDefaults(elem, ref) {
   if (!LENS_PLATE_SLOTS.has(String(ref).split("/")[0])) return;
-  if (elem.light_mask || elem.fill_frame) return;   // the owner has decided
-  elem.fill_frame = true;
+  // The 16:9 full-frame mapping is what a plate IS, so it is not negotiable
+  // by the mask guard below: a preset that set light_mask by hand still gets
+  // its dirt spread across the frame instead of squeezed into a square with
+  // the texture's own margins showing. Only an explicit fill_frame:false --
+  // someone deliberately using dirt as a local smudge -- opts out.
+  if (elem.fill_frame === undefined) elem.fill_frame = true;
+  if (elem.light_mask || elem.fill_frame !== true) return;  // the owner has decided
   elem.screen_space = true;
   elem.light_mask = 1;
   elem.mask_floor = 0.35;
@@ -849,29 +895,31 @@ const COMMON_DEFAULTS = {
 const COMPLETION_FALLBACK = { completion: 360, completion_feather: 0.2 };
 const COMPLETION_SPEC = { completion: [10, 360, 1], completion_feather: [0, 1, 0.01] };
 
-const CRESCENT_FALLBACK = { crescent: 0, crescent_feather: 0.1 };
-const CRESCENT_SPEC = { crescent: [0, 0.98, 0.01], crescent_feather: [0.001, 1, 0.005] };
+const CRESCENT_FALLBACK = { crescent: 0, crescent_feather: 0.1, surface_detail: 0 };
+const CRESCENT_SPEC = { crescent: [0, 0.98, 0.01], crescent_feather: [0.001, 1, 0.005], surface_detail: [0, 1, 0.01] };
+const PUPIL_FALLBACK = { coma: 0, caustic: 0, trefoil: 0 };
+const PUPIL_SPEC = { coma: [-1, 1, 0.01], caustic: [0, 1, 0.01], trefoil: [0, 1, 0.01] };
 
 const PARAM_FALLBACKS = {
-  glow: { softness: 0.35, falloff: 1.2 },
-  iris: { blades: 6, edge_softness: 0.15, hollow: 0, ...CRESCENT_FALLBACK },
+  glow: { softness: 0.35, falloff: 1.2, scatter: 0 },
+  iris: { blades: 6, edge_softness: 0.15, hollow: 0, roundness: 0, density_bias: 0, ...PUPIL_FALLBACK, ...CRESCENT_FALLBACK },
   streak: { length: 0.8, thickness: 0.02, count: 1, curve: 0, dash: 0 },
-  ring: { radius: 0.5, thickness: 0.05, ...COMPLETION_FALLBACK, ...CRESCENT_FALLBACK },
+  ring: { radius: 0.5, thickness: 0.05, edge_bias: 0, ...COMPLETION_FALLBACK, ...CRESCENT_FALLBACK },
   hoop: { radius: 0.6, thickness: 0.15, angular_falloff: 0.8, ...COMPLETION_FALLBACK, ...CRESCENT_FALLBACK },
-  glint: { points: 8, length: 0.5, thickness: 0.008, length_jitter: 0.3, ...COMPLETION_FALLBACK },
-  spectral: { radius: 0.5, thickness: 0.08, blades: 8, edge_softness: 0.1, hollow: 0, ...COMPLETION_FALLBACK, ...CRESCENT_FALLBACK },
+  glint: { points: 8, length: 0.5, thickness: 0.008, length_jitter: 0.3, ray_falloff: 1, fan: 0, ray_taper: 0, ...COMPLETION_FALLBACK },
+  spectral: { radius: 0.5, thickness: 0.08, blades: 8, edge_softness: 0.1, hollow: 0, roundness: 0, density_bias: 0, edge_bias: 0, ...PUPIL_FALLBACK, ...COMPLETION_FALLBACK, ...CRESCENT_FALLBACK },
   texture: {},
   orbs: { count: 24, size: 0.12, size_jitter: 0.6, spread: 1.0, edge_softness: 0.3, illumination: 0.8, blades: 6, ring: 0, ring_width: 0.3, spectral: 0 },
 };
 
 const PARAM_SPECS = {
-  glow: { softness: [0.01, 2, 0.01], falloff: [0.05, 6, 0.05] },
-  iris: { blades: [3, 24, 1], edge_softness: [0, 1, 0.01], hollow: [0, 0.95, 0.01], ...CRESCENT_SPEC },
+  glow: { softness: [0.01, 2, 0.01], falloff: [0.05, 6, 0.05], scatter: [0, 1, 0.01] },
+  iris: { blades: [3, 24, 1], edge_softness: [0, 1, 0.01], hollow: [0, 0.95, 0.01], roundness: [0, 1, 0.01], density_bias: [-1, 1, 0.01], ...PUPIL_SPEC, ...CRESCENT_SPEC },
   streak: { length: [0.01, 4, 0.01], thickness: [0.001, 0.5, 0.001], count: [1, 8, 1], curve: [-1, 1, 0.01], dash: [0, 1, 0.01] },
-  ring: { radius: [0, 2, 0.01], thickness: [0.001, 0.5, 0.001], ...COMPLETION_SPEC, ...CRESCENT_SPEC },
+  ring: { radius: [0, 2, 0.01], thickness: [0.001, 0.5, 0.001], edge_bias: [-0.4, 1, 0.01], ...COMPLETION_SPEC, ...CRESCENT_SPEC },
   hoop: { radius: [0, 2, 0.01], thickness: [0.001, 1, 0.001], angular_falloff: [0, 1, 0.01], ...COMPLETION_SPEC, ...CRESCENT_SPEC },
-  glint: { points: [1, 256, 1], length: [0.01, 3, 0.01], thickness: [0.001, 0.1, 0.001], length_jitter: [0, 1, 0.01], ...COMPLETION_SPEC },
-  spectral: { radius: [0, 2, 0.01], thickness: [0.001, 0.5, 0.001], blades: [3, 24, 1], edge_softness: [0, 1, 0.01], hollow: [0, 0.95, 0.01], ...COMPLETION_SPEC, ...CRESCENT_SPEC },
+  glint: { points: [1, 256, 1], length: [0.01, 3, 0.01], thickness: [0.001, 0.1, 0.001], length_jitter: [0, 1, 0.01], ray_falloff: [1, 4, 0.05], fan: [0, 0.5, 0.005], ray_taper: [0, 1, 0.01], ...COMPLETION_SPEC },
+  spectral: { radius: [0, 2, 0.01], thickness: [0.001, 0.5, 0.001], blades: [3, 24, 1], edge_softness: [0, 1, 0.01], hollow: [0, 0.95, 0.01], roundness: [0, 1, 0.01], density_bias: [-1, 1, 0.01], edge_bias: [-0.4, 1, 0.01], ...PUPIL_SPEC, ...COMPLETION_SPEC, ...CRESCENT_SPEC },
   texture: {},
   orbs: { count: [1, 200, 1], size: [0.01, 1, 0.005], size_jitter: [0, 1, 0.01], spread: [0, 3, 0.01], edge_softness: [0, 1, 0.01], illumination: [0.05, 5, 0.01], blades: [3, 16, 1], ring: [0, 1, 0.01], ring_width: [0.01, 2, 0.01], spectral: [0, 1, 0.01] },
 };
@@ -880,9 +928,58 @@ const CSS = `
 .fcore { font: 12px/1.4 sans-serif; color: #ccc; background: #131317;
   border: 1px solid #2b2b33; border-radius: 4px; padding: 8px;
   display: flex; flex-direction: column; gap: 7px; box-sizing: border-box;
-  height: 100%; overflow: hidden; }
+  height: 100%; overflow-x:hidden; overflow-y:auto; }
 .fcore * { box-sizing: border-box; }
-.fcore-bar { display: flex; gap: 6px; align-items: center; }
+.fcore > :not(.fcore-list) { flex-shrink:0; }
+.fcore > .fcore-list { min-height:120px; }
+.fcore-bar { display: flex; gap: 8px; align-items: center; flex-wrap:wrap; width:100%; }
+.fcore-advanced { max-height:340px; overflow:auto; padding:10px; border:1px solid #70502a; border-radius:4px; background:#19191f; }
+.fcore-advanced h3 { margin:0 0 6px; font-size:12px; color:#e8a33d; }
+.fcore-advanced-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; margin-top:10px; }
+.fcore-advanced-field { display:flex; flex-direction:column; gap:5px; min-width:0; }
+.fcore-advanced-field.wide { grid-column:1/-1; }
+.fcore-advanced-field input:not([type=checkbox]),.fcore-advanced-field select,.fcore-advanced-field textarea { width:100%; min-width:0; color:#e6e6ee; background:#101014; border:1px solid #3b3b46; border-radius:4px; padding:6px; font:12px/1.4 sans-serif; }
+.fcore-advanced-field textarea { min-height:100px; resize:vertical; font-family:monospace; }
+.fcore-advanced-field input[type=checkbox] { align-self:flex-start; accent-color:#e8a33d; }
+.fcore-advanced-field :disabled { opacity:.55; }
+.fcore-bar > .fcore-btn { min-height:36px; padding:7px 12px; }
+.fcore-bar .fcore-preset-button { flex:1 1 200px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; }
+.fcore-preset-gallery { box-sizing:border-box; width:min(1050px,94vw); max-height:88vh; padding:18px; border:1px solid #3a3a44; border-radius:10px; background:#19191f; color:#ddd; font:13px sans-serif; }
+.fcore-preset-gallery::backdrop { background:#0009; }
+.fcore-preset-gallery header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.fcore-preset-gallery h2 { margin:0 0 12px; font-size:20px; }
+.fcore-preset-gallery input[type=search] { box-sizing:border-box; width:100%; height:36px; margin:8px 0 14px; padding:8px; border:1px solid #3a3a44; border-radius:4px; background:#101014; color:#eee; }
+.fcore-preset-body { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:18px; }
+.fcore-preset-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); grid-auto-rows:max-content; align-content:start; gap:9px; overflow:auto; max-height:55vh; padding:2px; }
+.fcore-preset-card { min-width:0; padding:0 0 9px; border:1px solid #34343e; border-radius:6px; overflow:hidden; background:#1e1e25; color:#ddd; cursor:pointer; text-align:left; }
+.fcore-preset-card:hover,.fcore-preset-card:focus-visible,.fcore-preset-card.selected { border-color:#e8a33d; outline:1px solid #e8a33d; }
+.fcore-preset-card.preview-selected { border-color:#e8a33d; outline:2px solid #e8a33d; background:#30271c; }
+.fcore-preset-card img { display:block; width:100%; aspect-ratio:16/9; object-fit:contain; background:#050508; }
+.fcore-preset-card span,.fcore-preset-card small { display:block; padding:7px 9px 0; overflow-wrap:anywhere; }
+.fcore-preset-card small { color:#aaa; }
+.fcore-preset-gallery .fcore-preset-card { display:flex!important; flex-direction:column!important; height:auto!important; min-height:145px!important; max-height:none!important; align-self:start; justify-content:flex-start; line-height:1.35; white-space:normal!important; }
+.fcore-preset-gallery .fcore-preset-card img { width:100%!important; height:auto!important; max-height:none!important; flex:0 0 auto; aspect-ratio:16/9; object-fit:contain!important; }
+.fcore-preset-gallery .fcore-preset-card span,.fcore-preset-gallery .fcore-preset-card small { display:block!important; flex:0 0 auto; height:auto!important; min-height:1.3em; white-space:normal; text-align:left; }
+.fcore-preset-category { display:block; width:100%; height:34px!important; margin:0 0 12px; border:1px solid #3a3a44; border-radius:4px; background:#202027; color:#eee; }
+.fcore-preset-filters { display:flex; gap:8px; }
+.fcore-preset-filters select { min-width:0; flex:1; }
+.fcore-physical-panel { padding:12px; background:#1a1a20; border:1px solid #584329; border-radius:4px; gap:12px; }
+.fcore-physical-panel h3 { color:#f1bc70; font-size:13px; margin:0; }
+.fcore-physical-panel p { margin:2px 0 10px; line-height:1.5; }
+.fcore-physical-panel .fcore-source-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.fcore-physical-hybrid { display:block; padding:10px 0 4px; }
+.fcore-physical-panel.hybrid { padding:8px 10px; overflow:auto; flex-shrink:0; }
+.fcore-advanced { font-size:12px; }
+.fcore-advanced label,.fcore-advanced .fcore-hint { font-size:12px; }
+.fcore-groups { display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:8px 0; border-bottom:1px solid #34343e; margin-bottom:8px; }
+.fcore-groups .fcore-btn { min-height:30px; }
+.fcore-groups .active { border-color:#e8a33d; color:#ffd08a; background:#30271e; }
+.fcore-group-title { flex-basis:100%; color:#aaa; font-size:11px; }
+.fcore-preset-preview { min-width:0; }
+.fcore-preset-preview img { display:block; width:100%; aspect-ratio:16/9; object-fit:contain; background:#050508; border-radius:6px; }
+.fcore-preset-preview p { color:#aaa; line-height:1.5; }
+.fcore-preset-actions { display:flex; gap:8px; flex-wrap:wrap; }
+@media(max-width:620px) { .fcore-preset-body { grid-template-columns:1fr; } .fcore-preset-grid { max-height:28vh; } .fcore-preset-preview img { max-height:22vh; } }
 .fcore-btn { background: #1e1e25; color: #ddd; border: 1px solid #34343e;
   border-radius: 3px; padding: 5px 12px; cursor: pointer; font-size: 12px; }
 .fcore-btn:hover { background: #2a2a33; border-color: #e8a33d; }
@@ -894,7 +991,7 @@ const CSS = `
 .fcore-row { background: #1a1a20; border: 1px solid #2b2b33;
   border-radius: 4px; padding: 7px 9px; }
 .fcore-row.off { opacity: 0.4; }
-.fcore-head { display: flex; align-items: center; gap: 8px; }
+.fcore-head { display: flex; align-items: center; gap: 8px; flex-wrap:wrap; }
 .fcore-chip { width: 44px; height: 44px; border-radius: 3px; flex: 0 0 44px;
   background: #101014; border: 1px solid #2b2b33; overflow: hidden;
   display: flex; align-items: center; justify-content: center; }
@@ -954,6 +1051,9 @@ const CSS = `
   border-top: 1px solid #2b2b33; padding-top: 5px; }
 .fcore-global.lens { margin-top: 4px; }
 .fcore-global.src { flex-wrap: wrap; }
+.fcore-source-tuning { flex-basis:100%; min-width:0; border-top:1px solid #34343e; padding-top:8px; }
+.fcore-source-tuning > summary { color:#aaa; cursor:pointer; }
+.fcore-source-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr)); gap:10px; padding-top:10px; }
 .fcore-src-sel { background: #1e1e25; color: #ddd; border: 1px solid #34343e;
   border-radius: 3px; font-size: 12px; height: 24px; padding: 0 6px; }
 .fcore-hint { color: #7f8496; font-size: 11px; flex-basis: 100%;
@@ -974,12 +1074,37 @@ const CSS = `
    horizontal source row; in this COLUMN panel that reads as 100% of the
    HEIGHT and it swallows every spare pixel meant for the prompt box. */
 .fcore-forge .fcore-hint { flex: 0 0 auto; }
+.fcore-forge { padding:14px; gap:12px; overflow-y:auto; }
+.fcore-forge h3 { margin:0; font-size:16px; color:#eee; }
+.fcore-forge .forge-intro { margin:4px 0 0; color:#9696a5; font-size:12px; }
+.forge-card { border:1px solid #34343e; border-radius:6px; padding:12px; min-width:0; flex-shrink:0; background:#1a1a20; }
+.forge-card > summary { cursor:pointer; color:#ddd; }
+.forge-card .rowline { flex-wrap:wrap; align-items:center; gap:10px; }
+.forge-card label { display:flex; flex-direction:column; gap:6px; min-width:0; flex:1 1 140px; color:#aaa; }
+.forge-card .fcore-src-sel { width:100%; height:34px; min-width:0; }
+.forge-card-title { color:#e8a33d; font-size:11px; letter-spacing:.05em; margin-bottom:10px; }
+.forge-prompt { flex:1 0 240px; display:flex; flex-direction:column; gap:8px; }
+.forge-prompt textarea { width:100%; min-height:160px; line-height:1.6; padding:10px; }
+.forge-footer { display:flex; gap:10px; justify-content:space-between; align-items:center; }
+.forge-style-body { display:flex; flex-direction:column; gap:10px; margin-top:12px; }
+.forge-card .forge-style-toggle { flex-direction:row; flex:0 0 auto; align-items:center; }
+.fcore-forge input[type=checkbox] { accent-color:#e8a33d; }
+.fcore-forge button:focus-visible,.fcore-forge select:focus-visible { outline:2px solid #e8a33d; }
 
-.fcore-adv { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px 10px;
-  padding: 8px 2px 2px 40px; border-top: 1px dashed #2b2b33; margin-top: 7px; }
+.fcore-adv { display: flex; flex-direction: column; gap: 8px; min-width: 0;
+  padding: 8px 0 0; border-top: 1px solid #2b2b33; margin-top: 7px; }
+.fcore-settings { min-width: 0; border: 1px solid #34343e; border-radius: 5px; }
+.fcore-settings > summary { padding: 9px 12px; cursor: pointer; color: #ddd;
+  font-size: 12px; user-select: none; }
+.fcore-settings > summary:hover { color: #e8a33d; background: #202027; }
+.fcore-settings > summary:focus-visible { outline: 2px solid #e8a33d; }
+.fcore-settings-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(180px,100%),1fr));
+  gap: 12px; padding: 10px 12px 12px; border-top: 1px solid #2b2b33; min-width: 0; }
+.fcore-settings-grid > * { min-width: 0; }
+.fcore-settings-grid input[type=checkbox] { accent-color: #e8a33d; }
 .fcore-adv select { background: #1e1e25; color: #ddd; border: 1px solid #34343e;
   border-radius: 3px; font-size: 11px; width: 100%; height: 22px; }
-.fcore-global { display: flex; gap: 10px; align-items: center;
+.fcore-global { display: flex; gap: 10px; align-items: center; flex-wrap:wrap;
   background: #1a1a20; border: 1px solid #2b2b33; border-radius: 4px;
   padding: 7px 10px; }
 .fcore-global label { color: #aaa; font-size: 12px; }
@@ -1186,9 +1311,28 @@ function openGallery(files, { title = "Element library", selected = null,
 // flare axis "pos" puts an element does. Looked up by the control's label,
 // so every slider, checkbox and dropdown with a matching name gets an (i).
 const TIPS = {
+  "scatter": "Adds soft, uneven fans and fine fibres to a glow. The pattern stays fixed as the light moves and is filtered for small previews. This is an artistic source finish, not simulated diffraction.",
+  "coma": "Bends an iris reflection into an asymmetric pupil. Positive and negative values bend opposite ways; the motion editor can vary it with the source position. An authored shape approximation, not a measured lens coefficient.",
+  "caustic": "Maps light from an aperture through an authored polynomial distortion. Overlapping samples form bright curved folds. Use source-driven motion to change focus as the light moves. This is not the separate Lens Lab ray tracer. Hollow, density bias and edge softness apply to the ordinary iris, not this mapped pupil.",
+  "trefoil": "Adds three-sided curvature to a mapped caustic. Zero favours round or comatic folds; higher values form a concave triangular caustic. Only active when caustic is above zero. This is independent of aperture blade count.",
+  "edge bias": "Changes an annulus from a symmetric ring into a steep inner edge with a soft outer skirt. Positive values leave a darker cavity; negative values soften the inside instead.",
   // element row
   "pos": "where along the flare axis this element sits: 0 is on the light, 1 is on the anchor, negative is behind the light. Ghosts usually spread between 0.2 and 1.5.",
   "blur": "softens this element only.",
+  "size": "Size of this artistic element relative to the frame. Changes its shape footprint, not the source position. The numeric field can retain values above the slider’s convenient range.",
+  "opac": "Element brightness multiplier, not a transparency ceiling. Values above 1 are allowed for HDR light; type them in the number field. Zero disables this element’s light contribution.",
+  "light X": "Horizontal source position: 0 is left, 0.5 centre, 1 right. Values outside 0–1 place it off screen. Detection and tracking modes may use this as a starting point rather than a fixed position.",
+  "light Y": "Vertical source position: 0 is top, 0.5 centre, 1 bottom. Values outside 0–1 place it off screen.",
+  "anchor X": "Horizontal flare-axis anchor, in normalized frame coordinates. Artistic elements are arranged between the source and this anchor. Lens Lab traces around the physical optical centre instead.",
+  "anchor Y": "Vertical flare-axis anchor: 0 top, 0.5 centre, 1 bottom. Does not move the physical lens sensor or source in Lens Lab.",
+  "source radius": "Sampling radius as a fraction of frame height (0.02 = about 22 px at 1080p). Cover the whole luminous body, not just its hottest pixel: an extended lamp needs a larger radius than a distant point. The surrounding ring at 2–3 times this radius estimates background, so keep other lamps outside it. Too small can cause premature dimming; too large includes unrelated light. This is relative image photometry, not segmentation.",
+  "visibility smoothing": "Smooths changes in the measured source visibility over the clip. Higher values soften flicker but can delay a fast reveal or disappearance.",
+  "light depth": "Source depth on the map’s scale: with the default convention, 0 is far away and 1 is near. Used with a depth input to test whether something is in front of the light. The convention and normalization must match your map.",
+  "depth blur": "Spatially softens the depth map before testing obstruction. Useful for harsh depth edges, but high values can make a small foreground object disappear from the test.",
+  "depth smoothing": "Smooths depth values across frames to reduce fluctuating depth estimates. Can lag behind fast changes; use sparingly around moving occluders.",
+  "scene colour": "Mixes colour sampled near the source into the flare. 0 preserves the preset tint; 1 follows the scene sample. Blown-out white sources have little colour information.",
+  "mask falloff": "How far the light’s reveal reaches across masked artistic elements such as dirt, as a fraction of frame height. Smaller values reveal a tighter pool. Does not blur the whole flare or change physical ghost geometry.",
+  "seed": "Fixed random seed for procedural artistic details. The same seed keeps the pattern repeatable across frames and renders. Does not change the deterministic traced lens geometry.",
   // shapes drawn from the cine-lens survey
   "shade": "lights the element from one side only, in its own local frame: a ghost bright on the edge facing the source reads as a comet, and as a pointed crescent once the frame cuts it. Negative lights the other edge.",
   "shift x": "a nudge across the SCREEN, applied after the flare axis, so it does not swing as the light moves. Half-frame-heights.",
@@ -1219,8 +1363,15 @@ const TIPS = {
   "scene lock": "how much the light is held to the way the picture moves. A sun is at infinity and moves only with the camera, so at 1 the detector may only nudge it and a hop to a rival source cannot drag it. Set 0 for a light that moves on its own — headlights, a torch. A matte with no scene in it is left alone either way.",
   "search radius": "only look for the light inside this circle around the picker's light point (fraction of frame height). 0 searches the whole frame. Set it when a rival source elsewhere keeps stealing the flare; drag the light point to move the ring.",
   // look
-  "master": "overall brightness of the whole flare.",
-  "aspect": "stretches every element horizontally: 1 is spherical, 1.3 to 2 reads as anamorphic.",
+  "master": "Overall strength: 1 preserves the preset; 0 turns it off. Artistic elements link brightness and size. With Lens Lab enabled, this scales brightness only, including its source finish; it never changes the traced lens geometry.",
+  "aspect": "Stretches artistic elements horizontally: 1 is spherical, 1.3 to 2 reads as anamorphic. Does not change Lens Lab’s traced geometry or turn its spherical prescription into an anamorphic lens.",
+  "fringe": "Adds chromatic fringe to the artistic element stack. It does not simulate wavelength-dependent refraction and does not affect Lens Lab’s traced ghosts.",
+  "base brightness": "Preset brightness before the master control. Scales the artistic stack and complete Lens Lab result together, including its source finish.",
+  "base size": "Artistic stack size before the master control. Physical Lens Lab geometry is not resized by this setting.",
+  "flicker": "Amount of seeded brightness variation in the artistic stack over a clip. Does not animate the physical Lens Lab pass.",
+  "flicker speed": "Speed of the artistic brightness variation. Has no effect when flicker is zero; does not affect the traced ghost pass.",
+  "edge fade start": "Distance from frame centre where the artistic stack begins fading as the source travels away. Lens Lab uses actual aperture clipping instead of this artistic fade.",
+  "edge fade range": "Distance over which the artistic edge fade reaches zero. Zero disables that fade. Does not change physical Lens Lab clipping.",
   // element settings
   "irregular": "seeded organic unevenness in the shape, so it stops looking computer-perfect.",
   "light mask": "reveal this element only where the light is. Set it to 1 for lens dirt and bloom.",
@@ -1242,7 +1393,13 @@ const TIPS = {
   // shape parameters
   "softness": "how gradually the glow fades from its centre.",
   "falloff": "how quickly it dies away with distance.",
+  "ray falloff": "How quickly diffraction rays fade along their length. 1 preserves the original long exponential tails; 2 gives a compact, softer-ended star. It does not change the light position.",
+  "fan": "How much each ray widens away from the source. 0 is a parallel hairline; small values form soft diffraction wedges. This is an artistic source shape, not a measured lens prescription.",
+  "surface detail": "Subtle seeded variation inside a ghost or reflection rim. The pattern follows the element and fades when too small to resolve, reducing shimmer. This is procedural detail, not a scanned coating texture.",
+  "density bias": "Moves the brightness inside a pupil-shaped ghost: negative values concentrate it toward the centre; positive values favour the edge. Zero keeps a flat fill. This shapes the appearance, not the lens prescription.",
+  "ray taper": "Concentrates ray brightness near the source and gently reduces long, hard spokes. Zero preserves the original ray profile; one gives a strongly tapered scattering profile. Separate from the number or direction of rays.",
   "blades": "number of iris blades, the polygon's sides.",
+  "roundness": "curves the aperture outline from a polygon (0) toward a circle (1); independent of edge softness.",
   "edge softness": "softens the polygon's edge.",
   "hollow": "carves out the middle, leaving a ring.",
   "length": "how far it reaches, as a fraction of the frame.",
@@ -1263,6 +1420,8 @@ const TRIGGER_TIPS = {
   "rotation": "extra rotation, in degrees, added while triggered.",
 };
 const DROPDOWN_TIPS = {
+  "channel (luminance = full recolor)": "RGB preserves the texture’s baked colour and multiplies it by your tint. Luminance converts it to brightness first, so the tint can fully recolour the element.",
+  "lens illumination": "For screen-space artistic elements with several lights: Strongest uses the brightest light; additive combines illumination from all lights. It does not change the physical Lens Lab pass.",
   "mode": "what makes this element react: nothing, the light nearing the frame border, the light nearing frame centre, or the element's own distance to the light.",
   "driven by": "whether the rule measures the light's position or this element's.",
   "falloff": "the shape of the ramp between the region's inner and outer edge.",
@@ -1278,26 +1437,7 @@ const CHECK_TIPS = {
 // body at a fixed position rather than inside the panel, because the panel
 // scrolls and clips: a tooltip that half-disappears is worse than none.
 function infoIcon(text) {
-  const i = document.createElement("span");
-  i.className = "fcore-info";
-  i.textContent = "i";
-  let tip = null;
-  const hide = () => { tip?.remove(); tip = null; };
-  const show = () => {
-    hide();
-    tip = document.createElement("div");
-    tip.className = "fcore-tip";
-    tip.textContent = text;
-    document.body.appendChild(tip);
-    const r = i.getBoundingClientRect();
-    const w = tip.offsetWidth || 250;
-    tip.style.left = `${Math.max(6, Math.min(r.left - 8, window.innerWidth - w - 8))}px`;
-    tip.style.top = `${r.bottom + 6}px`;
-  };
-  i.addEventListener("pointerenter", show);
-  i.addEventListener("pointerleave", hide);
-  i.addEventListener("pointerdown", (e) => { e.stopPropagation(); e.preventDefault(); });
-  return i;
+  return infoTag(text);
 }
 function hideAllTips() {
   document.querySelectorAll(".fcore-tip, .fcore-peek").forEach((t) => t.remove());
@@ -1316,7 +1456,7 @@ function sliderCol(label, value, [min, max, step], onChange, tip) {
   range.value = Math.min(max, Math.max(min, real));
   const num = document.createElement("input");
   num.type = "number"; num.min = min; num.step = step;
-  const fmt = (v) => Number(v).toFixed(step >= 1 ? 0 : 2);
+  const fmt = (v) => Number(v).toFixed(step >= 1 ? 0 : Math.max(2, Math.ceil(-Math.log10(step))));
   num.value = fmt(real);
   range.addEventListener("input", () => {
     num.value = fmt(range.value);
@@ -1354,6 +1494,7 @@ class FlareEditor {
     this.previewIndex = null;
     this.root.tabIndex = 0;
     this.root.addEventListener("keydown", (e) => {
+      if (e.target.matches('input,textarea,select')) return;
       if (!(e.ctrlKey || e.metaKey)) return;
       const k = e.key.toLowerCase();
       if (k === "z" && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); this.undo(); }
@@ -1379,6 +1520,7 @@ class FlareEditor {
 
   destroy() {
     clearInterval(this._poll);
+    this._lensLab?.close();
     if (this.node) this.node._fcTriggerPreview = null;
   }
 
@@ -1390,9 +1532,83 @@ class FlareEditor {
 
   get widget() { return findWidget(this.node, "preset_json"); }
 
+  advancedPanel() {
+    const section=document.createElement('section');section.className='fcore-advanced';
+    section.setAttribute('aria-label','Advanced node settings');
+    const heading=document.createElement('h3');heading.textContent='Advanced node settings';
+    const note=document.createElement('div');note.className='fcore-hint';
+    note.textContent='Edits apply to this node. Group source controls remain in Source tuning. Connected values are read-only here.';
+    const grid=document.createElement('div');grid.className='fcore-advanced-grid';section.append(heading,note,grid);
+    const aliases={light_x:'light X',light_y:'light Y',flare_x:'anchor X',flare_y:'anchor Y',
+      detect_threshold:'threshold',detect_max_lights:'max lights',occlusion_radius:'source radius',
+      occlusion_smooth:'visibility smoothing',track_smoothing:'smoothing',track_max_jump:'max jump',
+      track_feature:'feature px',track_search:'search px',track_hold:'hold',track_fade:'fade',
+      light_travel:'travel',scene_color:'scene colour',depth_temporal_smooth:'depth smoothing'};
+    const tips={preset_json:'The complete saved flare document, including all groups, elements and Lens Lab settings. Advanced use: valid JSON is required. Save the workflow to keep the whole scene; Save preset keeps the selected group.',
+      intensity:'Node-wide brightness multiplier, applied to artistic elements and the complete Lens Lab contribution. Does not move the source or change physical lens geometry.',
+      scale:'Scales the artistic flare elements. Does not scale physical lens geometry; use Lens Lab sensor and aperture controls for physical ghost shapes.',
+      visibility_mode:'Estimate source obstruction from image energy, depth, or both. Match source radius to the whole emitter. Physical ghosts dim but do not shrink or hide behind scene objects; artistic elements may also shrink. Image visibility needs a clear reference and responds to exposure changes.',
+      blend_mode:'Add combines light in linear space and supports HDR. Screen is a bounded artistic blend; it can look flatter and is not a physical light addition.',
+      clamp_output:'Limit final image values to 0–1. Turn off for an HDR linear workflow that can preserve values above white. Ordinary image previews may still clip them.',
+      invert_depth:'Reverse the depth map’s near/far convention. By default 0 is far and 1 is near.',
+      control_after_generate:'What happens to the seed after a queued render. Fixed keeps repeatable artistic details; randomize changes the next seed. Physical ray geometry stays deterministic.'};
+    for(const w of nodeWidgets(this.node)) {
+      if(activeGroup(sceneDocument(this.node)) && SOURCE_FIELDS.has(w.name)) continue;
+      const definition=this.node._fcInputDefs?.[w.name], spec=definition?.[1] || w.options || {};
+      const label=aliases[w.name] || w.name.replaceAll('_',' ');
+      const row=document.createElement('label');row.className='fcore-advanced-field';
+      const title=document.createElement('span');title.textContent=label;
+      const tip=tips[w.name] || TIPS[label] || spec.tooltip || w.tooltip || w.options?.tooltip;
+      if(tip) title.append(infoTag(tip,`About ${label}`));
+      const kind=definition?.[0], current=w.value;
+      let options=Array.isArray(kind)?kind:w.options?.values;
+      if(typeof options==='function') options=options(w);
+      let input;
+      if(Array.isArray(options)) {
+        input=document.createElement('select');
+        for(const v of options){const o=document.createElement('option');o.value=String(v);o.textContent=String(v);input.append(o);}
+        input.value=String(current);
+      } else if(kind==='BOOLEAN' || typeof current==='boolean') {
+        input=document.createElement('input');input.type='checkbox';input.checked=!!current;
+      } else if(kind==='FLOAT' || kind==='INT' || typeof current==='number') {
+        input=document.createElement('input');input.type='number';input.value=current;
+        if(Number.isFinite(spec.min))input.min=spec.min;
+        if(Number.isFinite(spec.max))input.max=spec.max;
+        input.step=kind==='INT'?'1':'any';
+      } else {
+        input=document.createElement(spec.multiline || w.name==='preset_json'?'textarea':'input');
+        input.value=String(current??'');
+        if(input.tagName==='TEXTAREA')row.classList.add('wide');
+      }
+      input.setAttribute('aria-label',label);
+      const linked=this.node.inputs?.some(s=>s.widget?.name===w.name && s.link!=null);
+      input.disabled=!!linked;
+      if(linked)title.append(' · connected input');
+      input.onchange=()=>{
+        input.setCustomValidity('');
+        let value=input.type==='checkbox'?input.checked:input.type==='number'?Number(input.value):input.value;
+        if(input.type==='number' && (!input.value.trim() || !Number.isFinite(value) || !input.checkValidity()))return;
+        if(w.name==='preset_json') {
+          try { JSON.parse(value); } catch { input.setCustomValidity('Enter valid JSON before applying this edit.');input.reportValidity();return; }
+          this.flushPending();this.snapshot(false);
+        }
+        w.value=value;w.callback?.(value,app.canvas,this.node,null,null);
+        // Third-party callbacks must not leave native widgets exposed.
+        setAdvanced(this.node,true);
+        if(w.name==='preset_json' || w.name==='position_mode')this.build();
+      };
+      // Commit valid numeric input as it is typed (like the editor sliders).
+      // Empty/intermediate values remain local until they become valid.
+      if(input.type==='number')input.oninput=input.onchange;
+      row.append(title,input);grid.append(row);
+    }
+    return section;
+  }
+
   read() {
     try {
-      const preset = JSON.parse(this.widget?.value || "{}");
+      const document = JSON.parse(this.widget?.value || "{}");
+      const preset = activeGroup(document)?.preset || document;
       if (!preset.elements) preset.elements = [];
       if (!preset.schema_version) preset.schema_version = 1;
       if (!preset.global) preset.global = {};
@@ -1405,6 +1621,12 @@ class FlareEditor {
   }
 
   write(preset, { quiet = false } = {}) {
+    const document=sceneDocument(this.node),group=activeGroup(document);
+    if(group){group.preset=preset;return this.writeDocument(document,{quiet});}
+    return this.writeDocument(preset,{quiet});
+  }
+
+  writeDocument(preset, { quiet = false } = {}) {
     const text = JSON.stringify(preset, null, 2);
     this.snapshot(quiet);
     if (this.widget) { this.widget.value = text; this.lastText = text; }
@@ -1596,7 +1818,7 @@ class FlareEditor {
     const elem = (this.previewIndex != null && preset)
       ? preset.elements[this.previewIndex] : null;
     const trig = elem?.trigger;
-    const live = !!trig && !!trig.mode && trig.mode !== "none"
+    const live = renderMode(preset)!=='physical' && !!trig && !!trig.mode && trig.mode !== "none"
       && this.expanded.has(this.previewIndex);
     if (!live) this.previewIndex = null;
     this.node._fcTriggerPreview = live
@@ -1609,9 +1831,21 @@ class FlareEditor {
     // Every edit rebuilds the list, which would otherwise throw the view back
     // to the top — press solo on the tenth element and you lose your place.
     // The scroller is .fcore-list; carry its offset across the rebuild.
-    const keptScroll = this.root.querySelector(".fcore-list")?.scrollTop ?? 0;
+    const previousList = this.root.querySelector(".fcore-list");
+    let keptScroll = previousList?.scrollTop ?? 0;
     this.root.textContent = "";
     const preset = this.read();
+    // Element and lens inspectors have different content. Never inherit a
+    // long stack's scroll offset when Apply first reveals the lens controls.
+    if (!!previousList?.classList.contains('fcore-physical-panel') !== (renderMode(preset)==='physical')) keptScroll=0;
+    const scene=sceneDocument(this.node),group=activeGroup(scene);
+    // Source-mode changes and group rebuilds must not reveal native controls.
+    // The cog's editable mirrors live inside the fixed-height DOM panel.
+    for(const widget of nodeWidgets(this.node))hideWidget(widget);
+    if(this.node._fcActiveGroup!==group?.id){
+      this.node._fcActiveGroup=group?.id;
+      if(group)selectGroupResult(this.node,scene);
+    }
 
     /* toolbar: + add | presets | save… | library | ⚙  (no play button —
        queueing belongs to ComfyUI's own Run) */
@@ -1631,81 +1865,60 @@ class FlareEditor {
     });
 
     const loadBtn = document.createElement("button");
-    loadBtn.className = "fcore-btn";
-    loadBtn.textContent = "presets ▾";
-    loadBtn.onclick = async (e) => {
+    loadBtn.className = "fcore-btn fcore-preset-button";
+    loadBtn.textContent = activeLookLabel(preset) + " ▾";
+    loadBtn.title = "Active look: " + activeLookLabel(preset) + ". Open the preset gallery to replace it.";
+    loadBtn.onclick = async () => {
+      this.flushPending();
+      loadBtn.disabled=true;
       try {
-        const r = await api.fetchApi("/flarecore/presets");
-        const d = await r.json();
-        const index = d.index && d.index.length ? d.index
-          : (d.presets || []).map((n) => ({ name: n.replace(/\.json$/, ""),
-                                            category: "", subcategory: "" }));
-        // Grouped by the category each preset files itself under, so the
-        // library reads as a shelf instead of one long alphabetical run.
-        // Order the headings deliberately; anything unfiled trails.
-        const ORDER = ["Anamorphic", "Spherical", "Scenario", "Utility"];
-        const rank = (c) => {
-          const i = ORDER.indexOf(c);
-          return i < 0 ? ORDER.length : i;
-        };
-        const groups = new Map();
-        for (const p of index) {
-          const key = (p.category || "Other")
-            + (p.subcategory ? " · " + p.subcategory : "");
-          if (!groups.has(key)) groups.set(key, []);
-          groups.get(key).push(p.name);
-        }
-        const keys = [...groups.keys()].sort((a, b) => {
-          const ra = rank(a.split(" · ")[0]), rb = rank(b.split(" · ")[0]);
-          return ra !== rb ? ra - rb : a.localeCompare(b);
+        const r=await api.fetchApi("/flarecore/presets");
+        if(!r.ok)throw new Error("Preset listing failed");
+        const d=await r.json();
+        const index=d.index?.length ? d.index : (d.presets || []).map(n=>({name:n.replace(/\.json$/,"")}));
+        const current=this.read();
+        openPresetGallery({
+          index, selected:selectedLibraryPreset(current,index),
+          opener:loadBtn,
+          previewUrl:name=>api.apiURL(`/flarecore/preset_preview/${encodeURIComponent(name)}`),
+          onChoose:async(action,item)=>{
+            const rr=await api.fetchApi(`/flarecore/preset/${encodeURIComponent(item.name)}`);
+            if(!rr.ok)throw new Error("Preset load failed");
+            const dd=await rr.json();
+            const incoming=JSON.parse(dd.json);
+            if(!Array.isArray(incoming.elements))throw new Error("Invalid preset");
+            if(action==="add"){
+              if(incoming.lens_lab?.enabled && !incoming.elements.length)
+                throw new Error("This is a Lens Lab configuration, not an element stack. Use Replace to load it, or open Lens Lab on your current flare.");
+              this.mutate(p=>{
+                for(const element of incoming.elements){
+                  element.id=this.mintId(element.type || "elem");p.elements.push(element);
+                }
+              });
+            } else {
+              incoming.name=incoming.name || item.title || item.name;
+              incoming.preset_file=item.name;
+              this.flushPending();this.write(incoming);this.build();
+            }
+          }
         });
-        const entries = [];
-        for (const k of keys) {
-          entries.push([k, null]);
-          for (const n of groups.get(k)) entries.push([n, "load:" + n]);
-        }
-        entries.push(["merge into the current stack", null]);
-        for (const k of keys) {
-          for (const n of groups.get(k)) entries.push(["+ " + n, "add:" + n]);
-        }
-        popupMenu(e, entries,
-          async (pick) => {
-            const [action, name] = [pick.slice(0, pick.indexOf(":")), pick.slice(pick.indexOf(":") + 1)];
-            try {
-              const rr = await api.fetchApi(
-                `/flarecore/preset/${encodeURIComponent(name)}`);
-              const dd = await rr.json();
-              if (dd.json && this.widget && action === "add") {
-                const incoming = JSON.parse(dd.json);
-                this.mutate((p) => {
-                  for (const el of incoming.elements || []) {
-                    el.id = this.mintId(el.type || "elem");
-                    p.elements.push(el);
-                  }
-                });
-              } else if (dd.json && this.widget) {
-                this.snapshot(false);
-                this.widget.value = dd.json;
-                this.lastText = dd.json;
-                this.build();
-              } else if (dd.error) {
-                loadBtn.textContent = "load failed";
-                setTimeout(() => { loadBtn.textContent = "presets ▾"; }, 1800);
-              }
-            } catch (err) { console.error("flarecore preset load", err); }
-          });
-      } catch (err) { console.error("flarecore presets", err); }
+      } catch(err) {
+        loadBtn.title="Could not open preset gallery. Restart ComfyUI after updating and retry.";
+        console.error("flarecore presets",err);
+      } finally {loadBtn.disabled=false;}
     };
 
     const saveBtn = document.createElement("button");
     saveBtn.className = "fcore-btn";
     saveBtn.textContent = "save…";
+    saveBtn.title = "Save this flare group's preset. Save the workflow to retain all groups and source settings.";
     saveBtn.onclick = async () => {
-      const name = prompt("Preset name:", "my_flare");
+      this.flushPending();
+      const name = prompt("Preset name:", activeLookLabel(this.read()) || "my_flare");
       if (!name) return;
       const post = (overwrite) => api.fetchApi("/flarecore/save_preset", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, json: this.widget?.value || "", overwrite }),
+        body: JSON.stringify({ name, json: JSON.stringify({...this.read(), name}), overwrite }),
       });
       try {
         let d = await (await post(false)).json();
@@ -1716,6 +1929,7 @@ class FlareEditor {
           }
         }
         saveBtn.textContent = d.saved ? "saved ✓" : (d.error ? "not saved" : "save…");
+        if(d.saved)this.mutate(p=>{p.name=name;p.preset_file=d.saved.replace(/\.json$/,"");});
         if (d.error && !d.saved) console.warn("flarecore save:", d.error);
       } catch { saveBtn.textContent = "error"; }
       setTimeout(() => { saveBtn.textContent = "save…"; }, 1800);
@@ -1734,7 +1948,9 @@ class FlareEditor {
     const advBtn = document.createElement("button");
     advBtn.className = "fcore-btn" + (this.node._fcAdvanced ? " on" : "");
     advBtn.textContent = "⚙";
-    advBtn.title = "show the node's inputs (preset JSON, detection, occlusion, blending, seed)";
+    advBtn.setAttribute("aria-label", "Advanced node settings");
+    advBtn.setAttribute("aria-expanded", String(!!this.node._fcAdvanced));
+    advBtn.title = "Show or hide advanced settings inside this panel. The node stays the same size; connections and values are preserved.";
     advBtn.onclick = () => { setAdvanced(this.node, !this.node._fcAdvanced); this.build(); };
 
     const undoBtn = document.createElement("button");
@@ -1750,7 +1966,33 @@ class FlareEditor {
     redoBtn.disabled = !this.future.length;
     redoBtn.onclick = () => this.redo();
 
-    bar.append(addBtn, loadBtn, saveBtn, libBtn, undoBtn, redoBtn, advBtn);
+    const lensLabBtn = document.createElement("button");
+    lensLabBtn.className = "fcore-btn" + (preset?.lens_lab?.enabled ? " on" : "");
+    lensLabBtn.textContent = "Lens Lab";
+    lensLabBtn.title = "Experimental physical lens designer · traced reflections";
+    lensLabBtn.onclick = async () => {
+      this.flushPending();
+      const original = this.widget?.value;
+      const current = this.read();
+      if (!current) return;
+      lensLabBtn.disabled = true;
+      try {
+        const {openLensLab} = await import("./flarecore_lens_lab.js");
+        this._lensLab?.close();
+        this._lensLab = await openLensLab({api, settings: current.lens_lab, opener: lensLabBtn,
+          onApply: settings => {
+            if (!this.root.isConnected) throw new Error("This node has been removed.");
+            if (this.widget?.value !== original) throw new Error("The flare changed while Lens Lab was open. Cancel and reopen to keep those changes.");
+            this.mutate(p => applyLensSettings(p,settings));
+          }});
+      } catch (err) { alert(err.message || "Could not open Lens Lab."); }
+      finally { lensLabBtn.disabled = false; }
+    };
+    if(renderMode(preset)==='physical'){
+      addBtn.disabled=libBtn.disabled=true;
+      addBtn.title=libBtn.title='Artistic elements are inactive. Enable Include artistic elements below, or switch back to the retained stack.';
+    }
+    bar.append(addBtn, loadBtn, saveBtn, libBtn, lensLabBtn, undoBtn, redoBtn, advBtn);
     if (this.error) {
       const badge = document.createElement("span");
       badge.className = "fcore-badge";
@@ -1758,6 +2000,16 @@ class FlareEditor {
       bar.appendChild(badge);
     }
     this.root.appendChild(bar);
+    if (this.node._fcAdvanced) this.root.appendChild(this.advancedPanel());
+    if (preset?.lens_lab?.enabled) {
+      const note = document.createElement("div");
+      note.className = "fcore-badge";
+      note.textContent = preset.lens_lab.include_artistic
+        ? "Lens Lab experimental · traced ghosts + artistic elements · travel damping off"
+        : "Lens Lab experimental · traced ghosts + separate source finish; stack elements inactive";
+      this.root.appendChild(note);
+    }
+    this.root.appendChild(this.buildGroups());
     this.root.appendChild(this.buildSourceRow());
     if (!preset) return;
 
@@ -1766,22 +2018,23 @@ class FlareEditor {
     const gRow = document.createElement("div");
     gRow.className = "fcore-global";
     const gLab = document.createElement("label");
-    gLab.textContent = "master";
+    gLab.textContent = renderMode(preset)==='physical' ? "brightness" : "master";
     gLab.appendChild(infoIcon(TIPS["master"]));
     const gRange = document.createElement("input");
     gRange.type = "range"; gRange.min = 0; gRange.max = 3; gRange.step = 0.01;
-    gRange.value = g.intensity ?? 1;
+    gRange.value = g.master ?? 1;
+    gRange.setAttribute("aria-label", renderMode(preset)==='physical' ? "Lens brightness" : "Master brightness and size");
     const gNum = document.createElement("input");
     gNum.type = "number"; gNum.min = 0; gNum.max = 3; gNum.step = 0.01;
     gNum.value = Number(gRange.value).toFixed(2);
     gRange.addEventListener("input", () => {
       gNum.value = Number(gRange.value).toFixed(2);
-      this.mutateQuiet((p) => { p.global.intensity = Number(gRange.value); });
+      this.mutateQuiet((p) => { p.global.master = Number(gRange.value); });
     });
     gNum.addEventListener("change", () => {
       const v = Math.min(3, Math.max(0, Number(gNum.value) || 0));
       gNum.value = v.toFixed(2); gRange.value = v;
-      this.mutateQuiet((p) => { p.global.intensity = v; });
+      this.mutateQuiet((p) => { p.global.master = v; });
     });
     const aLab = document.createElement("label");
     aLab.textContent = "aspect";
@@ -1816,8 +2069,16 @@ class FlareEditor {
     lensBtn.textContent = this.lensOpen ? "lens ▴" : "lens ▾";
     lensBtn.title = "lens-wide behaviour: chromatic fringe, flicker, edge fade";
     lensBtn.onclick = () => { this.lensOpen = !this.lensOpen; this.build(); };
-    gRow.append(gLab, gRange, gNum, aLab, aRange, aNum, tint, lensBtn);
+    gRow.append(gLab, gRange, gNum);
+    if(renderMode(preset)!=='physical')gRow.append(aLab,aRange,aNum);
+    gRow.append(tint);
+    if(renderMode(preset)!=='physical')gRow.append(lensBtn);
     this.root.appendChild(gRow);
+
+    if(preset.lens_lab?.enabled){
+      const panel=this.buildPhysicalPanel(preset,()=>lensLabBtn.click());this.root.append(panel);
+      if(!preset.lens_lab.include_artistic){panel.scrollTop=keptScroll;this.syncTriggerPreview();return;}
+    }
 
     if (this.lensOpen) {
       const lens = document.createElement("div");
@@ -1829,6 +2090,8 @@ class FlareEditor {
         lens.appendChild(col);
       };
       gslider("fringe", "fringe", [0, 1, 0.01], 0);
+      gslider("base brightness", "intensity", [0, 3, 0.01], 1);
+      gslider("base size", "scale", [.01, 3, .01], 1);
       gslider("flicker", "flicker_amount", [0, 1, 0.01], 0);
       gslider("flicker speed", "flicker_speed", [0, 5, 0.05], 1);
       gslider("edge fade start", "edge_fade_start", [0, 2, 0.01], 0);
@@ -1857,6 +2120,99 @@ class FlareEditor {
     }
   }
 
+  buildPhysicalPanel(preset,openDesigner) {
+    const section=document.createElement('section');section.className='fcore-physical-panel'+(preset.lens_lab.include_artistic?' hybrid':' fcore-list');
+    section.setAttribute('aria-label','Active Lens Lab settings');
+    const heading=document.createElement('h3');heading.textContent=activeLookLabel(preset);
+    heading.append(infoTag('These controls change the active traced lens. Source position, tracking, obstruction, tint and brightness still belong to Flarecore Render. The old artistic stack is retained separately, not used in a physical-only pass.','About active Lens Lab settings'));
+    const model=document.createElement('p');model.className='fcore-hint';model.textContent='PBRT Wide 22 mm · experimental spherical reference';
+    const grid=document.createElement('div');grid.className='fcore-source-grid';
+    const lens=preset.lens_lab;
+    const controls=[
+      ['F-number','f_stop',[2.8,22,.1],'Aperture opening. Higher f-numbers stop down the lens and change ghost shape and energy; exposure is not automatically normalized.'],
+      ['Ghost exposure','exposure',[-10,16,.1],'Brightness of traced reflections in stops. +1 EV doubles ghost energy. Source finish has separate controls.'],
+      ['Source glow','source_glow',[0,4,.05],'Separate artistic core and halo. Use zero on a photograph that already has sufficient source bloom.'],
+      ['Source rays','source_rays',[0,8,.1],'Separate artistic rays, not traced diffraction. Does not change the ghost paths.'],
+      ['Source size','source_size',[.001,.05,.001],'Size of the artistic source finish as a fraction of image height. Does not change the point source used for tracing.']
+    ];
+    for(const [label,key,spec,help] of controls){
+      const col=sliderCol(label,lens[key]??spec[0],spec,v=>this.mutateQuiet(p=>{p.lens_lab[key]=v;}),help);
+      grid.append(col);
+    }
+    const choose=(label,key,options,help)=>{
+      const col=document.createElement('label');col.className='fcore-col';col.append(label,infoTag(help,`About ${label}`));
+      const input=document.createElement('select');input.className='fcore-src-sel';input.setAttribute('aria-label',label);
+      for(const [value,text] of options){const o=document.createElement('option');o.value=value;o.textContent=text;input.append(o);}
+      input.value=lens[key];input.onchange=()=>this.mutate(p=>{p.lens_lab[key]=key==='blades'?Number(input.value):input.value;});
+      col.append(input);grid.append(col);
+    };
+    choose('Aperture blades','blades',[[0,'Circular'],...Array.from({length:14},(_,i)=>[i+3,`${i+3} blades`])],'Shape of the aperture stop. Changes the traced ghosts, not your tracker.');
+    choose('Final ray quality','quality',[['draft','Draft · 48²'],['standard','Standard · 96²'],['fine','Fine · 192²']],'Fine is recommended for delivery, especially narrow caustics. More rays improve convergence and take longer.');
+    const hybrid=document.createElement('label');hybrid.className='fcore-physical-hybrid';
+    const check=document.createElement('input');check.type='checkbox';check.checked=!!lens.include_artistic;check.setAttribute('aria-label','Include artistic elements');
+    check.onchange=()=>this.mutate(p=>{p.lens_lab.include_artistic=check.checked;});
+    hybrid.append(check,' Include artistic elements',infoTag('Hybrid mode adds the retained stack below to the traced lens. Watch for duplicate source cores or bloom. Turning it off keeps all elements saved.','About hybrid rendering'));
+    const retained=document.createElement('p');retained.className='fcore-hint';retained.textContent=`${preset.elements.length} artistic elements retained${lens.include_artistic?' · active below':' · inactive, no element settings affect this pass'}.`;
+    const actions=document.createElement('div');actions.className='fcore-bar';
+    const edit=document.createElement('button');edit.className='fcore-btn';edit.textContent='Open full Lens Lab';edit.onclick=openDesigner;
+    const restore=document.createElement('button');restore.className='fcore-btn';restore.textContent='Use artistic stack';
+    restore.title='Disable Lens Lab and render the retained artistic elements. Optical settings remain saved; Undo returns to this lens.';
+    restore.onclick=()=>this.mutate(p=>applyLensSettings(p,{...p.lens_lab,enabled:false}));
+    actions.append(edit,restore);
+    // In hybrid mode give the active element list room. Full optical controls
+    // remain one click away; a second tall inspector would bury that list.
+    if(lens.include_artistic)section.append(heading,hybrid,retained,actions);
+    else section.append(heading,model,grid,hybrid,retained,actions);
+    return section;
+  }
+
+  changeGroups(change) {
+    this.flushPending();
+    if(!sceneDocument(this.node))return;
+    const document=ensureGroups(sceneDocument(this.node),this.node);
+    change(document);
+    this.writeDocument(document);this.expanded.clear();this.previewIndex=null;
+    selectGroupResult(this.node,document);this.build();
+  }
+
+  buildGroups() {
+    const row=document.createElement('div');row.className='fcore-groups';
+    const scene=sceneDocument(this.node),selected=activeGroup(scene);
+    if(!scene){row.textContent='Fix the preset JSON before editing flare groups.';return row;}
+    const title=document.createElement('div');title.className='fcore-group-title';
+    title.textContent='FLARE GROUPS · settings below apply only to the selected group';row.append(title);
+    if(scene.groups && (!Array.isArray(scene.groups) || scene.groups.some(g=>!g?.preset))){
+      row.textContent='Invalid flare groups. Correct the scene JSON or use Undo.';return row;
+    }
+    const groups=scene?.groups || [{id:'single',name:'Flare 1',enabled:true}];
+    for(const group of groups){
+      const button=document.createElement('button');button.className='fcore-btn'+(!selected||selected.id===group.id?' active':'');
+      button.textContent=(group.enabled===false?'○ ':'● ')+group.name;button.setAttribute('aria-pressed',String(!selected||selected.id===group.id));
+      button.onclick=()=>{if(selected && selected.id!==group.id)this.changeGroups(d=>{d.active_group=group.id;});};row.append(button);
+    }
+    const add=document.createElement('button');add.className='fcore-btn';add.textContent='+ Flare';add.disabled=groups.length>=16;
+    add.onclick=()=>this.changeGroups(d=>{
+      const id=newGroupId(d);d.groups.push({id,name:`Flare ${d.groups.length+1}`,enabled:true,
+        preset:{schema_version:1,name:'Choose a preset',global:{},elements:[]},
+        source:{...clone(activeGroup(d).source),position_mode:'manual',use_lights_input:false,light_x:.7,light_y:.3}});
+      d.active_group=id;
+    });
+    const duplicate=document.createElement('button');duplicate.className='fcore-btn';duplicate.textContent='Duplicate flare';duplicate.disabled=groups.length>=16;
+    duplicate.onclick=()=>this.changeGroups(d=>{
+      const copy=clone(activeGroup(d));copy.id=newGroupId(d);copy.name+=' copy';
+      for(const element of copy.preset.elements || [])element.id=this.mintId(element.type || 'elem');
+      d.groups.push(copy);d.active_group=copy.id;
+    });
+    const rename=document.createElement('button');rename.className='fcore-btn';rename.textContent='Rename';
+    rename.onclick=()=>{const name=prompt('Flare group name:',selected?.name || 'Flare 1');if(name?.trim())this.changeGroups(d=>{activeGroup(d).name=name.trim();});};
+    const enabled=document.createElement('label'),check=document.createElement('input');check.type='checkbox';check.checked=selected?.enabled!==false;
+    check.onchange=()=>this.changeGroups(d=>{activeGroup(d).enabled=check.checked;});enabled.append(check,' Enabled');
+    const remove=document.createElement('button');remove.className='fcore-btn';remove.textContent='Remove flare';remove.disabled=groups.length<=1;
+    remove.title='Remove the selected group. Undo restores it.';
+    remove.onclick=()=>this.changeGroups(d=>{d.groups=d.groups.filter(g=>g.id!==activeGroup(d).id);d.active_group=d.groups[0].id;});
+    row.append(add,duplicate,rename,enabled,remove);return row;
+  }
+
   // The light-source row: one dropdown, and only the controls that mode
   // actually uses. Bound to the NODE's widgets, not the preset.
   buildSourceRow() {
@@ -1864,30 +2220,77 @@ class FlareEditor {
     row.className = "fcore-global src";
     const mode = getStr(this.node, "position_mode") || "manual";
 
+    const group=activeGroup(sceneDocument(this.node));
+    const connected=this.node.inputs?.some(input=>input.name === "lights" && input.link != null);
+    if(group && connected){
+      const label=document.createElement('label'),check=document.createElement('input');check.type='checkbox';
+      check.checked=group.source?.use_lights_input===true;check.onchange=()=>{setGroupSource(this.node,'use_lights_input',check.checked);this.build();};
+      label.append(check,' Use connected lights for this group',infoIcon('Use source positions and brightness from the connected LIGHTS input for this flare group. When off, this group keeps its own source controls.'));row.append(label);
+    }
+    if (connected && (!group || group.source?.use_lights_input===true)) {
+      const message=document.createElement("div");message.className="fcore-hint";
+      message.textContent="External lights connected. Positions come from that input; disconnect it to use the source controls. Your source settings are preserved.";
+      row.append(message);return row;
+    }
+
     const lab = document.createElement("label");
     lab.textContent = "light source";
-    lab.appendChild(infoIcon("what places the light. Each mode shows only its own controls, and the line beneath explains the one selected. For a clip, track or lock; for a still, manual or detect."));
+    lab.appendChild(infoIcon("Choose how the source is positioned. Place or Detect for stills; tracking, camera motion, features or a drawn path for clips. Source tuning contains only settings used by the chosen method."));
     const sel = document.createElement("select");
     sel.className = "fcore-src-sel";
+    sel.ariaLabel = "Light source";
     for (const [value, text] of POSITION_MODES) {
       const opt = document.createElement("option");
       opt.value = value;
       opt.textContent = text;
       sel.appendChild(opt);
     }
-    sel.value = mode;
+    sel.value = sourceFamily(mode);
     sel.addEventListener("pointerdown", (e) => e.stopPropagation());
     sel.onchange = () => {
       setStr(this.node, "position_mode", sel.value);
-      for (const [w, v] of Object.entries(MODE_DEFAULTS[sel.value] || {})) {
-        setVal(this.node, w, v);
-      }
       this.node.setDirtyCanvas(true, false);
       this.node._fcPicker?.draw();
       this.build();
     };
     row.append(lab, sel);
 
+    const chooseMode = value => {
+      // Variants share the existing serialized modes: no preset migration.
+      setStr(this.node, "position_mode", value);
+      this.node.setDirtyCanvas(true, false); this.node._fcPicker?.draw(); this.build();
+    };
+    if (sourceFamily(mode) === "detect") {
+      const offset = document.createElement("label");
+      const check = document.createElement("input");check.type="checkbox";
+      check.checked=mode === "detect_with_manual_offset";
+      check.onchange=()=>chooseMode(check.checked ? "detect_with_manual_offset" : "detect");
+      offset.append(check, " Offset from picker",infoIcon('Shifts detected source positions by the picker light’s offset from frame centre. Turn off to use the detected coordinates without that offset.'));row.append(offset);
+    }
+    if (sourceFamily(mode) === "track") {
+      const method = document.createElement("select");method.className="fcore-src-sel";
+      method.ariaLabel="Tracking method";
+      for (const [value,label] of [["track","Match between frames"],["lock","Solve entire clip"],["track_dots","Track a dot matte"]]) {
+        const option=document.createElement("option");option.value=value;option.textContent=label;method.append(option);
+      }
+      method.value=mode;method.onchange=()=>chooseMode(method.value);row.append(method,infoIcon('Match between frames associates bright detections through time. Solve entire clip fits a source path through visible and hidden intervals. Track a dot matte expects isolated white dots on a dark background.'));
+    }
+    if (Object.keys(MODE_DEFAULTS[mode] || {}).length) {
+      const reset=document.createElement("button");reset.className="fcore-btn";
+      reset.textContent="Recommended settings";
+      reset.title="Replace this source mode's tuning with its recommended starting values.";
+      reset.onclick=()=>{
+        for(const [name,value] of Object.entries(MODE_DEFAULTS[mode])) setVal(this.node,name,value);
+        this.node.setDirtyCanvas(true,false);this.build();
+      };row.append(reset);
+    }
+
+    const tuning=document.createElement("details");tuning.className="fcore-source-tuning";
+    tuning.open=this.sourceTuningOpen===true;
+    tuning.ontoggle=()=>{this.sourceTuningOpen=tuning.open;};
+    const tuningTitle=document.createElement("summary");tuningTitle.textContent="Source tuning";
+    const tuningGrid=document.createElement("div");tuningGrid.className="fcore-source-grid";
+    tuning.append(tuningTitle,tuningGrid);row.append(tuning);
     const nodeSlider = (label, widget, spec) => {
       const col = sliderCol(label, getVal(this.node, widget, spec[0]), spec,
         (v) => {
@@ -1895,12 +2298,18 @@ class FlareEditor {
           this.node.setDirtyCanvas(true, false);
         });
       col.style.flex = "1";
-      row.appendChild(col);
+      tuningGrid.appendChild(col);
     };
+
+    if(group){
+      nodeSlider('light X','light_x',[-1,2,.001]);nodeSlider('light Y','light_y',[-1,2,.001]);
+      nodeSlider('anchor X','flare_x',[-1,2,.001]);nodeSlider('anchor Y','flare_y',[-1,2,.001]);
+    }
 
     if (mode === "detect" || mode === "detect_with_manual_offset") {
       nodeSlider("threshold", "detect_threshold", [0, 1, 0.01]);
       nodeSlider("max lights", "detect_max_lights", [1, 16, 1]);
+      nodeSlider("search radius", "search_radius", [0, 1, 0.01]);
       nodeSlider("smoothing", "track_smoothing", [0, 0.98, 0.01]);
       nodeSlider("scene lock", "scene_lock", [0, 1, 0.01]);
       nodeSlider("travel", "light_travel", [0, 1, 0.01]);
@@ -1912,9 +2321,11 @@ class FlareEditor {
       nodeSlider("smoothing", "track_smoothing", [0, 0.98, 0.01]);
       nodeSlider("max jump", "track_max_jump", [0.01, 0.5, 0.01]);
       nodeSlider("travel", "light_travel", [0, 1, 0.01]);
-      nodeSlider("scene lock", "scene_lock", [0, 1, 0.01]);
-      nodeSlider("hold", "track_hold", [0, 60, 1]);
-      nodeSlider("fade", "track_fade", [1, 60, 1]);
+      if (mode !== "lock") nodeSlider("scene lock", "scene_lock", [0, 1, 0.01]);
+      if (mode !== "lock") {
+        nodeSlider("hold", "track_hold", [0, 60, 1]);
+        nodeSlider("fade", "track_fade", [1, 60, 1]);
+      }
       nodeSlider("search radius", "search_radius", [0, 1, 0.01]);
     } else if (mode === "follow") {
       nodeSlider("smoothing", "track_smoothing", [0, 0.98, 0.01]);
@@ -1940,6 +2351,7 @@ class FlareEditor {
       row.appendChild(col);
       nodeSlider("feature px", "track_feature", [8, 128, 2]);
       nodeSlider("search px", "track_search", [8, 256, 2]);
+      nodeSlider("smoothing", "track_smoothing", [0, 0.98, 0.01]);
       nodeSlider("travel", "light_travel", [0, 1, 0.01]);
     } else if (mode === "path") {
       const pts = parsePath(getStr(this.node, "light_path"));
@@ -1959,6 +2371,47 @@ class FlareEditor {
         this.build();
       };
       row.append(count, clear);
+    }
+
+    const visibilityCol = document.createElement("label");
+    visibilityCol.className = "fcore-col";
+    visibilityCol.textContent = "Obstruction";
+    visibilityCol.append(infoIcon('Measures how much of the emitting source is visible, independently of tracker confidence. Image visibility needs a clear reference in the clip and also responds to exposure changes. Depth requires a matching depth map; Off ignores obstruction. Ghosts form inside the lens, so they are not masked behind scene objects.'));
+    const visibilitySelect = document.createElement("select");
+    visibilitySelect.className = "fcore-src-sel";
+    visibilitySelect.setAttribute("aria-label", "Source obstruction");
+    for (const [value, title] of [["hybrid", "Image + depth (recommended)"],
+      ["image", "Image visibility"], ["depth", "Depth only (legacy)"], ["off", "Off"]]) {
+      const option = document.createElement("option"); option.value = value; option.textContent = title;
+      visibilitySelect.append(option);
+    }
+    visibilitySelect.value = getStr(this.node, "visibility_mode") || "hybrid";
+    visibilitySelect.title = "Measures visible source energy, not tracker confidence. Image visibility needs a clear reference in the clip and also responds to exposure changes.";
+    visibilitySelect.onchange = () => { setStr(this.node, "visibility_mode", visibilitySelect.value); this.node.setDirtyCanvas(true, false); };
+    visibilityCol.append(visibilitySelect); tuningGrid.append(visibilityCol);
+    nodeSlider("source radius", "occlusion_radius", [.001, .15, .001]);
+    nodeSlider("visibility smoothing", "occlusion_smooth", [0, 1, .01]);
+    if(group){
+      const advanced=document.createElement('details');advanced.className='fcore-source-tuning';
+      const heading=document.createElement('summary');heading.textContent='Group depth, colour and seed';advanced.append(heading);
+      const grid=document.createElement('div');grid.className='fcore-source-grid';advanced.append(grid);row.append(advanced);
+      for(const [label,name,spec,fallback] of [
+        ['light depth','light_depth',[0,1,.01],.1],['depth blur','depth_blur',[0,.1,.001],0],
+        ['depth smoothing','depth_temporal_smooth',[0,1,.01],0],['scene colour','scene_color',[0,1,.01],0],
+        ['mask falloff','mask_falloff',[.01,2,.01],.35],['seed','seed',[0,2147483647,1],0]]){
+        grid.append(sliderCol(label,getVal(this.node,name,fallback),spec,v=>setVal(this.node,name,v)));
+      }
+      const invert=document.createElement('label'),check=document.createElement('input');check.type='checkbox';
+      check.checked=!!getVal(this.node,'invert_depth',0);check.onchange=()=>setGroupSource(this.node,'invert_depth',check.checked);
+      invert.append(check,' Invert depth',infoIcon('Reverse near and far values when your depth map uses the opposite convention. Check the depth preview before enabling.'));grid.append(invert);
+      const normalise=document.createElement('select');normalise.className='fcore-src-sel';normalise.setAttribute('aria-label','Group depth normalisation');
+      for(const value of ['as_is','per_frame','per_batch']){const option=document.createElement('option');option.value=value;option.textContent=value.replaceAll('_',' ');normalise.append(option);}
+      normalise.value=getStr(this.node,'depth_normalize') || 'as_is';normalise.onchange=()=>setStr(this.node,'depth_normalize',normalise.value);grid.append(normalise,infoIcon('As is preserves the input depth range. Per frame stretches each frame independently and can cause depth pumping. Per batch uses one range for the clip, keeping the depth threshold more consistent.'));
+    }
+    if (this.node._fcSourceStatus) {
+      const status=document.createElement("div");status.className="fcore-hint";
+      status.setAttribute("role","status");status.textContent=this.node._fcSourceStatus;
+      tuningGrid.append(status);
     }
 
     // After a render in any tracked mode the light's path is known. Baking
@@ -2189,6 +2642,35 @@ class FlareEditor {
       p.elements[i].params[k] = v;
     });
 
+    this.motionPanelStates ??= new Map();
+    const motionKey = elem.id || i;
+    if (!this.motionPanelStates.has(motionKey)) this.motionPanelStates.set(motionKey, {});
+    const panelState = this.motionPanelStates.get(motionKey);
+    panelState.sections ??= new Set(["Shape & appearance"]);
+    const section = (title) => {
+      const details = document.createElement("details");
+      details.className = "fcore-settings";
+      details.open = panelState.sections.has(title);
+      details.ontoggle = () => {
+        if (details.open) panelState.sections.add(title);
+        else panelState.sections.delete(title);
+      };
+      const summary = document.createElement("summary");
+      summary.textContent = title;
+      const content = document.createElement("div");
+      content.className = "fcore-settings-grid";
+      details.append(summary, content); adv.append(details);
+      return content;
+    };
+    const appearance = section("Shape & appearance");
+    const placement = section("Position & orientation");
+    const copies = section("Repeated elements");
+    const visibility = section("Masking & lens space");
+    const response = section("Optical response");
+    response.appendChild(createMotionPanel(elem, motion => this.mutate(p => {
+      p.elements[i].motion = motion;
+    }), undefined, this.motionPanelStates.get(motionKey)));
+
     const dropdown = (label, value, options, onPick) => {
       const wrap = document.createElement("div");
       wrap.className = "fcore-col";
@@ -2209,7 +2691,7 @@ class FlareEditor {
     };
 
     if (elem.type === "texture") {
-      adv.appendChild(dropdown("channel (luminance = full recolor)",
+      appearance.appendChild(dropdown("channel (luminance = full recolor)",
         elem.params?.channel || "auto",
         ["auto", "rgb", "luminance"], (v) => setParam("channel", v)));
     }
@@ -2228,35 +2710,38 @@ class FlareEditor {
       wrap.append(l, cb);
       return wrap;
     };
-    adv.appendChild(checkbox("auto-rotate", elem.auto_rotate !== false,
+    placement.appendChild(checkbox("auto-rotate", elem.auto_rotate !== false,
       (v) => set("auto_rotate", v)));
-    adv.appendChild(checkbox("screen space (lens)", elem.screen_space === true,
-      (v) => set("screen_space", v)));
-    adv.appendChild(checkbox("fill frame (lens plate)", elem.fill_frame === true,
+    visibility.appendChild(checkbox("screen space (lens)", elem.screen_space === true,
+      (v) => { set("screen_space", v); this.flushPending(); this.build(); }));
+    visibility.appendChild(checkbox("fill frame (lens plate)", elem.fill_frame === true,
       (v) => set("fill_frame", v)));
 
     for (const [key, spec] of Object.entries(COMMON_SPECS)) {
-      adv.appendChild(sliderCol(key.replace(/_/g, " "),
+      const group = key === "rotation" ? placement
+        : ["count", "spread", "count_falloff", "count_scale_step"].includes(key) ? copies
+        : ["light_mask", "mask_scene", "mask_floor"].includes(key) ? visibility : appearance;
+      group.appendChild(sliderCol(key.replace(/_/g, " "),
         elem[key] ?? COMMON_DEFAULTS[key], spec,
         (v) => set(key, spec[2] >= 1 ? Math.round(v) : v)));
     }
-    adv.appendChild(sliderCol("stretch x", elem.stretch?.[0] ?? 1, [0.1, 4, 0.01],
+    placement.appendChild(sliderCol("stretch x", elem.stretch?.[0] ?? 1, [0.1, 4, 0.01],
       (v) => this.mutateQuiet((p) => {
         const s = p.elements[i].stretch || [1, 1];
         p.elements[i].stretch = [v, s[1]];
       })));
-    adv.appendChild(sliderCol("stretch y", elem.stretch?.[1] ?? 1, [0.1, 4, 0.01],
+    placement.appendChild(sliderCol("stretch y", elem.stretch?.[1] ?? 1, [0.1, 4, 0.01],
       (v) => this.mutateQuiet((p) => {
         const s = p.elements[i].stretch || [1, 1];
         p.elements[i].stretch = [s[0], v];
       })));
 
-    adv.appendChild(sliderCol("move x", elem.move?.[0] ?? 1, [0, 1, 0.01],
+    placement.appendChild(sliderCol("move x", elem.move?.[0] ?? 1, [0, 1, 0.01],
       (v) => this.mutateQuiet((p) => {
         const m = p.elements[i].move || [1, 1];
         p.elements[i].move = [v, m[1]];
       })));
-    adv.appendChild(sliderCol("move y", elem.move?.[1] ?? 1, [0, 1, 0.01],
+    placement.appendChild(sliderCol("move y", elem.move?.[1] ?? 1, [0, 1, 0.01],
       (v) => this.mutateQuiet((p) => {
         const m = p.elements[i].move || [1, 1];
         p.elements[i].move = [m[0], v];
@@ -2264,12 +2749,12 @@ class FlareEditor {
 
     // A screen-space nudge: unlike `offset` it does not swing with the
     // flare axis, so a companion ghost stays a fixed drop below the source.
-    adv.appendChild(sliderCol("shift x", elem.shift?.[0] ?? 0, [-2, 2, 0.01],
+    placement.appendChild(sliderCol("shift x", elem.shift?.[0] ?? 0, [-2, 2, 0.01],
       (v) => this.mutateQuiet((p) => {
         const s = p.elements[i].shift || [0, 0];
         p.elements[i].shift = [v, s[1]];
       })));
-    adv.appendChild(sliderCol("shift y", elem.shift?.[1] ?? 0, [-2, 2, 0.01],
+    placement.appendChild(sliderCol("shift y", elem.shift?.[1] ?? 0, [-2, 2, 0.01],
       (v) => this.mutateQuiet((p) => {
         const s = p.elements[i].shift || [0, 0];
         p.elements[i].shift = [s[0], v];
@@ -2288,94 +2773,42 @@ class FlareEditor {
         });
         if (rebuild) { this.flushPending(); this.build(); }
       };
-      adv.appendChild(checkbox(`pin ${axis} to frame`, at != null,
+      placement.appendChild(checkbox(`pin ${axis} to frame`, at != null,
         (on) => setPin(on ? (idx === 1 ? -1 : 0) : null, true)));
       if (at != null) {
-        adv.appendChild(sliderCol(`pin ${axis}`, at, [-2, 2, 0.01],
+        placement.appendChild(sliderCol(`pin ${axis}`, at, [-2, 2, 0.01],
           (v) => setPin(v, false)));
       }
     }
 
     if (elem.type === "spectral") {
-      adv.appendChild(dropdown("shape", elem.params?.shape || "ring",
+      appearance.appendChild(dropdown("shape", elem.params?.shape || "ring",
         ["ring", "iris"], (v) => setParam("shape", v)));
     }
     if (elem.type === "orbs") {
-      adv.appendChild(dropdown("shape", elem.params?.shape || "disc",
+      appearance.appendChild(dropdown("shape", elem.params?.shape || "disc",
         ["disc", "polygon"], (v) => setParam("shape", v)));
     }
     for (const [key, spec] of Object.entries(PARAM_SPECS[elem.type] || {})) {
-      adv.appendChild(sliderCol(key.replace(/_/g, " "),
+      appearance.appendChild(sliderCol(key.replace(/_/g, " "),
         elem.params?.[key] ?? PARAM_FALLBACKS[elem.type]?.[key], spec,
         (v) => setParam(key, spec[2] >= 1 ? Math.round(v) : v)));
     }
 
-    /* trigger: rule-based animation without keyframes */
-    const sec = document.createElement("div");
-    sec.className = "fcore-sec";
-    sec.textContent =
-      "trigger — animation without keyframes: react to the light reaching " +
-      "the frame border or centre, or to this element nearing the light";
-    adv.appendChild(sec);
-    const trig = Object.assign({}, TRIGGER_DEFAULTS, elem.trigger || {});
-    const setTrig = (k, v) => {
-      this.mutateQuiet((p) => {
-        const t = Object.assign({}, TRIGGER_DEFAULTS, p.elements[i].trigger || {});
-        t[k] = v;
-        p.elements[i].trigger = t.mode === "none" ? null : t;
-      });
-      if (this.previewIndex === i && this.node._fcTriggerPreview) {
-        this.node._fcTriggerPreview[k] = v;
-        this.node._fcPicker?.draw();
-      }
-    };
-    const setTrigRebuild = (k, v) => { setTrig(k, v); this.flushPending(); this.build(); };
-    adv.appendChild(dropdown("mode", trig.mode,
-      ["none", "border", "center", "light"],
-      (v) => setTrigRebuild("mode", v)));
-    if (trig.mode !== "none") {
-      // "light" always measures this element's distance to the light, so
-      // the driving-point choice does not apply to it
-      if (trig.mode !== "light") {
-        adv.appendChild(dropdown("driven by", trig.source, ["light", "element"],
-          (v) => setTrig("source", v)));
-      }
-      adv.appendChild(dropdown("falloff", trig.falloff, ["smooth", "linear", "exponential"],
-        (v) => setTrig("falloff", v)));
-      for (const [key, spec] of Object.entries(TRIGGER_SPECS)) {
-        adv.appendChild(sliderCol(key, trig[key], spec, (v) => setTrig(key, v),
-          TRIGGER_TIPS[key] ?? TIPS[key] ?? null));
-      }
-      // preview: paint the trigger region on the picker. Only one element
-      // previews at a time — arming another (or collapsing this row) clears it.
-      const pwrap = document.createElement("div");
-      pwrap.className = "fcore-col";
-      const pl = document.createElement("label");
-      pl.textContent = "preview region";
-      const pb = document.createElement("button");
-      pb.className = "fcore-mini" + (this.previewIndex === i ? " armed" : "");
-      pb.style.width = "100%";
-      pb.textContent = this.previewIndex === i ? "previewing" : "show";
-      pb.title = "paint this rule's trigger region over the picker";
-      pb.onclick = () => {
-        this.previewIndex = this.previewIndex === i ? null : i;
-        this.syncTriggerPreview();
-        this.build();
-      };
-      pwrap.append(pl, pb);
-      adv.appendChild(pwrap);
+    if (elem.screen_space || elem.type === "orbs") {
+      visibility.appendChild(dropdown("lens illumination", elem.screen_blend || "strongest",
+        ["strongest", "all"], v => set("screen_blend", v)));
+    }
 
-      const cwrap = document.createElement("div");
-      cwrap.className = "fcore-col";
-      const cl = document.createElement("label");
-      cl.textContent = "colour at full trigger";
-      const tc = document.createElement("input");
-      tc.type = "color"; tc.className = "fcore-swatch";
-      tc.value = colorToHex(trig.color || [1, 1, 1]);
-      tc.addEventListener("pointerdown", (e) => e.stopPropagation());
-      tc.addEventListener("input", () => setTrig("color", hexToColor(tc.value)));
-      cwrap.append(cl, tc);
-      adv.appendChild(cwrap);
+    // Old files must not silently change appearance or hide an active rule.
+    // New work uses optical response; compatibility is visible only if needed.
+    if (elem.trigger && elem.trigger.mode !== "none") {
+      const notice=document.createElement("div");notice.className="fcore-hint";
+      notice.textContent="This element has an older trigger rule. It is still rendered for compatibility. Use Optical response for new animation. ";
+      const disable=document.createElement("button");disable.className="fcore-btn";
+      disable.textContent="Remove old rule";
+      disable.onclick=()=>this.mutate(p=>{p.elements[i].trigger=null;});
+      notice.append(disable);adv.append(notice);
     }
     return adv;
   }
@@ -2417,26 +2850,49 @@ function setupForgePanel(nodeType) {
     const root = document.createElement("div");
     root.className = "fcore fcore-forge";
 
+    const header=document.createElement("header");
+    const title=document.createElement("h3");title.textContent="Element Forge";
+    const intro=document.createElement("p");intro.className="forge-intro";
+    intro.textContent="Define an element → generate → prepare → save to your library.";
+    header.append(title,intro);
+    const selectionCard=document.createElement("section");selectionCard.className="forge-card";
+    const selectionTitle=document.createElement("div");selectionTitle.className="forge-card-title";selectionTitle.textContent="01 / CHOOSE AN ELEMENT";
+
     const selRow = document.createElement("div");
     selRow.className = "rowline";
     const catSel = document.createElement("select");
     catSel.className = "fcore-src-sel";
-    catSel.style.flex = "1";
+    catSel.style.flex = "0 0 34px";
     const elemSel = document.createElement("select");
     elemSel.className = "fcore-src-sel";
-    elemSel.style.flex = "1.4";
-    selRow.append(catSel, elemSel);
+    elemSel.style.flex = "0 0 34px";
+    const categoryLabel=document.createElement("label");categoryLabel.append("Family",catSel);
+    const elementLabel=document.createElement("label");elementLabel.append("Element",elemSel);
+    selRow.append(categoryLabel,elementLabel);
+    selectionCard.append(selectionTitle,selRow);
+    const selectionHint=document.createElement("p");selectionHint.className="forge-intro";
+    selectionHint.textContent="Choosing another element loads its base prompt.";selectionCard.append(selectionHint);
+    catSel.disabled=true;elemSel.disabled=true;
 
     const prompt = document.createElement("textarea");
     prompt.placeholder = "pick an element above — its prompt appears here, ready to edit";
     prompt.spellcheck = false;
+    prompt.ariaLabel="Generation prompt";
+    const promptCard=document.createElement("section");promptCard.className="forge-card forge-prompt";
+    const promptTitle=document.createElement("div");promptTitle.className="forge-card-title";promptTitle.textContent="02 / REFINE THE PROMPT";
+    const promptFooter=document.createElement("div");promptFooter.className="forge-footer";
+    const resetPrompt=document.createElement("button");resetPrompt.className="fcore-btn";resetPrompt.textContent="Restore base prompt";resetPrompt.disabled=true;
+    resetPrompt.title="Replace your edited prompt with the selected element's base prompt.";
+    const promptCount=document.createElement("span");promptCount.className="fcore-hint";
+    const updateCount=()=>{promptCount.textContent=`${prompt.value.length} characters`;};
+    promptFooter.append(resetPrompt,promptCount);promptCard.append(promptTitle,prompt,promptFooter);
 
     const styleRow = document.createElement("div");
     styleRow.className = "rowline";
     const styleToggle = document.createElement("input");
     styleToggle.type = "checkbox";
     const styleLab = document.createElement("label");
-    styleLab.textContent = "extra style";
+    styleLab.textContent = "Enable style";styleLab.className="forge-style-toggle";
     styleLab.style.cssText = "color:#aaa;font-size:11px;";
     // A shelf of real conditions -- a lens era, a stock, weather, what is
     // lighting it, what is on the matte box -- rather than one suggestion.
@@ -2444,16 +2900,23 @@ function setupForgePanel(nodeType) {
     const styleSel = document.createElement("select");
     styleSel.className = "fcore-src-sel";
     styleSel.style.cssText = "flex:1 1 auto;min-width:0;";
-    styleRow.append(styleToggle, styleLab, styleSel);
+    styleLab.prepend(styleToggle);styleSel.ariaLabel="Style starting point";
+    styleRow.append(styleLab, styleSel);
     // its own multi-line box: a style tail is a sentence, not a word
     const styleText = document.createElement("textarea");
     styleText.className = "styletext";
     styleText.spellcheck = false;
     styleText.value = EXTRA_STYLE_SUGGESTION;
+    styleText.ariaLabel="Additional style prompt";
+    const styleCard=document.createElement("details");styleCard.className="forge-card";
+    const styleSummary=document.createElement("summary");styleSummary.textContent="03 / Optional styling";
+    const styleBody=document.createElement("div");styleBody.className="forge-style-body";
+    styleBody.append(styleRow,styleText);styleCard.append(styleSummary,styleBody);
 
     const hint = document.createElement("div");
     hint.className = "fcore-hint";
-    root.append(selRow, prompt, styleRow, styleText, hint);
+    hint.setAttribute("role","status");hint.textContent="Loading element library…";
+    root.append(header,selectionCard,promptCard,styleCard,hint);
 
     for (const el of [catSel, elemSel, prompt, styleToggle, styleSel, styleText]) {
       el.addEventListener("pointerdown", (e) => e.stopPropagation());
@@ -2486,12 +2949,15 @@ function setupForgePanel(nodeType) {
         prompt.value = bank[cat]?.[name] || "";
         setStr(node, "custom_prompt", prompt.value);
       }
+      updateCount();
       node.setDirtyCanvas(true, false);
     };
 
     catSel.onchange = () => { fillElems(catSel.value); applySelection(true); };
     elemSel.onchange = () => applySelection(true);
+    resetPrompt.onclick=()=>applySelection(true);
     prompt.addEventListener("input", () => setStr(node, "custom_prompt", prompt.value));
+    prompt.addEventListener("input",updateCount);
     styleToggle.onchange = syncStyle;
     styleText.addEventListener("input", syncStyle);
 
@@ -2527,6 +2993,8 @@ function setupForgePanel(nodeType) {
 
     api.fetchApi("/flarecore/prompt_bank").then((r) => r.json()).then((d) => {
       bank = d.bank || {};
+      if (!Object.keys(bank).length) throw new Error("Empty prompt bank");
+      catSel.disabled=false;elemSel.disabled=false;resetPrompt.disabled=false;
       styles = d.styles || {};
       fillStyles();
       catSel.textContent = "";
@@ -2549,6 +3017,7 @@ function setupForgePanel(nodeType) {
       const savedPrompt = getStr(node, "custom_prompt");
       const savedStyle = getStr(node, "extra_style");
       if (savedStyle) {
+        styleCard.open=true;
         styleToggle.checked = true;
         styleText.value = savedStyle;
         // show which preset it came from, when it is still one of them
@@ -2578,14 +3047,24 @@ function setupForgePanel(nodeType) {
         getMinHeight: () => node._fcForgeH ?? 260 });
     widget.serialize = false;
     widget.serializeValue = () => undefined;
-    widget.computeSize = (w) =>
-      [Number(w) || node.size?.[0] || 380, node._fcForgeH ?? 220];
+    fitPanelWidth(widget, node, 380, () => node._fcForgeH ?? 220);
     // only grow a node that was never sized by the workflow
     if (node.size[0] < 380 || node.size[1] < 260) {
       node.setSize([Math.max(node.size[0], 400), Math.max(node.size[1], 300)]);
     }
     setTimeout(() => fitForge(node), 40);
   };
+
+  // LiteGraph clamps a resize drag to computeSize(), and a DOM widget's only
+  // layout channel is getMinHeight -- computeLayoutSize computes getHeight and
+  // then drops it on the floor, measured. So the fluid panel height has to be
+  // reported through getMinHeight, which makes the node's own minimum equal to
+  // its current height: measured 772 reported at a height of 700, and a drag
+  // down to 400 landing at 1372. The node could only ever grow. Giving the
+  // clamp the real floor instead decouples the two: the panel stays fluid and
+  // the node shrinks again. Every other widget here is hidden, so the panel is
+  // the whole content and this floor is the honest one.
+  nodeType.prototype.computeSize = function () { return [380, 300]; };
 
   const onResize = nodeType.prototype.onResize;
   nodeType.prototype.onResize = function (size) {
@@ -2817,6 +3296,7 @@ app.registerExtension({
     nodeType.prototype.onNodeCreated = function () {
       onNodeCreated?.apply(this, arguments);
       const node = this;
+      node._fcInputDefs = {...nodeData.input?.required, ...nodeData.input?.optional};
 
       const picker = new PointPicker(node);
       node._fcPicker = picker;
@@ -2824,11 +3304,8 @@ app.registerExtension({
         picker.el, { serialize: false, hideOnZoom: true, getMinHeight: () => 170 });
       pickerWidget.serialize = false;
       pickerWidget.serializeValue = () => undefined;
-      // the frontend sometimes calls computeSize() with no argument
-      pickerWidget.computeSize = (w) => {
-        const width = Number(w) || node.size?.[0] || 460;
-        return [width, Math.min((width * 9) / 16 + 12, 330)];
-      };
+      fitPanelWidth(pickerWidget, node, 460,
+        (width) => Math.min((width * 9) / 16 + 12, 330));
 
       const editor = new FlareEditor(node);
       node._fcEditor = editor;
@@ -2841,14 +3318,13 @@ app.registerExtension({
           getMinHeight: () => Math.max(280, node._fcEditorH ?? 400) });
       editorWidget.serialize = false;
       editorWidget.serializeValue = () => undefined;
-      editorWidget.computeSize = (w) =>
-        [Number(w) || node.size?.[0] || 500, node._fcEditorH ?? 400];
+      fitPanelWidth(editorWidget, node, 500, () => node._fcEditorH ?? 400);
 
       // The panels stay at the END of node.widgets: widgets_values is a
       // positional array and ComfyUI serializes a null for each DOM widget,
       // so any other position shifts every real value on reload.
       setAdvanced(node, false);
-      node.setSize([Math.max(node.size[0], 500),
+      node.setSize([Math.max(node.size[0], 720),
                     Math.max(node.computeSize()[1], 880)]);
       setTimeout(() => picker.draw(), 60);
     };
@@ -2897,11 +3373,7 @@ app.registerExtension({
       const savedHeight = Array.isArray(info?.size) ? info.size[1] : null;
       setTimeout(() => {
         // the toggle state rides in node.properties, which IS serialized
-        setAdvanced(node, !!node.properties?.fc_advanced);
-        // setAdvanced only grows; if the user saved the node taller, keep it
-        if (savedHeight && savedHeight > node.size[1]) {
-          node.setSize([node.size[0], savedHeight]);
-        }
+        setAdvanced(node, !!node.properties?.fc_advanced, savedHeight);
         node._fcEditor?.build();
         node._fcPicker?.draw();
       }, 50);
@@ -2914,6 +3386,12 @@ app.registerExtension({
       // NOT sent as ui.images so ComfyUI does not also paint a preview
       // image under the node
       const src = message?.fc_light_src?.[0];
+      if(message?.fc_groups?.[0])this._fcGroupResults=message.fc_groups[0];
+      const sourceStatus = message?.fc_source_status?.[0];
+      if (sourceStatus) {
+        this._fcSourceStatus=sourceStatus;
+        this._fcEditor?.build();
+      }
       if (src) {
         this._fcLightSrc = src;
         this._fcPicker?.draw();

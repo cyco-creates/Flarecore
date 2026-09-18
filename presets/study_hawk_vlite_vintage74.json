@@ -1,0 +1,888 @@
+{
+  "schema_version": 1,
+  "name": "Hawk V-Lite Vintage 74 55mm T2.8 · study",
+  "author": "Flarecore",
+  "category": "Anamorphic",
+  "subcategory": "Reference studies · Anamorphic",
+  "elements": [
+    {
+      "type": "glow",
+      "label": "Source · white core",
+      "offset": 0,
+      "scale": 0.15,
+      "intensity": 0.15,
+      "color": [
+        1,
+        1,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.38,
+        "falloff": 2.1
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "hawk_vlite_vintage74-00",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Source · scatter halo",
+      "offset": 0,
+      "scale": 0.9697948000000001,
+      "intensity": 0.6451200000000001,
+      "color": [
+        0.23349929156090737,
+        0.2677461759676538,
+        0.31133260035608706
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.35,
+        "falloff": 1.65,
+        "scatter": 0
+      },
+      "irregular": 0.22,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "hawk_vlite_vintage74-01",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Source · fine diffraction",
+      "offset": 0,
+      "scale": 1.7,
+      "intensity": 0.85,
+      "color": [
+        0.85,
+        0.95,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "file": "glows/study_photographic_scatter.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "rotation": 13,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "hawk_vlite_vintage74-02",
+      "blur": 0.015,
+      "stretch": [
+        1,
+        1
+      ],
+      "shade": 0
+    },
+    {
+      "type": "glint",
+      "label": "Source · long rays",
+      "offset": 0,
+      "scale": 0.46399999999999997,
+      "intensity": 0.00072,
+      "color": [
+        0.0375,
+        0.043,
+        0.05
+      ],
+      "auto_rotate": false,
+      "params": {
+        "points": 12,
+        "length": 0.65,
+        "thickness": 0.004,
+        "length_jitter": 0.6,
+        "ray_falloff": 1.7,
+        "fan": 0.008,
+        "ray_taper": 0.8
+      },
+      "irregular": 0.5,
+      "rotation": 23,
+      "slot": "rays",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "hawk_vlite_vintage74-03",
+      "blur": 0.035,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "streak",
+      "label": "Pale full-width streak",
+      "offset": 0,
+      "scale": 5.1448,
+      "intensity": 0.48,
+      "color": [
+        0.9938126893836288,
+        1.164181014223551,
+        1.419732809070002
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.01,
+        "curve": 0.03
+      },
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "hawk_vlite_vintage74-04",
+      "irregular": 0.8,
+      "stretch": [
+        1.2862,
+        1.0738
+      ]
+    },
+    {
+      "type": "streak",
+      "label": "Lower secondary streak",
+      "offset": 1.69,
+      "scale": 3.4727400000000004,
+      "intensity": 0.14,
+      "color": [
+        0.8280797104699459,
+        0.9522914576442121,
+        1.3801326181207703
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.007,
+        "curve": 0.03
+      },
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                1.5
+              ],
+              [
+                1.5,
+                -1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0
+      ],
+      "id": "hawk_vlite_vintage74-05",
+      "irregular": 0.8,
+      "stretch": [
+        1,
+        1.18
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Opposite streak hotspot",
+      "offset": 1.94,
+      "scale": 0.244378,
+      "intensity": 0.52,
+      "color": [
+        0.713537974503031,
+        0.8782004767295405,
+        1.097750247270809
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        2.36,
+        0.7074100000000001
+      ],
+      "params": {
+        "softness": 0.6,
+        "falloff": 1.8
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -1.5
+              ],
+              [
+                1.5,
+                1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0
+      ],
+      "id": "hawk_vlite_vintage74-06"
+    },
+    {
+      "type": "glow",
+      "label": "Blue veiling field",
+      "offset": 0.8,
+      "scale": 2.9848000000000003,
+      "intensity": 0.014040000000000002,
+      "color": [
+        5.5581801860295394,
+        8.337270279044306,
+        16.87304699330396
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 1,
+        "falloff": 1.3
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "hawk_vlite_vintage74-07",
+      "stretch": [
+        1.2862,
+        0.7462000000000001
+      ]
+    },
+    {
+      "type": "ring",
+      "label": "Broad blue reflection arc",
+      "offset": 1.1,
+      "scale": 1.8039839999999998,
+      "intensity": 0.10500000000000001,
+      "color": [
+        0.04064520517797768,
+        0.1145455782288462,
+        0.18475076085372272
+      ],
+      "auto_rotate": false,
+      "params": {
+        "radius": 1,
+        "thickness": 0.25,
+        "surface_detail": 0.3,
+        "edge_bias": 0.7
+      },
+      "stretch": [
+        1.1939200000000003,
+        0.7
+      ],
+      "irregular": 0.25,
+      "slot": "rings",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "hawk_vlite_vintage74-08"
+    },
+    {
+      "type": "texture",
+      "label": "Textured opposite rose oval",
+      "offset": 1.9,
+      "scale": 0.5432336000000002,
+      "intensity": 0.14400000000000002,
+      "color": [
+        2.1298259184637036,
+        1.3252251197272509,
+        1.5382078672650403
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1.23,
+        0.6608
+      ],
+      "params": {
+        "file": "ghosts/smeared_disc.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "hawk_vlite_vintage74-09",
+      "shade": 0
+    },
+    {
+      "type": "iris",
+      "label": "Textured opposite rose oval · rim",
+      "offset": 1.9,
+      "scale": 0.5432336000000002,
+      "intensity": 0.00216,
+      "color": [
+        5.604891088583474,
+        3.4874877884519404,
+        4.047976897310287
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1.23,
+        0.6608
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.6,
+        "surface_detail": 0.4,
+        "density_bias": 0.2,
+        "hollow": 0.94,
+        "coma": 0.35
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "hawk_vlite_vintage74-10"
+    },
+    {
+      "type": "streak",
+      "label": "Opposite vertical reflection",
+      "offset": 1.8,
+      "scale": 0.45,
+      "intensity": 0.04,
+      "color": [
+        2.526645,
+        3.158306,
+        6.316613
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.008,
+        "curve": 0.03
+      },
+      "rotation": 90,
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -1.5
+              ],
+              [
+                1.5,
+                1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0
+      ],
+      "id": "hawk_vlite_vintage74-11",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Lower streak hotspot",
+      "offset": 1.65,
+      "scale": 0.08,
+      "intensity": 0.1,
+      "color": [
+        0.035,
+        0.04,
+        0.05
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.5,
+        "falloff": 2
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                1.5
+              ],
+              [
+                1.5,
+                -1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0
+      ],
+      "id": "hawk_vlite_vintage74-12",
+      "stretch": [
+        1,
+        1
+      ]
+    }
+  ],
+  "global": {
+    "seed": 2709,
+    "edge_fade_start": 0.25,
+    "edge_fade_range": 0.65
+  }
+}

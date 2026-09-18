@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "name": "Realism - Stopped Down Warm",
+  "author": "flarecore",
+  "category": "Spherical",
+  "subcategory": "Realism Studies",
+  "global": {
+    "seed": 27,
+    "edge_fade_start": 0.05,
+    "edge_fade_range": 0.6
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "source_core",
+      "label": "source core",
+      "slot": "glows",
+      "scale": 0.055,
+      "intensity": 2.3,
+      "params": {
+        "softness": 0.3,
+        "falloff": 2.2
+      }
+    },
+    {
+      "type": "glow",
+      "id": "source_scatter",
+      "label": "source scatter",
+      "slot": "glows",
+      "scale": 0.28,
+      "intensity": 0.12,
+      "color": [
+        1,
+        0.91,
+        0.77
+      ],
+      "params": {
+        "softness": 0.4,
+        "falloff": 1.8
+      }
+    },
+    {
+      "type": "glint",
+      "id": "six_blade_star",
+      "label": "six blade star",
+      "slot": "rays",
+      "scale": 0.35,
+      "intensity": 0.14,
+      "auto_rotate": false,
+      "rotation": 15,
+      "color": [
+        1,
+        0.88,
+        0.68
+      ],
+      "irregular": 0.08,
+      "params": {
+        "points": 6,
+        "length": 0.6,
+        "thickness": 0.004,
+        "length_jitter": 0.08
+      }
+    },
+    {
+      "type": "iris",
+      "id": "six_blade_ghosts",
+      "label": "six blade ghosts",
+      "slot": "ghosts",
+      "offset": 0.8,
+      "count": 3,
+      "spread": 0.5,
+      "scale": 0.06,
+      "count_scale_step": 1.5,
+      "count_falloff": 0.7,
+      "intensity": 0.045,
+      "color": [
+        0.55,
+        0.78,
+        1
+      ],
+      "params": {
+        "blades": 6,
+        "roundness": 0.08,
+        "edge_softness": 0.12
+      }
+    }
+  ]
+}

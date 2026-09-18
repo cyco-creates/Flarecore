@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "name": "Lens Lab · PBRT Wide 22 mm (experimental)",
+  "author": "Flarecore · prescription from PBRT Table 6.1",
+  "category": "Utility",
+  "subcategory": "Lens Lab",
+  "global": {"intensity": 1.0},
+  "elements": [],
+  "lens_lab": {
+    "version": 1,
+    "enabled": true,
+    "model": "pbrt-wide-22",
+    "f_stop": 4.0,
+    "blades": 7,
+    "quality": "fine",
+    "exposure": 6.0,
+    "include_artistic": false
+  }
+}

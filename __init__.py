@@ -75,14 +75,18 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "FlareRender": "Flare Render",
-    "FlarePresetLoader": "Flare Preset Loader",
-    "FlareDepthAdapter": "Flare Depth Adapter",
-    "FlareKeyframes": "Flare Keyframes",
-    "FlareElementPrompts": "Flare Element Prompts",
-    "FlareTexturePrepare": "Flare Texture Prepare",
-    "FlareElementSave": "Flare Element Save",
-    "FlareGeneratorSelect": "Flare Generator Select",
+    "FlareRender": "Flarecore · Render",
+    "FlarePresetLoader": "Flarecore · Preset Loader",
+    "FlareDepthAdapter": "Flarecore · Depth Adapter",
+    "FlareKeyframes": "Flarecore · Keyframes",
+    "FlareElementPrompts": "Flarecore · Element Forge",
+    "FlareTexturePrepare": "Flarecore · Prepare Texture",
+    "FlareElementSave": "Flarecore · Save Element",
+    "FlareGeneratorSelect": "Flarecore · Generator Select",
 }
+
+# One discoverable family; serialized node IDs remain unchanged.
+for _node_class in NODE_CLASS_MAPPINGS.values():
+    _node_class.CATEGORY = "Flarecore"
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]

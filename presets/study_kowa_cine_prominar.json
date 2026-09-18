@@ -1,0 +1,4456 @@
+{
+  "schema_version": 1,
+  "name": "Kowa Cine Prominar 25mm T4 · study",
+  "author": "Flarecore",
+  "category": "Spherical",
+  "subcategory": "Reference studies · Spherical",
+  "elements": [
+    {
+      "type": "glow",
+      "label": "Source · white core",
+      "offset": 0,
+      "scale": 0.1,
+      "intensity": 0.15,
+      "color": [
+        1,
+        1,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.38,
+        "falloff": 2.1
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-00",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Source · scatter halo",
+      "offset": 0,
+      "scale": 0.6688240000000001,
+      "intensity": 0.4435200000000001,
+      "color": [
+        0.5825423174960768,
+        0.6535840995567248,
+        0.7104170821033873
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.35,
+        "falloff": 1.65,
+        "scatter": 0
+      },
+      "irregular": 0.22,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-01",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Source · fine diffraction",
+      "offset": 0,
+      "scale": 1,
+      "intensity": 0.7,
+      "color": [
+        0.85,
+        0.95,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "file": "glows/study_photographic_scatter.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "rotation": 13,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-02",
+      "blur": 0.015,
+      "stretch": [
+        1,
+        1
+      ],
+      "shade": 0
+    },
+    {
+      "type": "glint",
+      "label": "Source · long rays",
+      "offset": 0,
+      "scale": 0.32000000000000006,
+      "intensity": 0.00084,
+      "color": [
+        0.041,
+        0.046,
+        0.05
+      ],
+      "auto_rotate": false,
+      "params": {
+        "points": 12,
+        "length": 0.65,
+        "thickness": 0.004,
+        "length_jitter": 0.6,
+        "ray_falloff": 1.7,
+        "fan": 0.008,
+        "ray_taper": 0.8
+      },
+      "irregular": 0.5,
+      "rotation": 23,
+      "slot": "rays",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-03",
+      "blur": 0.035,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Front gold oval",
+      "offset": -0.95,
+      "scale": 0.30347889,
+      "intensity": 0.22,
+      "color": [
+        2.814123838585244,
+        2.814123838585244,
+        1.5008664327131014
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        0.8,
+        1
+      ],
+      "params": {
+        "file": "ghosts/smeared_disc.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.1
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.8,
+                0.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "offset",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.8,
+                0
+              ],
+              [
+                2.8,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.35
+              ],
+              [
+                0.4,
+                1.35
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                2.4,
+                0.85
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-04",
+      "shade": 0
+    },
+    {
+      "type": "iris",
+      "label": "Front gold oval · rim",
+      "offset": -0.95,
+      "scale": 0.30347889,
+      "intensity": 0.02145,
+      "color": [
+        1.3264589015445707,
+        1.3264589015445707,
+        0.7074445162098547
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        0.8,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94,
+        "crescent": 0.25
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.1
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.8,
+                0.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "offset",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.8,
+                0
+              ],
+              [
+                2.8,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.35
+              ],
+              [
+                0.4,
+                1.35
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                2.4,
+                0.85
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-05"
+    },
+    {
+      "type": "iris",
+      "label": "Near gold sliver",
+      "offset": -0.28,
+      "scale": 0.1003,
+      "intensity": 0.24,
+      "color": [
+        0.6948935261608958,
+        0.6948935261608958,
+        0.3706099750188589
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        0.5,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.25,
+        "surface_detail": 0.55,
+        "density_bias": 0.48
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.1
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.8,
+                0.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "offset",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.8,
+                0
+              ],
+              [
+                2.8,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.35
+              ],
+              [
+                0.4,
+                1.35
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                2.4,
+                0.85
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-06",
+      "shade": 0.35
+    },
+    {
+      "type": "iris",
+      "label": "Near gold sliver · rim",
+      "offset": -0.28,
+      "scale": 0.1003,
+      "intensity": 0.312,
+      "color": [
+        0.8413280152416229,
+        0.8413280152416229,
+        0.4487085107948184
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        0.5,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.1
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.8,
+                0.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "offset",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.8,
+                0
+              ],
+              [
+                2.8,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.35
+              ],
+              [
+                0.4,
+                1.35
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                2.4,
+                0.85
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-07"
+    },
+    {
+      "type": "texture",
+      "label": "Near rimmed ghost",
+      "offset": 0.42,
+      "scale": 0.12,
+      "intensity": 0.26,
+      "color": [
+        1.9864701272987724,
+        1.9864701272987724,
+        1.0594508513907193
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1.18,
+        1
+      ],
+      "params": {
+        "file": "ghosts/smeared_disc.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.1
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.8,
+                0.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "offset",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.8,
+                0
+              ],
+              [
+                2.8,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.35
+              ],
+              [
+                0.4,
+                1.35
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                2.4,
+                0.85
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-08",
+      "shade": 0
+    },
+    {
+      "type": "iris",
+      "label": "Near rimmed ghost · rim",
+      "offset": 0.42,
+      "scale": 0.12,
+      "intensity": 0.02535,
+      "color": [
+        1.1376583574159145,
+        1.1376583574159145,
+        0.606750890292406
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1.18,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.1
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.8,
+                0.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "offset",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.8,
+                0
+              ],
+              [
+                2.8,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.35
+              ],
+              [
+                0.4,
+                1.35
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                2.4,
+                0.85
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-09"
+    },
+    {
+      "type": "texture",
+      "label": "Rear disc A",
+      "offset": 1.85,
+      "scale": 0.41418,
+      "intensity": 0.10631249999999999,
+      "color": [
+        4.264973586681125,
+        4.264973586681125,
+        2.274652518101878
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "file": "ghosts/study_nested_pupil.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                4
+              ],
+              [
+                0.45,
+                4
+              ],
+              [
+                0.9,
+                1.6
+              ],
+              [
+                1.8,
+                0.7
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.1
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.8,
+                0.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "offset",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.8,
+                -0.22559999999999997
+              ],
+              [
+                2.8,
+                -0.22559999999999997
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_y",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-10",
+      "shade": 0,
+      "blur": 0.07
+    },
+    {
+      "type": "iris",
+      "label": "Rear disc A · rim",
+      "offset": 1.85,
+      "scale": 0.3186,
+      "intensity": 0.005528249999999999,
+      "color": [
+        2.3739286416327228,
+        2.3739286416327228,
+        1.2660950911532847
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0.3,
+        "hollow": 0.94,
+        "coma": 0.28
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                4
+              ],
+              [
+                0.45,
+                4
+              ],
+              [
+                0.9,
+                1.6
+              ],
+              [
+                1.8,
+                0.7
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.1
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.8,
+                0.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "offset",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.8,
+                -0.22559999999999997
+              ],
+              [
+                2.8,
+                -0.22559999999999997
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.45,
+                0
+              ],
+              [
+                1.1,
+                0.28
+              ],
+              [
+                2.4,
+                0.55
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_y",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-11",
+      "blur": 0.07,
+      "shade": 0.65
+    },
+    {
+      "type": "texture",
+      "label": "Rear disc B",
+      "offset": 2.03,
+      "scale": 0.34515,
+      "intensity": 0.21656249999999996,
+      "color": [
+        0.7688621901255845,
+        0.7688621901255845,
+        0.41006005184447764
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "file": "ghosts/study_nested_pupil.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                4
+              ],
+              [
+                0.45,
+                4
+              ],
+              [
+                0.9,
+                1.6
+              ],
+              [
+                1.8,
+                0.7
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.1
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.8,
+                0.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "offset",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.8,
+                -0.34309999999999985
+              ],
+              [
+                2.8,
+                -0.34309999999999985
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_y",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-12",
+      "shade": 0,
+      "blur": 0.07
+    },
+    {
+      "type": "iris",
+      "label": "Rear disc B · rim",
+      "offset": 2.03,
+      "scale": 0.2655,
+      "intensity": 0.01126125,
+      "color": [
+        0.35521134222185613,
+        0.35521134222185613,
+        0.18944591891849039
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0.3,
+        "hollow": 0.94,
+        "coma": 0.28
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                4
+              ],
+              [
+                0.45,
+                4
+              ],
+              [
+                0.9,
+                1.6
+              ],
+              [
+                1.8,
+                0.7
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.1
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.8,
+                0.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "offset",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.8,
+                -0.34309999999999985
+              ],
+              [
+                2.8,
+                -0.34309999999999985
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.45,
+                0
+              ],
+              [
+                1.1,
+                0.28
+              ],
+              [
+                2.4,
+                0.55
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_y",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-13",
+      "blur": 0.07,
+      "shade": 0.65
+    },
+    {
+      "type": "texture",
+      "label": "Rear disc C",
+      "offset": 2.22,
+      "scale": 0.57791916,
+      "intensity": 0.09843749999999998,
+      "color": [
+        1.3484291407159716,
+        1.3484291407159716,
+        0.719161844946883
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "file": "ghosts/study_nested_pupil.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                4
+              ],
+              [
+                0.45,
+                4
+              ],
+              [
+                0.9,
+                1.6
+              ],
+              [
+                1.8,
+                0.7
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.1
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.8,
+                0.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "offset",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.8,
+                -0.5169999999999999
+              ],
+              [
+                2.8,
+                -0.5169999999999999
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_y",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-14",
+      "shade": 0,
+      "blur": 0.07
+    },
+    {
+      "type": "iris",
+      "label": "Rear disc C · rim",
+      "offset": 2.22,
+      "scale": 0.4445532,
+      "intensity": 0.00511875,
+      "color": [
+        1.3098279858312474,
+        1.3098279858312474,
+        0.698574707715684
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0.3,
+        "hollow": 0.94,
+        "coma": 0.28
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                4
+              ],
+              [
+                0.45,
+                4
+              ],
+              [
+                0.9,
+                1.6
+              ],
+              [
+                1.8,
+                0.7
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.1
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.8,
+                0.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "offset",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.8,
+                -0.5169999999999999
+              ],
+              [
+                2.8,
+                -0.5169999999999999
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.45,
+                0
+              ],
+              [
+                1.1,
+                0.28
+              ],
+              [
+                2.4,
+                0.55
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_y",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-15",
+      "blur": 0.07,
+      "shade": 0.65
+    },
+    {
+      "type": "iris",
+      "label": "Uneven microghost 1",
+      "offset": 0.73,
+      "scale": 0.025,
+      "intensity": 0.0073500000000000015,
+      "color": [
+        0.045,
+        0.045,
+        0.024
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.5,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.5
+              ],
+              [
+                2.4,
+                0.5
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-16",
+      "shade": 0.35,
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Uneven microghost 1 · rim",
+      "offset": 0.73,
+      "scale": 0.025,
+      "intensity": 0.0029400000000000008,
+      "color": [
+        0.045,
+        0.045,
+        0.024
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.5,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.5
+              ],
+              [
+                2.4,
+                0.5
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-17",
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Uneven microghost 2",
+      "offset": 0.93,
+      "scale": 0.017,
+      "intensity": 0.004200000000000001,
+      "color": [
+        1.195384,
+        1.195384,
+        0.637538
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.5,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.5
+              ],
+              [
+                2.4,
+                0.5
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-18",
+      "shade": 0.35,
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Uneven microghost 2 · rim",
+      "offset": 0.93,
+      "scale": 0.017,
+      "intensity": 0.0016800000000000003,
+      "color": [
+        1.507319,
+        1.507319,
+        0.803904
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.5,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.5
+              ],
+              [
+                2.4,
+                0.5
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-19",
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Uneven microghost 3",
+      "offset": 1.1,
+      "scale": 0.031,
+      "intensity": 0.004725000000000001,
+      "color": [
+        0.045,
+        0.045,
+        0.024
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.5,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.5
+              ],
+              [
+                2.4,
+                0.5
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-20",
+      "shade": 0.35,
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Uneven microghost 3 · rim",
+      "offset": 1.1,
+      "scale": 0.031,
+      "intensity": 0.00189,
+      "color": [
+        0.045,
+        0.045,
+        0.024
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.5,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.5
+              ],
+              [
+                2.4,
+                0.5
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-21",
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Uneven microghost 4",
+      "offset": 1.27,
+      "scale": 0.043,
+      "intensity": 0.0034125000000000006,
+      "color": [
+        1.035174,
+        1.035174,
+        0.552093
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.5,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.5
+              ],
+              [
+                2.4,
+                0.5
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-22",
+      "shade": 0.35,
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Uneven microghost 4 · rim",
+      "offset": 1.27,
+      "scale": 0.043,
+      "intensity": 0.0013650000000000003,
+      "color": [
+        1.379185,
+        1.379185,
+        0.735565
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.5,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.5
+              ],
+              [
+                2.4,
+                0.5
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-23",
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Uneven microghost 5",
+      "offset": 1.4,
+      "scale": 0.021,
+      "intensity": 0.0063,
+      "color": [
+        0.045,
+        0.045,
+        0.024
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.5,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.5
+              ],
+              [
+                2.4,
+                0.5
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-24",
+      "shade": 0.35,
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Uneven microghost 5 · rim",
+      "offset": 1.4,
+      "scale": 0.021,
+      "intensity": 0.0025200000000000005,
+      "color": [
+        0.045,
+        0.045,
+        0.024
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.5,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.5
+              ],
+              [
+                2.4,
+                0.5
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-25",
+      "blur": 0.012
+    },
+    {
+      "type": "ring",
+      "label": "Blue outer reflection",
+      "offset": 1,
+      "scale": 2.3108000000000004,
+      "intensity": 0.05525,
+      "color": [
+        0.36566519790627117,
+        1.030511551362967,
+        1.66211588364174
+      ],
+      "auto_rotate": false,
+      "params": {
+        "radius": 1,
+        "thickness": 0.08,
+        "surface_detail": 0.25,
+        "edge_bias": 0.7
+      },
+      "irregular": 0.15,
+      "slot": "rings",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.45,
+                1.1
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.5,
+                0.55
+              ],
+              [
+                2.4,
+                0.02
+              ],
+              [
+                3,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.73
+              ],
+              [
+                0.9,
+                0.86
+              ],
+              [
+                1.8,
+                1.05
+              ],
+              [
+                2.5,
+                1.4
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "completion",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                360
+              ],
+              [
+                2.4,
+                360
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-26",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Focused cyan caustic",
+      "offset": 1.97,
+      "scale": 0.33,
+      "intensity": 0.65,
+      "color": [
+        0.35,
+        0.75,
+        1
+      ],
+      "auto_rotate": true,
+      "params": {
+        "file": "ghosts/study_nested_pupil.png",
+        "channel": "luminance"
+      },
+      "stretch": [
+        1,
+        1
+      ],
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-27",
+      "blur": 0.012,
+      "shade": 0
+    },
+    {
+      "type": "glow",
+      "label": "Gold veiling reflection",
+      "offset": 0.79,
+      "scale": 2.8296400000000004,
+      "intensity": 0.002145,
+      "color": [
+        5.471529421887609,
+        5.676711775208396,
+        4.103647066415706
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.8,
+        "falloff": 2
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-28",
+      "stretch": [
+        1.2862,
+        0.7462000000000001
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Focused cyan knot",
+      "offset": 2.04,
+      "scale": 0.1265,
+      "intensity": 0.04032000000000001,
+      "color": [
+        0.35,
+        0.75,
+        1
+      ],
+      "auto_rotate": true,
+      "blur": 0.012,
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.35,
+        "trefoil": 0.08,
+        "surface_detail": 0.55,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "rotation": 17,
+      "shade": 0.8,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.35
+              ],
+              [
+                2.4,
+                0.35
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-29",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Focused cyan knot · focus",
+      "offset": 2.04,
+      "scale": 0.030359999999999998,
+      "intensity": 0.43199999999999994,
+      "color": [
+        0.35,
+        0.75,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.55,
+        "falloff": 1.8
+      },
+      "irregular": 0.25,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-30",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Uneven microghost scatter",
+      "offset": 0.73,
+      "scale": 0.035,
+      "intensity": 0.002835,
+      "color": [
+        3.070125,
+        3.070125,
+        1.6374
+      ],
+      "auto_rotate": true,
+      "blur": 0.012,
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.5,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "rotation": 17,
+      "shade": 0.8,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.5
+              ],
+              [
+                2.4,
+                0.5
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-31",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Uneven microghost scatter · focus",
+      "offset": 0.73,
+      "scale": 0.008400000000000001,
+      "intensity": 0.081,
+      "color": [
+        3.33112,
+        3.33112,
+        1.776597
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.55,
+        "falloff": 1.8
+      },
+      "irregular": 0.25,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-32",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Uneven microghost scatter",
+      "offset": 1.1,
+      "scale": 0.035,
+      "intensity": 0.002835,
+      "color": [
+        4.461394,
+        4.461394,
+        2.37941
+      ],
+      "auto_rotate": true,
+      "blur": 0.012,
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.5,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "rotation": 17,
+      "shade": 0.8,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.5
+              ],
+              [
+                2.4,
+                0.5
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-33",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Uneven microghost scatter · focus",
+      "offset": 1.1,
+      "scale": 0.008400000000000001,
+      "intensity": 0.081,
+      "color": [
+        7.2,
+        7.2,
+        3.84
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.55,
+        "falloff": 1.8
+      },
+      "irregular": 0.25,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-34",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Uneven microghost scatter",
+      "offset": 1.4,
+      "scale": 0.035,
+      "intensity": 0.002835,
+      "color": [
+        2.098955,
+        2.098955,
+        1.119443
+      ],
+      "auto_rotate": true,
+      "blur": 0.012,
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.5,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "rotation": 17,
+      "shade": 0.8,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.5
+              ],
+              [
+                2.4,
+                0.5
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-35",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Uneven microghost scatter · focus",
+      "offset": 1.4,
+      "scale": 0.008400000000000001,
+      "intensity": 0.081,
+      "color": [
+        7.2,
+        7.2,
+        3.84
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.55,
+        "falloff": 1.8
+      },
+      "irregular": 0.25,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-36",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Rear disc A · scattered fill",
+      "offset": 1.85,
+      "scale": 0.310635,
+      "intensity": 0.02,
+      "color": [
+        0.75,
+        0.75,
+        0.45
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 1,
+        "edge_softness": 0.2,
+        "density_bias": -0.3,
+        "surface_detail": 0.6
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                4
+              ],
+              [
+                0.45,
+                4
+              ],
+              [
+                0.9,
+                1.6
+              ],
+              [
+                1.8,
+                0.7
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.1
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.8,
+                0.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "offset",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.8,
+                -0.22559999999999997
+              ],
+              [
+                2.8,
+                -0.22559999999999997
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_y",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-material-37",
+      "shade": 0.2,
+      "blur": 0.07
+    },
+    {
+      "type": "iris",
+      "label": "Rear disc B · scattered fill",
+      "offset": 2.03,
+      "scale": 0.2588625,
+      "intensity": 0.02,
+      "color": [
+        0.75,
+        0.75,
+        0.45
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 1,
+        "edge_softness": 0.2,
+        "density_bias": -0.3,
+        "surface_detail": 0.6
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                4
+              ],
+              [
+                0.45,
+                4
+              ],
+              [
+                0.9,
+                1.6
+              ],
+              [
+                1.8,
+                0.7
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.1
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.8,
+                0.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "offset",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.8,
+                -0.34309999999999985
+              ],
+              [
+                2.8,
+                -0.34309999999999985
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_y",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-material-38",
+      "shade": 0.2,
+      "blur": 0.07
+    },
+    {
+      "type": "iris",
+      "label": "Rear disc C · scattered fill",
+      "offset": 2.22,
+      "scale": 0.43343937,
+      "intensity": 0.02,
+      "color": [
+        0.75,
+        0.75,
+        0.45
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 1,
+        "edge_softness": 0.2,
+        "density_bias": -0.3,
+        "surface_detail": 0.6
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                4
+              ],
+              [
+                0.45,
+                4
+              ],
+              [
+                0.9,
+                1.6
+              ],
+              [
+                1.8,
+                0.7
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.1
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.85,
+                1
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.8,
+                0.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "offset",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.8,
+                -0.5169999999999999
+              ],
+              [
+                2.8,
+                -0.5169999999999999
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_y",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                2.4,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "kowa_cine_prominar-material-39",
+      "shade": 0.2,
+      "blur": 0.07
+    }
+  ],
+  "global": {
+    "seed": 2709,
+    "edge_fade_start": 0.25,
+    "edge_fade_range": 0.65
+  }
+}

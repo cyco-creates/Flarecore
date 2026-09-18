@@ -1,0 +1,6 @@
+# Normalise line endings so a checkout on another machine does not show
+# ~50 files changed with no content difference.
+* text=auto
+*.png binary
+*.jpg binary
+*.gif binary

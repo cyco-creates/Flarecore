@@ -1,0 +1,16 @@
+<!doctype html><meta charset="utf-8"><title>Flarecore Lens Lab QA</title>
+<style>body{background:#0c0f15;color:#dce6ee;font:14px system-ui;margin:40px}button{padding:12px}pre{white-space:pre-wrap}#node{width:800px;max-width:90vw;border:1px solid #4683a6;padding:20px;box-sizing:border-box}</style>
+<h1>Lens Lab · live renderer QA</h1><p>Isolated test fixture. No user workflows are modified.</p>
+<div id="node"><button id="open">Open Lens Lab</button><pre id="status">No settings applied</pre></div>
+<script type="module">
+import {openLensLab} from '../web/flarecore_lens_lab.js';
+const opener=document.querySelector('#open'),node=document.querySelector('#node'),status=document.querySelector('#status');
+let settings;
+opener.onclick=async()=>{
+  opener.disabled=true;const width=node.getBoundingClientRect().width;
+  try{await openLensLab({api:{fetchApi:(p,o)=>fetch(p,o)},settings,opener,onApply:s=>{
+    if(node.getBoundingClientRect().width!==width)throw Error('Node width changed');
+    settings=s;status.textContent='Applied; node width preserved at '+width+' px\n'+JSON.stringify(s,null,2);
+  }});}catch(e){status.textContent=e.message;}finally{opener.disabled=false;}
+};
+</script>

@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "name": "ZEISS Supreme Prime Radiance · inspired",
+  "author": "Flarecore · independent artistic lens study",
+  "category": "Spherical",
+  "subcategory": "Lens inspired · Modern",
+  "global": {
+    "seed": 903,
+    "aspect": 1,
+    "fringe": 0.018,
+    "edge_fade_start": 0.1,
+    "edge_fade_range": 0.65,
+    "flicker_amount": 0
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "source_core",
+      "label": "source core",
+      "slot": "glows",
+      "scale": 0.02875,
+      "intensity": 3.2,
+      "color": [
+        1,
+        0.94,
+        0.84
+      ],
+      "params": {
+        "softness": 0.24,
+        "falloff": 2.4
+      }
+    },
+    {
+      "type": "glow",
+      "id": "source_inner_light",
+      "label": "source inner light",
+      "slot": "glows",
+      "scale": 0.08338,
+      "intensity": 0.42,
+      "color": [
+        1,
+        0.98,
+        0.94
+      ],
+      "params": {
+        "softness": 0.48,
+        "falloff": 1.95
+      }
+    },
+    {
+      "type": "glow",
+      "id": "source_envelope",
+      "label": "source envelope",
+      "slot": "glows",
+      "scale": 0.19584,
+      "intensity": 0.14,
+      "color": [
+        1,
+        0.94,
+        0.84
+      ],
+      "irregular": 0.1,
+      "params": {
+        "softness": 0.65,
+        "falloff": 1.8
+      }
+    },
+    {
+      "type": "glint",
+      "id": "fine_source_rays",
+      "label": "fine source rays",
+      "slot": "rays",
+      "scale": 0.34,
+      "intensity": 0.0748,
+      "color": [
+        1,
+        0.94,
+        0.84
+      ],
+      "irregular": 0.22,
+      "rotation": 35,
+      "params": {
+        "points": 11,
+        "length": 0.31,
+        "thickness": 0.004,
+        "length_jitter": 0.68
+      }
+    },
+    {
+      "type": "iris",
+      "id": "reflection_1",
+      "label": "reflection 1",
+      "slot": "ghosts",
+      "scale": 0.024,
+      "intensity": 0.095,
+      "color": [
+        0.13,
+        0.35,
+        1
+      ],
+      "offset": 0.56,
+      "stretch": [
+        1,
+        1
+      ],
+      "rotation": 14,
+      "blur": 0.015,
+      "shade": 0.12,
+      "params": {
+        "blades": 9,
+        "roundness": 0.32,
+        "edge_softness": 0.12
+      }
+    },
+    {
+      "type": "iris",
+      "id": "reflection_2",
+      "label": "reflection 2",
+      "slot": "ghosts",
+      "scale": 0.049,
+      "intensity": 0.085,
+      "color": [
+        0.13,
+        0.35,
+        1
+      ],
+      "offset": 1.18,
+      "stretch": [
+        1,
+        1
+      ],
+      "rotation": 31,
+      "blur": 0.027,
+      "shade": 0.3,
+      "params": {
+        "blades": 64,
+        "roundness": 0.32,
+        "edge_softness": 0.175
+      }
+    },
+    {
+      "type": "iris",
+      "id": "reflection_3",
+      "label": "reflection 3",
+      "slot": "ghosts",
+      "scale": 0.095,
+      "intensity": 0.067,
+      "color": [
+        0.2,
+        0.51,
+        1
+      ],
+      "offset": 1.72,
+      "stretch": [
+        1,
+        1
+      ],
+      "rotation": 48,
+      "blur": 0.039,
+      "shade": 0.48,
+      "params": {
+        "blades": 64,
+        "roundness": 0.32,
+        "edge_softness": 0.23
+      }
+    },
+    {
+      "type": "iris",
+      "id": "reflection_4",
+      "label": "reflection 4",
+      "slot": "ghosts",
+      "scale": 0.24,
+      "intensity": 0.027,
+      "color": [
+        0.13,
+        0.35,
+        1
+      ],
+      "offset": 2.24,
+      "stretch": [
+        1,
+        1
+      ],
+      "rotation": 65,
+      "blur": 0.051,
+      "shade": 0.66,
+      "params": {
+        "blades": 64,
+        "roundness": 0.32,
+        "edge_softness": 0.285,
+        "crescent": 0.33,
+        "crescent_feather": 0.18
+      }
+    },
+    {
+      "type": "glow",
+      "id": "broad_veiling_light",
+      "label": "broad veiling light",
+      "slot": "glows",
+      "scale": 2,
+      "intensity": 0.0025,
+      "color": [
+        1,
+        0.94,
+        0.84
+      ],
+      "offset": 0.12,
+      "params": {
+        "softness": 0.9,
+        "falloff": 1.1
+      },
+      "trigger": {
+        "mode": "border",
+        "source": "light",
+        "inner": 0,
+        "outer": 0.6,
+        "falloff": "smooth",
+        "brightness": 0.0016250000000000001
+      }
+    },
+    {
+      "type": "iris",
+      "id": "reflection_edge",
+      "label": "soft coating edge",
+      "slot": "ghosts",
+      "scale": 0.049,
+      "intensity": 0.017,
+      "color": [
+        0.13,
+        0.35,
+        1
+      ],
+      "offset": 1.18,
+      "stretch": [
+        1,
+        1
+      ],
+      "rotation": 31,
+      "blur": 0.025,
+      "shade": 0.3,
+      "params": {
+        "blades": 64,
+        "roundness": 0.32,
+        "edge_softness": 0.2,
+        "hollow": 0.84
+      }
+    }
+  ]
+}

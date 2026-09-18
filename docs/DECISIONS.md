@@ -1367,3 +1367,53 @@ docs stay in `C:\WORK\Comfy_Flares\docs`.
 
 Element `rotation` in presets is degrees (user-facing). Internal math is
 radians.
+
+## Source-driven optical response (2026-09-07)
+
+The owner requested one flexible flare system guided by the Lens Distortions
+reference gallery, with independent opacity, size, rotation and aspect changes
+as a light moves. The 30 featured first-page posters were inspected; the
+browser's motion streams did not advance, so the authored response curves are
+explicitly hypotheses rather than measurements of the commercial clips.
+
+An optional per-element `motion` block has independent channels with finite,
+strictly increasing knots. Smoothstep segments cannot overshoot and evaluation
+is stateless: the same source state gives the same response regardless of
+chunking or traversal direction. Radius is measured about the optical frame
+center, not the user-movable flare anchor. Motion transforms precede the
+existing trigger; its opacity multiplier is applied after trigger brightness
+so zero energy stays zero. Presets without motion retain their old path.
+
+Target ranges and applicable shapes live in Python and are served to a modular
+curve editor, rather than duplicating another contract in the main frontend
+file. Executed JavaScript checks compare interpolation with Python fixtures.
+Existing positional node widgets are unchanged.
+
+Screen-space elements can opt into `screen_blend=all`. Each source illuminates
+the same seeded coordinates, so illumination is summed without selecting a
+new winner abruptly. Strongest-light mode remains the compatibility default.
+The all-light path costs one evaluation per source and remains an artistic
+approximation, not radiometric lens transport.
+
+Four original Adaptive Optics stacks cover warm reflection chains, segmented
+blue streaks, broad prismatic spill and cleaner spherical ghosts. No reference
+media is shipped. See FLARE_ANATOMY_STUDY.md and OPTICAL_RESPONSE.md for the
+evidence, controls, verification and known limitations.
+# 2026-09-07 — Editor organization and Flare Lab depth restoration
+
+The advanced element editor now uses six collapsible sections, preserving open
+state during edits. Optical response adopts the existing charcoal/amber palette;
+its scoped control sizing overrides the legacy 22px select height that clipped
+text. Curve canvases preserve their aspect ratio and use double-resolution
+backing buffers. Undo/redo shortcuts can bubble to the stack editor.
+
+Flare Lab again includes Depth Anything V2 below its image loader, connected to
+the same source image and the renderer's depth input. This supersedes the older
+decision to keep depth only in Video Lab. The node remains inside the lab group
+and inherits that bench's mode. Existing presets, switches, generator setup,
+Video Lab, and library paths are preserved.
+
+Documentation now has an index and a practical Studio guide. Historical reports
+remain in place rather than being deleted or silently treated as current advice.
+`tests/editor_layout_qa.html` exercises the actual advanced builder and host CSS,
+so component-only tests no longer miss host-style conflicts.

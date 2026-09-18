@@ -1,0 +1,3193 @@
+{
+  "method": "Hue-preserving scalar appearance fit including source energy, bounded 0.05..8. Source geometry authored. Display references are not photometric or optical calibration. Basis 3x area-downsampled; saturated pixels and website overlay excluded.",
+  "source": "https://lenses.cineflares.com/",
+  "train_times": [
+    6,
+    8,
+    12,
+    14
+  ],
+  "holdout_time": 10,
+  "colors": {
+    "kowa_cine_prominar-00": [
+      0.025,
+      0.025,
+      0.025
+    ],
+    "kowa_cine_prominar-01": [
+      0.5825423174960768,
+      0.6535840995567248,
+      0.7104170821033873
+    ],
+    "kowa_cine_prominar-02": [
+      0.041,
+      0.046,
+      0.05
+    ],
+    "kowa_cine_prominar-03": [
+      0.041,
+      0.046,
+      0.05
+    ],
+    "kowa_cine_prominar-04": [
+      2.814123838585244,
+      2.814123838585244,
+      1.5008664327131014
+    ],
+    "kowa_cine_prominar-05": [
+      1.3264589015445707,
+      1.3264589015445707,
+      0.7074445162098547
+    ],
+    "kowa_cine_prominar-06": [
+      0.6948935261608958,
+      0.6948935261608958,
+      0.3706099750188589
+    ],
+    "kowa_cine_prominar-07": [
+      0.8413280152416229,
+      0.8413280152416229,
+      0.4487085107948184
+    ],
+    "kowa_cine_prominar-08": [
+      1.9864701272987724,
+      1.9864701272987724,
+      1.0594508513907193
+    ],
+    "kowa_cine_prominar-09": [
+      1.1376583574159145,
+      1.1376583574159145,
+      0.606750890292406
+    ],
+    "kowa_cine_prominar-10": [
+      4.264973586681125,
+      4.264973586681125,
+      2.274652518101878
+    ],
+    "kowa_cine_prominar-11": [
+      2.3739286416327228,
+      2.3739286416327228,
+      1.2660950911532847
+    ],
+    "kowa_cine_prominar-12": [
+      0.7688621901255845,
+      0.7688621901255845,
+      0.41006005184447764
+    ],
+    "kowa_cine_prominar-13": [
+      0.35521134222185613,
+      0.35521134222185613,
+      0.18944591891849039
+    ],
+    "kowa_cine_prominar-14": [
+      1.3484291407159716,
+      1.3484291407159716,
+      0.719161844946883
+    ],
+    "kowa_cine_prominar-15": [
+      1.3098279858312474,
+      1.3098279858312474,
+      0.698574707715684
+    ],
+    "kowa_cine_prominar-16": [
+      0.045,
+      0.045,
+      0.024
+    ],
+    "kowa_cine_prominar-17": [
+      0.045,
+      0.045,
+      0.024
+    ],
+    "kowa_cine_prominar-18": [
+      1.195384,
+      1.195384,
+      0.637538
+    ],
+    "kowa_cine_prominar-19": [
+      1.507319,
+      1.507319,
+      0.803904
+    ],
+    "kowa_cine_prominar-20": [
+      0.045,
+      0.045,
+      0.024
+    ],
+    "kowa_cine_prominar-21": [
+      0.045,
+      0.045,
+      0.024
+    ],
+    "kowa_cine_prominar-22": [
+      1.035174,
+      1.035174,
+      0.552093
+    ],
+    "kowa_cine_prominar-23": [
+      1.379185,
+      1.379185,
+      0.735565
+    ],
+    "kowa_cine_prominar-24": [
+      0.045,
+      0.045,
+      0.024
+    ],
+    "kowa_cine_prominar-25": [
+      0.045,
+      0.045,
+      0.024
+    ],
+    "kowa_cine_prominar-26": [
+      0.36566519790627117,
+      1.030511551362967,
+      1.66211588364174
+    ],
+    "kowa_cine_prominar-27": [
+      0.834792,
+      2.352596,
+      3.794508
+    ],
+    "kowa_cine_prominar-28": [
+      5.471529421887609,
+      5.676711775208396,
+      4.103647066415706
+    ],
+    "kowa_cine_prominar-29": [
+      0.01,
+      0.035,
+      0.05
+    ],
+    "kowa_cine_prominar-30": [
+      0.318693,
+      1.115425,
+      1.593464
+    ],
+    "kowa_cine_prominar-31": [
+      3.070125,
+      3.070125,
+      1.6374
+    ],
+    "kowa_cine_prominar-32": [
+      3.33112,
+      3.33112,
+      1.776597
+    ],
+    "kowa_cine_prominar-33": [
+      4.461394,
+      4.461394,
+      2.37941
+    ],
+    "kowa_cine_prominar-34": [
+      7.2,
+      7.2,
+      3.84
+    ],
+    "kowa_cine_prominar-35": [
+      2.098955,
+      2.098955,
+      1.119443
+    ],
+    "kowa_cine_prominar-36": [
+      7.2,
+      7.2,
+      3.84
+    ],
+    "cooke_anamorphic_sf-00": [
+      0.5486947817466805,
+      0.5486947817466805,
+      0.5486947817466805
+    ],
+    "cooke_anamorphic_sf-01": [
+      18.656792373657225,
+      20.932010955810547,
+      22.752185821533203
+    ],
+    "cooke_anamorphic_sf-02": [
+      1.64,
+      1.84,
+      2
+    ],
+    "cooke_anamorphic_sf-03": [
+      6.56,
+      7.36,
+      8
+    ],
+    "cooke_anamorphic_sf-04": [
+      1.8707218454704284,
+      8.503360291557312,
+      34.01344116622925
+    ],
+    "cooke_anamorphic_sf-05": [
+      0.12348659179363825,
+      0.561304081870297,
+      2.245216327481188
+    ],
+    "cooke_anamorphic_sf-06": [
+      0.002330502445549812,
+      0.010593506527950668,
+      0.04237402611180267
+    ],
+    "cooke_anamorphic_sf-07": [
+      0.24377276350368904,
+      1.1080573260198656,
+      4.4322293040794625
+    ],
+    "cooke_anamorphic_sf-08": [
+      0.09046728963901683,
+      0.41121237692464957,
+      1.6448459657261358
+    ],
+    "cooke_anamorphic_sf-09": [
+      0.0048702121352954255,
+      0.02213732788770648,
+      0.08854931155082592
+    ],
+    "cooke_anamorphic_sf-10": [
+      0.00471029734850713,
+      0.021410442493214228,
+      0.08564176997285691
+    ],
+    "cooke_anamorphic_sf-11": [
+      0.3651045680774847,
+      1.6595662185340214,
+      6.6382665869714845
+    ],
+    "cooke_anamorphic_sf-12": [
+      1.76,
+      4.96,
+      8
+    ],
+    "cooke_anamorphic_sf-13": [
+      1.76,
+      4.96,
+      8
+    ],
+    "cooke_anamorphic_sf-14": [
+      1.76,
+      4.96,
+      8
+    ],
+    "cooke_anamorphic_sf-15": [
+      1.76,
+      4.96,
+      8
+    ],
+    "cooke_anamorphic_sf-16": [
+      0.0714580749095825,
+      0.428748449457495,
+      3.5729062744015465
+    ],
+    "cooke_anamorphic_sf-17": [
+      0.08981964744060564,
+      0.5389172560682742,
+      4.490975457701327
+    ],
+    "cooke_anamorphic_sf-18": [
+      0.26339051572706,
+      1.5803430943623598,
+      13.169525786352999
+    ],
+    "cooke_anamorphic_sf-19": [
+      1.3185691575602687,
+      4.61499205146094,
+      8.241057234751679
+    ],
+    "cooke_anamorphic_sf-20": [
+      1.2177924347044669,
+      2.6385496350669646,
+      4.059307603580719
+    ],
+    "arri_signature-00": [
+      0.4289815677533953,
+      0.4289815677533953,
+      0.4289815677533953
+    ],
+    "arri_signature-01": [
+      1.3629459159770012,
+      1.5291598571953773,
+      1.6621294624307155
+    ],
+    "arri_signature-02": [
+      0.1972295,
+      0.221282,
+      0.240524
+    ],
+    "arri_signature-03": [
+      13.12,
+      14.72,
+      16
+    ],
+    "arri_signature-04": [
+      0.00275,
+      0.0125,
+      0.05
+    ],
+    "arri_signature-05": [
+      0.00275,
+      0.0125,
+      0.05
+    ],
+    "arri_signature-06": [
+      3.827885,
+      2.411567,
+      1.531154
+    ],
+    "arri_signature-07": [
+      8,
+      5.04,
+      3.2
+    ],
+    "arri_signature-08": [
+      0.44,
+      2,
+      8
+    ],
+    "arri_signature-09": [
+      0.44,
+      2,
+      8
+    ],
+    "arri_signature-10": [
+      0.488211,
+      1.375866,
+      2.219139
+    ],
+    "arri_signature-11": [
+      1.76,
+      4.96,
+      8
+    ],
+    "arri_signature-12": [
+      0.080416,
+      0.365526,
+      1.462106
+    ],
+    "arri_signature-13": [
+      0.333368,
+      1.041768,
+      4.167076
+    ],
+    "arri_signature-14": [
+      0.066713,
+      0.208478,
+      0.833913
+    ],
+    "arri_signature-15": [
+      0.8,
+      0.96,
+      8
+    ],
+    "arri_signature-16": [
+      0.8,
+      0.96,
+      8
+    ],
+    "zeiss_radiance-00": [
+      0.22002726313969712,
+      0.22002726313969712,
+      0.22002726313969712
+    ],
+    "zeiss_radiance-01": [
+      4.648578,
+      5.215478,
+      5.668998
+    ],
+    "zeiss_radiance-02": [
+      0.288948,
+      0.335986,
+      0.24863
+    ],
+    "zeiss_radiance-03": [
+      6.56,
+      7.36,
+      8
+    ],
+    "zeiss_radiance-04": [
+      0.012619984975301604,
+      0.014197369779340453,
+      0.15775117200575628
+    ],
+    "zeiss_radiance-05": [
+      0.003626171963307695,
+      0.004079443458721157,
+      0.04532714954134619
+    ],
+    "zeiss_radiance-06": [
+      0.2328040295847519,
+      1.0581981406559424,
+      4.23279256262377
+    ],
+    "zeiss_radiance-07": [
+      0.038575795262843236,
+      0.17534476318043907,
+      0.7013781754408669
+    ],
+    "zeiss_radiance-08": [
+      0.45026945612751074,
+      2.046680627783674,
+      8.18672452531254
+    ],
+    "zeiss_radiance-09": [
+      0.10520856529351105,
+      0.478224230368592,
+      1.912898935652208
+    ],
+    "zeiss_radiance-10": [
+      0.01311674763800029,
+      0.059621009801856986,
+      0.2384832549474795
+    ],
+    "zeiss_radiance-11": [
+      0.02140480677332986,
+      0.0972945049460495,
+      0.3891788040441465
+    ],
+    "zeiss_radiance-12": [
+      0.013661752009391783,
+      0.06209709379673004,
+      0.2483869774222374
+    ],
+    "zeiss_radiance-13": [
+      0.003843852877616882,
+      0.017472058534622192,
+      0.06988823413848877
+    ],
+    "zeiss_radiance-14": [
+      0.10514227689772844,
+      0.4779190036091208,
+      1.9116760144364833
+    ],
+    "zeiss_radiance-15": [
+      0.14027203138536215,
+      0.6376011036979556,
+      2.550403453754604
+    ],
+    "zeiss_radiance-16": [
+      0.35075731501624213,
+      1.5943505052128861,
+      6.3774020208515445
+    ],
+    "zeiss_radiance-17": [
+      0.011,
+      0.031,
+      0.05
+    ],
+    "zeiss_radiance-18": [
+      0.012,
+      0.031,
+      0.05
+    ],
+    "zeiss_radiance-19": [
+      0.012,
+      0.031,
+      0.05
+    ],
+    "atlas_orion-00": [
+      0.1,
+      0.1,
+      0.1
+    ],
+    "atlas_orion-01": [
+      1.353945565341711,
+      1.5190608573585151,
+      1.6511529201680422
+    ],
+    "atlas_orion-02": [
+      0.041,
+      0.046,
+      0.05
+    ],
+    "atlas_orion-03": [
+      0.041,
+      0.046,
+      0.05
+    ],
+    "atlas_orion-04": [
+      0.10865560598683587,
+      0.49389049654541994,
+      1.9755606077582415
+    ],
+    "atlas_orion-05": [
+      0.035118,
+      0.159626,
+      0.638506
+    ],
+    "atlas_orion-06": [
+      8.001402026615372,
+      22.549405711370596,
+      36.37000921188806
+    ],
+    "atlas_orion-07": [
+      0.029356,
+      0.133438,
+      0.533754
+    ],
+    "atlas_orion-08": [
+      0.44,
+      2,
+      8
+    ],
+    "atlas_orion-09": [
+      0.2690708924999322,
+      1.435044759999638,
+      17.93805949999548
+    ],
+    "atlas_orion-10": [
+      0.2690708924999322,
+      1.435044759999638,
+      17.93805949999548
+    ],
+    "atlas_orion-11": [
+      0.48,
+      3.2,
+      8
+    ],
+    "panavision_c-00": [
+      0.13989993666273834,
+      0.13989993666273834,
+      0.13989993666273834
+    ],
+    "panavision_c-01": [
+      0.15394311819396717,
+      0.20452544424864744,
+      0.21991975606804415
+    ],
+    "panavision_c-02": [
+      1.2234514792172606,
+      1.6254446995816956,
+      1.7477898475034217
+    ],
+    "panavision_c-03": [
+      0.035,
+      0.0465,
+      0.05
+    ],
+    "panavision_c-04": [
+      1.0741239541019938,
+      0.8306560500739479,
+      1.432164835238099
+    ],
+    "panavision_c-05": [
+      3.27340646697907,
+      5.0737772823170255,
+      8.183516167447678
+    ],
+    "panavision_c-06": [
+      0.6023333996951581,
+      0.49477351669371133,
+      2.151190852133632
+    ],
+    "panavision_c-07": [
+      0.3817041012793779,
+      0.31354248095154763,
+      1.363228516330719
+    ],
+    "panavision_c-08": [
+      0.011,
+      0.031,
+      0.05
+    ],
+    "panavision_c-09": [
+      0.011,
+      0.031,
+      0.05
+    ],
+    "panavision_c-10": [
+      6.99528254482799,
+      2.098583114901971,
+      3.637545164861034
+    ],
+    "panavision_c-11": [
+      16.248265905600643,
+      4.874482519257571,
+      8.449097171881386
+    ],
+    "panavision_c-12": [
+      0.009,
+      0.03,
+      0.05
+    ],
+    "panavision_c-13": [
+      0.009,
+      0.03,
+      0.05
+    ],
+    "canon_k35-00": [
+      0.05,
+      0.05,
+      0.05
+    ],
+    "canon_k35-01": [
+      0.7254230329076328,
+      0.8138897111976758,
+      0.8846626394885191
+    ],
+    "canon_k35-02": [
+      0.041,
+      0.046,
+      0.05
+    ],
+    "canon_k35-03": [
+      0.041,
+      0.046,
+      0.05
+    ],
+    "canon_k35-04": [
+      9.540001161737067,
+      2.289600278816896,
+      3.816000464694827
+    ],
+    "canon_k35-05": [
+      9.540001161737067,
+      2.289600278816896,
+      3.816000464694827
+    ],
+    "canon_k35-06": [
+      7.905508345856161,
+      7.905508345856161,
+      11.293583351223088
+    ],
+    "canon_k35-07": [
+      7.905508345856161,
+      7.905508345856161,
+      11.293583351223088
+    ],
+    "canon_k35-08": [
+      0.12633350675725938,
+      0.5742378231081963,
+      2.296951292432785
+    ],
+    "canon_k35-09": [
+      0.2954671305706501,
+      1.3430338815279008,
+      5.372135526111603
+    ],
+    "canon_k35-10": [
+      0.07899239158630371,
+      0.6582699298858643,
+      0.2633079719543457
+    ],
+    "canon_k35-11": [
+      0.07899239158630371,
+      0.6582699298858643,
+      0.2633079719543457
+    ],
+    "canon_k35-12": [
+      30.101386928229935,
+      10.75049533151069,
+      71.66996887673794
+    ],
+    "canon_k35-13": [
+      30.101386928229935,
+      10.75049533151069,
+      71.66996887673794
+    ],
+    "canon_k35-14": [
+      0.8572460403666666,
+      3.4289809238820337,
+      5.714968206470056
+    ],
+    "canon_k35-15": [
+      9.30220195506272,
+      10.335779950069691,
+      20.671559900139382
+    ],
+    "canon_k35-16": [
+      0.006,
+      0.05,
+      0.024
+    ],
+    "canon_k35-17": [
+      0.7893401673121453,
+      6.577827745989323,
+      3.157358051144123
+    ],
+    "canon_k35-18": [
+      0.035,
+      0.0375,
+      0.05
+    ],
+    "canon_k35-19": [
+      1.015329,
+      1.087853,
+      1.45047
+    ],
+    "cooke_speed_panchro-00": [
+      0.36991579734024127,
+      0.36991579734024127,
+      0.36991579734024127
+    ],
+    "cooke_speed_panchro-01": [
+      0.8131661702274083,
+      0.9938689153661728,
+      1.1293967921708823
+    ],
+    "cooke_speed_panchro-02": [
+      1.1893466627322435,
+      1.3677487008781433,
+      1.486683134734988
+    ],
+    "cooke_speed_panchro-03": [
+      0.04,
+      0.046,
+      0.05
+    ],
+    "cooke_speed_panchro-04": [
+      0.6043862161699597,
+      1.0576751784037173,
+      1.5109655404248992
+    ],
+    "cooke_speed_panchro-05": [
+      0.02,
+      0.033,
+      0.035
+    ],
+    "cooke_speed_panchro-06": [
+      0.011,
+      0.031,
+      0.05
+    ],
+    "cooke_speed_panchro-07": [
+      0.011,
+      0.031,
+      0.05
+    ],
+    "leitz_hugo-00": [
+      0.13219136051214048,
+      0.13219136051214048,
+      0.13219136051214048
+    ],
+    "leitz_hugo-01": [
+      1.5629166046028138,
+      1.7535158599972724,
+      1.9059962499012948
+    ],
+    "leitz_hugo-02": [
+      2.2929189786258584,
+      2.5725433185072353,
+      2.796242384811382
+    ],
+    "leitz_hugo-03": [
+      26.24,
+      29.44,
+      32
+    ],
+    "leitz_hugo-04": [
+      0.004,
+      0.05,
+      0.016
+    ],
+    "leitz_hugo-05": [
+      0.014422,
+      0.180272,
+      0.057687
+    ],
+    "leitz_hugo-06": [
+      0.189415,
+      1.420616,
+      3.314771
+    ],
+    "leitz_hugo-07": [
+      0.035,
+      0.033,
+      0.01
+    ],
+    "arri_master_prime-00": [
+      0.35043277268628703,
+      0.35043277268628703,
+      0.35043277268628703
+    ],
+    "arri_master_prime-01": [
+      1.1636233875694275,
+      1.3055282074546815,
+      1.4190530294904709
+    ],
+    "arri_master_prime-02": [
+      2.1518296637317524,
+      2.4142481649115326,
+      2.624182858174176
+    ],
+    "arri_master_prime-03": [
+      5.141765,
+      5.76881,
+      6.270445
+    ],
+    "arri_master_prime-04": [
+      2.8700343848173695,
+      8.088278720848948,
+      13.04561084007895
+    ],
+    "arri_master_prime-05": [
+      1.04,
+      4,
+      3.44
+    ],
+    "arri_master_prime-06": [
+      0.468845,
+      1.321291,
+      2.131115
+    ],
+    "arri_master_prime-07": [
+      1.76,
+      4.96,
+      8
+    ],
+    "atlas_mercury-00": [
+      0.2035515297419545,
+      0.2035515297419545,
+      0.2035515297419545
+    ],
+    "atlas_mercury-01": [
+      0.9978640740354061,
+      1.1195548416254522,
+      1.2169076759004591
+    ],
+    "atlas_mercury-02": [
+      3.0743329167780877,
+      3.449251711572647,
+      3.7491864472739698
+    ],
+    "atlas_mercury-03": [
+      6.56,
+      7.36,
+      8
+    ],
+    "atlas_mercury-04": [
+      2.1851910512522053,
+      1.0488917046010584,
+      0.21851950621385632
+    ],
+    "atlas_mercury-05": [
+      0.957838,
+      2.69936,
+      4.353807
+    ],
+    "atlas_mercury-06": [
+      1.2803598007983104,
+      3.608286055224384,
+      5.819816838945084
+    ],
+    "atlas_mercury-07": [
+      1.6734104902968407,
+      0.8032366940116883,
+      0.3179475024933815
+    ],
+    "atlas_mercury-08": [
+      1.410486578662634,
+      0.6770338990888595,
+      0.26799267394423487
+    ],
+    "atlas_mercury-09": [
+      13.515989990234376,
+      6.335620307922363,
+      10.559367179870605
+    ],
+    "atlas_mercury-10": [
+      13.515989990234376,
+      6.335620307922363,
+      10.559367179870605
+    ],
+    "atlas_mercury-11": [
+      0.020304,
+      0.05722,
+      0.09229
+    ],
+    "atlas_mercury-12": [
+      0.134381,
+      0.378711,
+      0.610824
+    ],
+    "atlas_mercury-13": [
+      0.05648,
+      0.05648,
+      0.05648
+    ],
+    "atlas_mercury-14": [
+      0.124435,
+      0.124435,
+      0.124435
+    ],
+    "hawk_vlite_vintage74-00": [
+      0.025,
+      0.025,
+      0.025
+    ],
+    "hawk_vlite_vintage74-01": [
+      0.23349929156090737,
+      0.2677461759676538,
+      0.31133260035608706
+    ],
+    "hawk_vlite_vintage74-02": [
+      0.0375,
+      0.043,
+      0.05
+    ],
+    "hawk_vlite_vintage74-03": [
+      0.0375,
+      0.043,
+      0.05
+    ],
+    "hawk_vlite_vintage74-04": [
+      0.9938126893836288,
+      1.164181014223551,
+      1.419732809070002
+    ],
+    "hawk_vlite_vintage74-05": [
+      0.8280797104699459,
+      0.9522914576442121,
+      1.3801326181207703
+    ],
+    "hawk_vlite_vintage74-06": [
+      0.713537974503031,
+      0.8782004767295405,
+      1.097750247270809
+    ],
+    "hawk_vlite_vintage74-07": [
+      5.5581801860295394,
+      8.337270279044306,
+      16.87304699330396
+    ],
+    "hawk_vlite_vintage74-08": [
+      0.04064520517797768,
+      0.1145455782288462,
+      0.18475076085372272
+    ],
+    "hawk_vlite_vintage74-09": [
+      2.1298259184637036,
+      1.3252251197272509,
+      1.5382078672650403
+    ],
+    "hawk_vlite_vintage74-10": [
+      5.604891088583474,
+      3.4874877884519404,
+      4.047976897310287
+    ],
+    "hawk_vlite_vintage74-11": [
+      2.526645,
+      3.158306,
+      6.316613
+    ],
+    "hawk_vlite_vintage74-12": [
+      0.035,
+      0.04,
+      0.05
+    ],
+    "panavision_primo_classic-00": [
+      0.05,
+      0.05,
+      0.05
+    ],
+    "panavision_primo_classic-01": [
+      1.4496446499909708,
+      1.6264310806655355,
+      1.767859597275886
+    ],
+    "panavision_primo_classic-02": [
+      0.041,
+      0.046,
+      0.05
+    ],
+    "panavision_primo_classic-03": [
+      0.041,
+      0.046,
+      0.05
+    ],
+    "panavision_primo_classic-04": [
+      1.0649313405352248,
+      1.3387705457329997,
+      1.3691970142783647
+    ],
+    "panavision_primo_classic-05": [
+      0.5591148963801198,
+      0.7028872983064364,
+      0.7188620096315826
+    ],
+    "panavision_primo_classic-06": [
+      1.762965358058074,
+      2.3867847693379396,
+      2.3867847693379396
+    ],
+    "panavision_primo_classic-07": [
+      0.055917067824851785,
+      0.0757031072090301,
+      0.0757031072090301
+    ],
+    "panavision_primo_classic-08": [
+      4.652490012745434,
+      23.262450063727172,
+      7.157676942685283
+    ],
+    "panavision_primo_classic-09": [
+      4.652490012745434,
+      23.262450063727172,
+      7.157676942685283
+    ],
+    "panavision_primo_classic-10": [
+      0.023042,
+      0.380201,
+      0.46085
+    ],
+    "panavision_primo_classic-11": [
+      0.011761,
+      0.194062,
+      0.235227
+    ],
+    "panavision_primo_classic-12": [
+      0.05,
+      0.009,
+      0.024
+    ],
+    "panavision_primo_classic-13": [
+      0.9439075886327452,
+      2.6601038212559844,
+      4.290491260178171
+    ],
+    "panavision_primo_classic-14": [
+      1.343965,
+      0.241914,
+      0.671982
+    ],
+    "panavision_primo_classic-15": [
+      0.538966,
+      0.097014,
+      0.269483
+    ],
+    "arri_master_anamorphic-00": [
+      0.0436965,
+      0.0436965,
+      0.0436965
+    ],
+    "arri_master_anamorphic-01": [
+      1.687709,
+      1.893527,
+      2.058182
+    ],
+    "arri_master_anamorphic-02": [
+      0.9586178856302277,
+      1.0755224756455162,
+      1.1690459001528855
+    ],
+    "arri_master_anamorphic-03": [
+      26.24,
+      29.44,
+      32
+    ],
+    "arri_master_anamorphic-04": [
+      0.434872,
+      0.407693,
+      2.717952
+    ],
+    "arri_master_anamorphic-05": [
+      1.2560156768125854,
+      2.5818098278183705,
+      6.280078384062926
+    ],
+    "arri_master_anamorphic-06": [
+      1.06487,
+      0.517223,
+      3.042487
+    ],
+    "arri_master_anamorphic-07": [
+      2.8,
+      1.36,
+      8
+    ],
+    "arri_master_anamorphic-08": [
+      1.098842,
+      0.464895,
+      4.226316
+    ],
+    "zeiss_super_speed-00": [
+      0.025,
+      0.025,
+      0.025
+    ],
+    "zeiss_super_speed-01": [
+      1.0274126915080946,
+      1.1527070261411012,
+      1.252942635927933
+    ],
+    "zeiss_super_speed-02": [
+      0.041,
+      0.046,
+      0.05
+    ],
+    "zeiss_super_speed-03": [
+      0.041,
+      0.046,
+      0.05
+    ],
+    "zeiss_super_speed-04": [
+      1.1240749153455496,
+      0.582853602021575,
+      4.163239791546226
+    ],
+    "zeiss_super_speed-05": [
+      0.7111143782606125,
+      0.3687257427639961,
+      2.633757534393072
+    ],
+    "zeiss_super_speed-06": [
+      0.2165115282007822,
+      0.13777959340006318,
+      0.393657606001683
+    ],
+    "zeiss_super_speed-07": [
+      0.987552,
+      0.653304,
+      0.227897
+    ],
+    "zeiss_super_speed-08": [
+      2.031701,
+      0.568876,
+      4.063401
+    ],
+    "zeiss_super_speed-09": [
+      0.9332562358173006,
+      2.6300848356671938,
+      4.242072764374381
+    ],
+    "zeiss_super_speed-10": [
+      7.127130419608331,
+      8.018021722059373,
+      21.381391258824983
+    ],
+    "zeiss_super_speed-11": [
+      3.5229116120656405,
+      4.053761369197114,
+      3.619429502205424
+    ],
+    "zeiss_super_speed-12": [
+      5.300238637820875,
+      6.098904733930867,
+      5.445450655295418
+    ]
+  },
+  "reference_sha256": {
+    "pair01-s06.png": "64d9491c2a24d4123e3043182494bfc30f5947471c7c9f8ca4044235d32d2b83",
+    "pair01-s08.png": "4c92ab65e7359ad380a47f10a69b57768f34ab4cb4c9aae3d0da72b351a707b5",
+    "pair01-s12.png": "ef3dc9aa3e289429260e2875937317a9e92aef8612b8982c4c844b4985429cd0",
+    "pair01-s14.png": "b9d3e36111f92feb7a495b8bc0adce6dfd01adc2b25737a74ca2485966803795",
+    "pair03-s06.png": "4067a630f71e03a880ee1eb894a468f1252aaca91bc4e4358fdda85e8d1ca396",
+    "pair03-s08.png": "74fb978bdbc4aa23c64d8edf3b9f16b3afa56a00968294c348a9b5e37d063a57",
+    "pair03-s12.png": "387aaf390a1534995b960dd393deedb05e122bced47e4c430d2977eb5d8c6c89",
+    "pair03-s14.png": "f926a8a05f9b36bfc002b089b2285fae4e8cfc7d24e6832f2ab86929a76ceab9",
+    "pair05-s06.png": "ae5c944f2bcead73d103e25ddcf01236ef11708c35f89a2571a1092a9c5e0922",
+    "pair05-s08.png": "179b0a6874d63b3e8445363f8794fb8a043032e2a1d8befffedbd60185dbf65b",
+    "pair05-s12.png": "d22816058763e895df4a78fcbfd75aea646ebaba656bfedd32e3f6407199edc6",
+    "pair05-s14.png": "8c08ae27075a50f697ff27cf7bdcc6028e2b0a46a2a71cbf2a59b61be0d32be7",
+    "pair07-s06.png": "6a7c61f44b1ea52871cd7e904394cfde2a3008de834fa4299168a595af2cd754",
+    "pair07-s08.png": "b11a34f3590e2c545aa3edf01660cdc4409a5070585699aaf0bf1c08c702bade",
+    "pair07-s12.png": "a4d8be70e6de0b258bcb5a84888afa9f89858d0947e262e2dbb86ea6c4019ec5",
+    "pair07-s14.png": "05d38047228e92275125395a7c6ef4bbaa77572f4a8439c086d4f3c497f70cc7",
+    "pair09-s06.png": "cfe82d925d6fd4b85951ad0ff52c30be5fecee2d0893e1edfc9eefa064cdb13e",
+    "pair09-s08.png": "425310a116260a6249519b58508876ab87899c74c049df72a7d069023e8f2039",
+    "pair09-s12.png": "8f53a2e8a94edc814ebbf0aab0b6afd6467bcc732411b06c2590f2911853572e",
+    "pair09-s14.png": "56324e3729af252c6c97de7d9764784ea5bf3a6500defe0b5ee208713adde4ec",
+    "pair11-s06.png": "052850f04088d39a6329ea47f576543962d7e8cf4f2e2ebce5f474e7e04a56c2",
+    "pair11-s08.png": "cf33a20560af886757a6d71ecd01eae353e93579b791b3fcb6e78179d6c9322b",
+    "pair11-s12.png": "e28a0646e613ee75e0db78714d8fee502c660b71ba0a783d539d00d246e17644",
+    "pair11-s14.png": "ff80715cee20efde2dcf9f7a2565bfa23974051da49a91825c38551c27027c64",
+    "pair13-s06.png": "01eda07fe1ec027413d8093b95adf9e3d4098f0afd5ca8fb94d113ac80e6fbba",
+    "pair13-s08.png": "865e13e52b9b404f3502d12bd35424488aa4d0479e239a13a0edf2198a70ba07",
+    "pair13-s12.png": "ab283447e82664eda967b8d32769c3503677e849ec26bc3d68842825536a337d",
+    "pair13-s14.png": "6c20be8f8ae962751d05e5ff2cbc531e4be3249b406e96c41d985ac8abebb86b",
+    "pair15-s06.png": "f65568e6b58b537c8cdf0b82bca9bcdb0e08c1a69908f124aca89fee3a2e5a3a",
+    "pair15-s08.png": "7700621ac49e81e246d57e673d11468cd6fd45bc41ecd91931f4ce62663561a2",
+    "pair15-s12.png": "fa2814c7121cf85885cfcfdd0b4f4ee01970b3a791081830cb0ef7474e3f7321",
+    "pair15-s14.png": "ca0520c3725dd35970f507c050f5371957bfb7d7a0edf7864410134c810e076b"
+  },
+  "excluded": [
+    {
+      "key": "canon_k35",
+      "time": 6,
+      "reason": "Source absent, clipped or too dim for reliable automatic localization"
+    },
+    {
+      "key": "canon_k35",
+      "time": 14,
+      "reason": "Source absent, clipped or too dim for reliable automatic localization"
+    },
+    {
+      "key": "cooke_speed_panchro",
+      "time": 6,
+      "reason": "Source absent, clipped or too dim for reliable automatic localization"
+    },
+    {
+      "key": "cooke_speed_panchro",
+      "time": 14,
+      "reason": "Source absent, clipped or too dim for reliable automatic localization"
+    },
+    {
+      "key": "arri_master_prime",
+      "time": 6,
+      "reason": "Source absent, clipped or too dim for reliable automatic localization"
+    },
+    {
+      "key": "arri_master_prime",
+      "time": 14,
+      "reason": "Source absent, clipped or too dim for reliable automatic localization"
+    },
+    {
+      "key": "atlas_mercury",
+      "time": 6,
+      "reason": "Source absent, clipped or too dim for reliable automatic localization"
+    },
+    {
+      "key": "atlas_mercury",
+      "time": 14,
+      "reason": "Source absent, clipped or too dim for reliable automatic localization"
+    },
+    {
+      "key": "panavision_primo_classic",
+      "time": 6,
+      "reason": "Source absent, clipped or too dim for reliable automatic localization"
+    },
+    {
+      "key": "panavision_primo_classic",
+      "time": 14,
+      "reason": "Source absent, clipped or too dim for reliable automatic localization"
+    },
+    {
+      "key": "zeiss_super_speed",
+      "time": 6,
+      "reason": "Source absent, clipped or too dim for reliable automatic localization"
+    },
+    {
+      "key": "zeiss_super_speed",
+      "time": 14,
+      "reason": "Source absent, clipped or too dim for reliable automatic localization"
+    }
+  ],
+  "fit_source": true,
+  "geometry": {
+    "kowa_cine_prominar-00": {
+      "scale": 0.05535000000000001,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-01": {
+      "scale": 0.6688240000000001,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-02": {
+      "scale": 0.21,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-03": {
+      "scale": 0.32000000000000006,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-04": {
+      "scale": 0.30347889,
+      "offset": -1.1300000000000001,
+      "stretch": [
+        0.90034,
+        1
+      ]
+    },
+    "kowa_cine_prominar-05": {
+      "scale": 0.30347889,
+      "offset": -1.1300000000000001,
+      "stretch": [
+        0.90034,
+        1
+      ]
+    },
+    "kowa_cine_prominar-06": {
+      "scale": 0.1003,
+      "offset": -0.28,
+      "stretch": [
+        0.5,
+        1
+      ]
+    },
+    "kowa_cine_prominar-07": {
+      "scale": 0.1003,
+      "offset": -0.28,
+      "stretch": [
+        0.5,
+        1
+      ]
+    },
+    "kowa_cine_prominar-08": {
+      "scale": 0.12,
+      "offset": 0.42,
+      "stretch": [
+        1.18,
+        1
+      ]
+    },
+    "kowa_cine_prominar-09": {
+      "scale": 0.12,
+      "offset": 0.42,
+      "stretch": [
+        1.18,
+        1
+      ]
+    },
+    "kowa_cine_prominar-10": {
+      "scale": 0.354,
+      "offset": 1.71,
+      "stretch": [
+        1.09,
+        0.82
+      ]
+    },
+    "kowa_cine_prominar-11": {
+      "scale": 0.354,
+      "offset": 1.71,
+      "stretch": [
+        1.09,
+        0.82
+      ]
+    },
+    "kowa_cine_prominar-12": {
+      "scale": 0.295,
+      "offset": 2.03,
+      "stretch": [
+        1,
+        0.82
+      ]
+    },
+    "kowa_cine_prominar-13": {
+      "scale": 0.295,
+      "offset": 2.03,
+      "stretch": [
+        1,
+        0.82
+      ]
+    },
+    "kowa_cine_prominar-14": {
+      "scale": 0.493948,
+      "offset": 2.54,
+      "stretch": [
+        1.18,
+        0.82
+      ]
+    },
+    "kowa_cine_prominar-15": {
+      "scale": 0.493948,
+      "offset": 2.54,
+      "stretch": [
+        1.18,
+        0.82
+      ]
+    },
+    "kowa_cine_prominar-16": {
+      "scale": 0.025,
+      "offset": 0.73,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-17": {
+      "scale": 0.025,
+      "offset": 0.73,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-18": {
+      "scale": 0.017,
+      "offset": 0.93,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-19": {
+      "scale": 0.017,
+      "offset": 0.93,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-20": {
+      "scale": 0.031,
+      "offset": 1.1,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-21": {
+      "scale": 0.031,
+      "offset": 1.1,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-22": {
+      "scale": 0.043,
+      "offset": 1.27,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-23": {
+      "scale": 0.043,
+      "offset": 1.27,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-24": {
+      "scale": 0.021,
+      "offset": 1.4,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-25": {
+      "scale": 0.021,
+      "offset": 1.4,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-26": {
+      "scale": 2.3108000000000004,
+      "offset": 0.91,
+      "stretch": [
+        1,
+        0.7462000000000001
+      ]
+    },
+    "kowa_cine_prominar-27": {
+      "scale": 0.18,
+      "offset": 1.97,
+      "stretch": [
+        1.09,
+        0.6
+      ]
+    },
+    "kowa_cine_prominar-28": {
+      "scale": 2.8296400000000004,
+      "offset": 0.79,
+      "stretch": [
+        1.2862,
+        0.7462000000000001
+      ]
+    },
+    "kowa_cine_prominar-29": {
+      "scale": 0.1265,
+      "offset": 2.04,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-30": {
+      "scale": 0.030359999999999998,
+      "offset": 2.04,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-31": {
+      "scale": 0.035,
+      "offset": 0.73,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-32": {
+      "scale": 0.008400000000000001,
+      "offset": 0.73,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-33": {
+      "scale": 0.035,
+      "offset": 1.1,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-34": {
+      "scale": 0.008400000000000001,
+      "offset": 1.1,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-35": {
+      "scale": 0.035,
+      "offset": 1.4,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "kowa_cine_prominar-36": {
+      "scale": 0.008400000000000001,
+      "offset": 1.4,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "cooke_anamorphic_sf-00": {
+      "scale": 0.0868185,
+      "offset": 0,
+      "stretch": [
+        1.8,
+        0.7
+      ]
+    },
+    "cooke_anamorphic_sf-01": {
+      "scale": 0.5583760000000001,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "cooke_anamorphic_sf-02": {
+      "scale": 0.12013820000000003,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "cooke_anamorphic_sf-03": {
+      "scale": 0.32000000000000006,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "cooke_anamorphic_sf-04": {
+      "scale": 0.4076600000000001,
+      "offset": -0.14,
+      "stretch": [
+        0.7462000000000001,
+        1.2862
+      ]
+    },
+    "cooke_anamorphic_sf-05": {
+      "scale": 0.504,
+      "offset": 0.74,
+      "stretch": [
+        0.91,
+        1.18
+      ]
+    },
+    "cooke_anamorphic_sf-06": {
+      "scale": 0.059059,
+      "offset": 0.28,
+      "stretch": [
+        4.1,
+        0.944
+      ]
+    },
+    "cooke_anamorphic_sf-07": {
+      "scale": 0.059059,
+      "offset": 0.28,
+      "stretch": [
+        4.1,
+        0.944
+      ]
+    },
+    "cooke_anamorphic_sf-08": {
+      "scale": 0.0537264,
+      "offset": 0.42,
+      "stretch": [
+        3.0594200000000003,
+        0.85904
+      ]
+    },
+    "cooke_anamorphic_sf-09": {
+      "scale": 0.0537264,
+      "offset": 0.42,
+      "stretch": [
+        3.0594200000000003,
+        0.85904
+      ]
+    },
+    "cooke_anamorphic_sf-10": {
+      "scale": 0.056639999999999996,
+      "offset": 0.66,
+      "stretch": [
+        4.837999999999999,
+        0.85904
+      ]
+    },
+    "cooke_anamorphic_sf-11": {
+      "scale": 0.056639999999999996,
+      "offset": 0.66,
+      "stretch": [
+        4.837999999999999,
+        0.85904
+      ]
+    },
+    "cooke_anamorphic_sf-12": {
+      "scale": 0.09,
+      "offset": 1.35,
+      "stretch": [
+        0.55,
+        1.6
+      ]
+    },
+    "cooke_anamorphic_sf-13": {
+      "scale": 0.09,
+      "offset": 1.35,
+      "stretch": [
+        0.55,
+        1.6
+      ]
+    },
+    "cooke_anamorphic_sf-14": {
+      "scale": 0.14,
+      "offset": 1.56,
+      "stretch": [
+        0.55,
+        1.6
+      ]
+    },
+    "cooke_anamorphic_sf-15": {
+      "scale": 0.14,
+      "offset": 1.56,
+      "stretch": [
+        0.55,
+        1.6
+      ]
+    },
+    "cooke_anamorphic_sf-16": {
+      "scale": 0.64428,
+      "offset": 0.6900000000000001,
+      "stretch": [
+        0.91,
+        0.8200000000000001
+      ]
+    },
+    "cooke_anamorphic_sf-17": {
+      "scale": 0.5476380000000001,
+      "offset": 0.55,
+      "stretch": [
+        1,
+        1.18
+      ]
+    },
+    "cooke_anamorphic_sf-18": {
+      "scale": 0.527342,
+      "offset": 0.55,
+      "stretch": [
+        1,
+        1.2862
+      ]
+    },
+    "cooke_anamorphic_sf-19": {
+      "scale": 2.9499999999999997,
+      "offset": 0.81,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "cooke_anamorphic_sf-20": {
+      "scale": 0.33579000000000003,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-00": {
+      "scale": 0.0868185,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-01": {
+      "scale": 0.4732,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-02": {
+      "scale": 0.1911,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-03": {
+      "scale": 0.37760000000000005,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-04": {
+      "scale": 0.08,
+      "offset": 1.65,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-05": {
+      "scale": 0.08,
+      "offset": 1.65,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-06": {
+      "scale": 0.033,
+      "offset": 2.02,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-07": {
+      "scale": 0.033,
+      "offset": 2.02,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-08": {
+      "scale": 0.15,
+      "offset": 2.32,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-09": {
+      "scale": 0.15,
+      "offset": 2.32,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-10": {
+      "scale": 0.014,
+      "offset": 0.42,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-11": {
+      "scale": 0.014,
+      "offset": 0.42,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-12": {
+      "scale": 0.17,
+      "offset": 2.3,
+      "stretch": [
+        1,
+        0.65
+      ]
+    },
+    "arri_signature-13": {
+      "scale": 0.11,
+      "offset": 1.86,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-14": {
+      "scale": 0.0264,
+      "offset": 1.65,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-15": {
+      "scale": 0.12,
+      "offset": 2.32,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_signature-16": {
+      "scale": 0.0288,
+      "offset": 2.32,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_radiance-00": {
+      "scale": 0.0868185,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_radiance-01": {
+      "scale": 0.52,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_radiance-02": {
+      "scale": 0.1785,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_radiance-03": {
+      "scale": 0.32000000000000006,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_radiance-04": {
+      "scale": 1.05,
+      "offset": -0.33,
+      "stretch": [
+        1,
+        0.8200000000000001
+      ]
+    },
+    "zeiss_radiance-05": {
+      "scale": 1.05,
+      "offset": -0.33,
+      "stretch": [
+        1,
+        0.8200000000000001
+      ]
+    },
+    "zeiss_radiance-06": {
+      "scale": 0.6104,
+      "offset": 2.15,
+      "stretch": [
+        1,
+        1.18
+      ]
+    },
+    "zeiss_radiance-07": {
+      "scale": 0.6104,
+      "offset": 2.15,
+      "stretch": [
+        1,
+        1.18
+      ]
+    },
+    "zeiss_radiance-08": {
+      "scale": 0.4368,
+      "offset": 2.08,
+      "stretch": [
+        0.7462000000000001,
+        0.7462000000000001
+      ]
+    },
+    "zeiss_radiance-09": {
+      "scale": 0.4368,
+      "offset": 2.08,
+      "stretch": [
+        0.7462000000000001,
+        0.7462000000000001
+      ]
+    },
+    "zeiss_radiance-10": {
+      "scale": 0.22419999999999998,
+      "offset": 1.91,
+      "stretch": [
+        0.9,
+        1.298
+      ]
+    },
+    "zeiss_radiance-11": {
+      "scale": 0.22419999999999998,
+      "offset": 1.91,
+      "stretch": [
+        0.9,
+        1.298
+      ]
+    },
+    "zeiss_radiance-12": {
+      "scale": 0.42,
+      "offset": 0.5800000000000001,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_radiance-13": {
+      "scale": 0.42,
+      "offset": 0.5800000000000001,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_radiance-14": {
+      "scale": 0.22,
+      "offset": 0.17,
+      "stretch": [
+        1.18,
+        1
+      ]
+    },
+    "zeiss_radiance-15": {
+      "scale": 0.22,
+      "offset": 0.17,
+      "stretch": [
+        1.18,
+        1
+      ]
+    },
+    "zeiss_radiance-16": {
+      "scale": 2.5370800000000004,
+      "offset": 1.07,
+      "stretch": [
+        1,
+        0.7462000000000001
+      ]
+    },
+    "zeiss_radiance-17": {
+      "scale": 0.15,
+      "offset": 1.98,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_radiance-18": {
+      "scale": 0.09,
+      "offset": 1.98,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_radiance-19": {
+      "scale": 0.021599999999999998,
+      "offset": 1.98,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "atlas_orion-00": {
+      "scale": 0.07357500000000002,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "atlas_orion-01": {
+      "scale": 0.6136,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "atlas_orion-02": {
+      "scale": 0.21,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "atlas_orion-03": {
+      "scale": 0.32000000000000006,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "atlas_orion-04": {
+      "scale": 4.887560000000001,
+      "offset": 0.07,
+      "stretch": [
+        1.18,
+        1.2862
+      ]
+    },
+    "atlas_orion-05": {
+      "scale": 0.855,
+      "offset": 1.4,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "atlas_orion-06": {
+      "scale": 0.8044200000000001,
+      "offset": 0.79,
+      "stretch": [
+        0.8938000000000001,
+        1.2862
+      ]
+    },
+    "atlas_orion-07": {
+      "scale": 0.13,
+      "offset": 1.6,
+      "stretch": [
+        3.5,
+        0.25
+      ]
+    },
+    "atlas_orion-08": {
+      "scale": 0.13,
+      "offset": 1.6,
+      "stretch": [
+        3.5,
+        0.25
+      ]
+    },
+    "atlas_orion-09": {
+      "scale": 1.4760000000000002,
+      "offset": 1.04,
+      "stretch": [
+        1,
+        0.7462000000000001
+      ]
+    },
+    "atlas_orion-10": {
+      "scale": 1.4760000000000002,
+      "offset": 1.04,
+      "stretch": [
+        1,
+        0.7462000000000001
+      ]
+    },
+    "atlas_orion-11": {
+      "scale": 0.32,
+      "offset": 1.3,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "panavision_c-00": {
+      "scale": 0.12321855,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "panavision_c-01": {
+      "scale": 1.5303666560000004,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "panavision_c-02": {
+      "scale": 0.3995901,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "panavision_c-03": {
+      "scale": 0.544,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "panavision_c-04": {
+      "scale": 4.5017000000000005,
+      "offset": 0.07,
+      "stretch": [
+        0.91,
+        1.2862
+      ]
+    },
+    "panavision_c-05": {
+      "scale": 2.3878400000000006,
+      "offset": 0.71,
+      "stretch": [
+        0.7462000000000001,
+        0.7462000000000001
+      ]
+    },
+    "panavision_c-06": {
+      "scale": 0.24,
+      "offset": 2.14,
+      "stretch": [
+        1.3,
+        0.58
+      ]
+    },
+    "panavision_c-07": {
+      "scale": 0.24,
+      "offset": 2.14,
+      "stretch": [
+        1.3,
+        0.58
+      ]
+    },
+    "panavision_c-08": {
+      "scale": 0.105,
+      "offset": 1.86,
+      "stretch": [
+        1.3,
+        0.7
+      ]
+    },
+    "panavision_c-09": {
+      "scale": 0.105,
+      "offset": 1.86,
+      "stretch": [
+        1.3,
+        0.7
+      ]
+    },
+    "panavision_c-10": {
+      "scale": 0.04905,
+      "offset": -0.2,
+      "stretch": [
+        2.006,
+        0.59
+      ]
+    },
+    "panavision_c-11": {
+      "scale": 0.04905,
+      "offset": -0.2,
+      "stretch": [
+        2.006,
+        0.59
+      ]
+    },
+    "panavision_c-12": {
+      "scale": 0.07,
+      "offset": 1.86,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "panavision_c-13": {
+      "scale": 0.016800000000000002,
+      "offset": 1.86,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "canon_k35-00": {
+      "scale": 0.0675,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "canon_k35-01": {
+      "scale": 0.6688240000000001,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "canon_k35-02": {
+      "scale": 0.21,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "canon_k35-03": {
+      "scale": 0.32000000000000006,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "canon_k35-04": {
+      "scale": 0.6979700000000001,
+      "offset": -0.12,
+      "stretch": [
+        1.2862,
+        0.91
+      ]
+    },
+    "canon_k35-05": {
+      "scale": 0.6979700000000001,
+      "offset": -0.12,
+      "stretch": [
+        1.2862,
+        0.91
+      ]
+    },
+    "canon_k35-06": {
+      "scale": 0.440258,
+      "offset": 0.32,
+      "stretch": [
+        0.7462000000000001,
+        1
+      ]
+    },
+    "canon_k35-07": {
+      "scale": 0.440258,
+      "offset": 0.32,
+      "stretch": [
+        0.7462000000000001,
+        1
+      ]
+    },
+    "canon_k35-08": {
+      "scale": 0.12,
+      "offset": 1.68,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "canon_k35-09": {
+      "scale": 0.12,
+      "offset": 1.68,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "canon_k35-10": {
+      "scale": 0.10900000000000001,
+      "offset": 1.98,
+      "stretch": [
+        1.18,
+        1.18
+      ]
+    },
+    "canon_k35-11": {
+      "scale": 0.10900000000000001,
+      "offset": 1.98,
+      "stretch": [
+        1.18,
+        1.18
+      ]
+    },
+    "canon_k35-12": {
+      "scale": 0.354,
+      "offset": 2.05,
+      "stretch": [
+        1.2862,
+        1.0738
+      ]
+    },
+    "canon_k35-13": {
+      "scale": 0.354,
+      "offset": 2.05,
+      "stretch": [
+        1.2862,
+        1.0738
+      ]
+    },
+    "canon_k35-14": {
+      "scale": 0.3068,
+      "offset": 2.45,
+      "stretch": [
+        1,
+        1.18
+      ]
+    },
+    "canon_k35-15": {
+      "scale": 3.8586000000000005,
+      "offset": 0.79,
+      "stretch": [
+        1.2862,
+        0.7462000000000001
+      ]
+    },
+    "canon_k35-16": {
+      "scale": 0.1,
+      "offset": 1.84,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "canon_k35-17": {
+      "scale": 0.024,
+      "offset": 2.05,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "canon_k35-18": {
+      "scale": 0.1,
+      "offset": 2.45,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "canon_k35-19": {
+      "scale": 0.024,
+      "offset": 2.45,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "cooke_speed_panchro-00": {
+      "scale": 0.1562733,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "cooke_speed_panchro-01": {
+      "scale": 1.4820624000000002,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "cooke_speed_panchro-02": {
+      "scale": 0.61803,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "cooke_speed_panchro-03": {
+      "scale": 0.5760000000000001,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "cooke_speed_panchro-04": {
+      "scale": 1.353,
+      "offset": 0.15,
+      "stretch": [
+        1,
+        1.18
+      ]
+    },
+    "cooke_speed_panchro-05": {
+      "scale": 2.8,
+      "offset": 0.2,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "cooke_speed_panchro-06": {
+      "scale": 0.0286,
+      "offset": 2.05,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "cooke_speed_panchro-07": {
+      "scale": 0.0286,
+      "offset": 2.05,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "leitz_hugo-00": {
+      "scale": 0.0868185,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "leitz_hugo-01": {
+      "scale": 0.42640000000000006,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "leitz_hugo-02": {
+      "scale": 0.270102,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "leitz_hugo-03": {
+      "scale": 0.41158400000000006,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "leitz_hugo-04": {
+      "scale": 0.23,
+      "offset": 2.02,
+      "stretch": [
+        0.2,
+        1
+      ]
+    },
+    "leitz_hugo-05": {
+      "scale": 0.23,
+      "offset": 2.02,
+      "stretch": [
+        0.2,
+        1
+      ]
+    },
+    "leitz_hugo-06": {
+      "scale": 0.48,
+      "offset": 1.98,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "leitz_hugo-07": {
+      "scale": 0.12,
+      "offset": -0.32,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_master_prime-00": {
+      "scale": 0.0868185,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_master_prime-01": {
+      "scale": 0.42640000000000006,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_master_prime-02": {
+      "scale": 0.270102,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_master_prime-03": {
+      "scale": 0.32000000000000006,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_master_prime-04": {
+      "scale": 2.2,
+      "offset": 1.07,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_master_prime-05": {
+      "scale": 0.34,
+      "offset": 1.9,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_master_prime-06": {
+      "scale": 0.018,
+      "offset": 0.7,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_master_prime-07": {
+      "scale": 0.018,
+      "offset": 0.7,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "atlas_mercury-00": {
+      "scale": 0.0868185,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "atlas_mercury-01": {
+      "scale": 0.4732,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "atlas_mercury-02": {
+      "scale": 0.22890000000000002,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "atlas_mercury-03": {
+      "scale": 0.32000000000000006,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "atlas_mercury-04": {
+      "scale": 4.5017000000000005,
+      "offset": 0,
+      "stretch": [
+        1,
+        1.18
+      ]
+    },
+    "atlas_mercury-05": {
+      "scale": 1.8,
+      "offset": 1.7,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "atlas_mercury-06": {
+      "scale": 1.092,
+      "offset": -0.07,
+      "stretch": [
+        1.2862,
+        0.7462000000000001
+      ]
+    },
+    "atlas_mercury-07": {
+      "scale": 0.45920000000000005,
+      "offset": 1.52,
+      "stretch": [
+        1.1,
+        0.95
+      ]
+    },
+    "atlas_mercury-08": {
+      "scale": 0.45920000000000005,
+      "offset": 1.52,
+      "stretch": [
+        1.1,
+        0.95
+      ]
+    },
+    "atlas_mercury-09": {
+      "scale": 0.3186,
+      "offset": 1.8099999999999998,
+      "stretch": [
+        2.2,
+        0.65
+      ]
+    },
+    "atlas_mercury-10": {
+      "scale": 0.3186,
+      "offset": 1.8099999999999998,
+      "stretch": [
+        2.2,
+        0.65
+      ]
+    },
+    "atlas_mercury-11": {
+      "scale": 0.024,
+      "offset": 1.48,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "atlas_mercury-12": {
+      "scale": 0.024,
+      "offset": 1.48,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "atlas_mercury-13": {
+      "scale": 0.014,
+      "offset": 2.12,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "atlas_mercury-14": {
+      "scale": 0.014,
+      "offset": 2.12,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "hawk_vlite_vintage74-00": {
+      "scale": 0.08025750000000001,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "hawk_vlite_vintage74-01": {
+      "scale": 0.9697948000000001,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "hawk_vlite_vintage74-02": {
+      "scale": 0.3045,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "hawk_vlite_vintage74-03": {
+      "scale": 0.46399999999999997,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "hawk_vlite_vintage74-04": {
+      "scale": 5.1448,
+      "offset": 0,
+      "stretch": [
+        1.2862,
+        1.0738
+      ]
+    },
+    "hawk_vlite_vintage74-05": {
+      "scale": 3.4727400000000004,
+      "offset": 1.69,
+      "stretch": [
+        1,
+        1.18
+      ]
+    },
+    "hawk_vlite_vintage74-06": {
+      "scale": 0.244378,
+      "offset": 1.94,
+      "stretch": [
+        2.36,
+        0.7074100000000001
+      ]
+    },
+    "hawk_vlite_vintage74-07": {
+      "scale": 2.9848000000000003,
+      "offset": 0.8,
+      "stretch": [
+        1.2862,
+        0.7462000000000001
+      ]
+    },
+    "hawk_vlite_vintage74-08": {
+      "scale": 1.8039839999999998,
+      "offset": 1.1,
+      "stretch": [
+        1.1939200000000003,
+        0.7
+      ]
+    },
+    "hawk_vlite_vintage74-09": {
+      "scale": 0.5432336000000002,
+      "offset": 1.9,
+      "stretch": [
+        1.23,
+        0.6608
+      ]
+    },
+    "hawk_vlite_vintage74-10": {
+      "scale": 0.5432336000000002,
+      "offset": 1.9,
+      "stretch": [
+        1.23,
+        0.6608
+      ]
+    },
+    "hawk_vlite_vintage74-11": {
+      "scale": 0.45,
+      "offset": 1.8,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "hawk_vlite_vintage74-12": {
+      "scale": 0.08,
+      "offset": 1.65,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "panavision_primo_classic-00": {
+      "scale": 0.0675,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "panavision_primo_classic-01": {
+      "scale": 0.6688240000000001,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "panavision_primo_classic-02": {
+      "scale": 0.21,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "panavision_primo_classic-03": {
+      "scale": 0.32000000000000006,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "panavision_primo_classic-04": {
+      "scale": 0.11209999999999999,
+      "offset": -0.23,
+      "stretch": [
+        1.5805,
+        0.83603
+      ]
+    },
+    "panavision_primo_classic-05": {
+      "scale": 0.11209999999999999,
+      "offset": -0.23,
+      "stretch": [
+        1.5805,
+        0.83603
+      ]
+    },
+    "panavision_primo_classic-06": {
+      "scale": 0.1054684,
+      "offset": -0.3,
+      "stretch": [
+        1.80068,
+        0.767
+      ]
+    },
+    "panavision_primo_classic-07": {
+      "scale": 0.1054684,
+      "offset": -0.3,
+      "stretch": [
+        1.80068,
+        0.767
+      ]
+    },
+    "panavision_primo_classic-08": {
+      "scale": 0.553066,
+      "offset": 1.97,
+      "stretch": [
+        1.2862,
+        1.18
+      ]
+    },
+    "panavision_primo_classic-09": {
+      "scale": 0.553066,
+      "offset": 1.97,
+      "stretch": [
+        1.2862,
+        1.18
+      ]
+    },
+    "panavision_primo_classic-10": {
+      "scale": 0.23,
+      "offset": 1.83,
+      "stretch": [
+        0.48,
+        1.25
+      ]
+    },
+    "panavision_primo_classic-11": {
+      "scale": 0.23,
+      "offset": 1.83,
+      "stretch": [
+        0.48,
+        1.25
+      ]
+    },
+    "panavision_primo_classic-12": {
+      "scale": 0.065,
+      "offset": 1.66,
+      "stretch": [
+        0.55,
+        1.3
+      ]
+    },
+    "panavision_primo_classic-13": {
+      "scale": 1.6400000000000001,
+      "offset": 1.3299999999999998,
+      "stretch": [
+        1,
+        1.18
+      ]
+    },
+    "panavision_primo_classic-14": {
+      "scale": 0.085,
+      "offset": 1.66,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "panavision_primo_classic-15": {
+      "scale": 0.0204,
+      "offset": 1.66,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_master_anamorphic-00": {
+      "scale": 0.06142500000000001,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_master_anamorphic-01": {
+      "scale": 0.52,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_master_anamorphic-02": {
+      "scale": 0.22549799999999998,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_master_anamorphic-03": {
+      "scale": 0.34361600000000003,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_master_anamorphic-04": {
+      "scale": 0.48999999999999994,
+      "offset": 1.9,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "arri_master_anamorphic-05": {
+      "scale": 1.1811800000000001,
+      "offset": 0.08999999999999997,
+      "stretch": [
+        1.2862,
+        0.7462000000000001
+      ]
+    },
+    "arri_master_anamorphic-06": {
+      "scale": 0.15,
+      "offset": 2.03,
+      "stretch": [
+        0.4,
+        1.2
+      ]
+    },
+    "arri_master_anamorphic-07": {
+      "scale": 0.15,
+      "offset": 2.03,
+      "stretch": [
+        0.4,
+        1.2
+      ]
+    },
+    "arri_master_anamorphic-08": {
+      "scale": 0.31,
+      "offset": 1.9,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_super_speed-00": {
+      "scale": 0.05535000000000001,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_super_speed-01": {
+      "scale": 0.6688240000000001,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_super_speed-02": {
+      "scale": 0.21,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_super_speed-03": {
+      "scale": 0.32000000000000006,
+      "offset": 0,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_super_speed-04": {
+      "scale": 0.40040000000000003,
+      "offset": 1.89,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_super_speed-05": {
+      "scale": 0.40040000000000003,
+      "offset": 1.89,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_super_speed-06": {
+      "scale": 0.488756,
+      "offset": 2,
+      "stretch": [
+        1.09,
+        1.18
+      ]
+    },
+    "zeiss_super_speed-07": {
+      "scale": 0.46,
+      "offset": 1.91,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    "zeiss_super_speed-08": {
+      "scale": 0.12,
+      "offset": 2.18,
+      "stretch": [
+        0.35,
+        1.1
+      ]
+    },
+    "zeiss_super_speed-09": {
+      "scale": 2.4198000000000004,
+      "offset": 1.07,
+      "stretch": [
+        1.09,
+        0.91
+      ]
+    },
+    "zeiss_super_speed-10": {
+      "scale": 3.2214,
+      "offset": 0.5900000000000001,
+      "stretch": [
+        0.7462000000000001,
+        0.7462000000000001
+      ]
+    },
+    "zeiss_super_speed-11": {
+      "scale": 0.3776,
+      "offset": -0.62,
+      "stretch": [
+        0.6431,
+        0.97006
+      ]
+    },
+    "zeiss_super_speed-12": {
+      "scale": 0.3776,
+      "offset": -0.62,
+      "stretch": [
+        0.6431,
+        0.97006
+      ]
+    }
+  },
+  "geometry_method": "Bounded coordinate search in appearance space, four non-central source positions. Not calibrated lens geometry; not a quality score.",
+  "geometry_training_loss": {
+    "kowa_cine_prominar": {
+      "before": 0.0022834711708128452,
+      "after": 0.001601028023287654,
+      "frames": 4
+    },
+    "cooke_anamorphic_sf": {
+      "before": 0.0006162810605019331,
+      "after": 0.0003438870480749756,
+      "frames": 4
+    },
+    "arri_signature": {
+      "before": 0.0001764530170476064,
+      "after": 0.00016405661881435663,
+      "frames": 4
+    },
+    "zeiss_radiance": {
+      "before": 0.0005529125919565558,
+      "after": 0.0004570104356389493,
+      "frames": 4
+    },
+    "atlas_orion": {
+      "before": 0.0012319422094151378,
+      "after": 0.001040264731273055,
+      "frames": 4
+    },
+    "panavision_c": {
+      "before": 0.004033343866467476,
+      "after": 0.0027772688772529364,
+      "frames": 4
+    },
+    "canon_k35": {
+      "before": 0.0038978103548288345,
+      "after": 0.002106665400788188,
+      "frames": 2
+    },
+    "cooke_speed_panchro": {
+      "before": 0.001309053273871541,
+      "after": 0.001157773775048554,
+      "frames": 2
+    },
+    "leitz_hugo": {
+      "before": 0.00020709758973680437,
+      "after": 0.00018368929158896208,
+      "frames": 4
+    },
+    "arri_master_prime": {
+      "before": 0.00009541272447677329,
+      "after": 0.00008109211194096133,
+      "frames": 2
+    },
+    "atlas_mercury": {
+      "before": 0.00045386364217847586,
+      "after": 0.00037199637154117227,
+      "frames": 2
+    },
+    "hawk_vlite_vintage74": {
+      "before": 0.011771155521273613,
+      "after": 0.00691228499636054,
+      "frames": 4
+    },
+    "panavision_primo_classic": {
+      "before": 0.005434846971184015,
+      "after": 0.0033694906160235405,
+      "frames": 2
+    },
+    "arri_master_anamorphic": {
+      "before": 0.00029440951766446233,
+      "after": 0.0002646233479026705,
+      "frames": 4
+    },
+    "zeiss_super_speed": {
+      "before": 0.002439772477373481,
+      "after": 0.00102192722260952,
+      "frames": 2
+    }
+  }
+}

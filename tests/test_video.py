@@ -1180,9 +1180,9 @@ class TestTrackingInsideRender:
         clip = torch.zeros(12, 60, 100, 3)
         clip[:4, 25:31, 40:46] = 1.0                    # gone from frame 4 on
         long_hold = run_node(clip, position_mode="track", detect_threshold=0.5,
-                             track_hold=6, track_fade=1)[1]
+                             track_hold=6, track_fade=1, visibility_mode="depth")[1]
         short_hold = run_node(clip, position_mode="track", detect_threshold=0.5,
-                              track_hold=0, track_fade=1)[1]
+                              track_hold=0, track_fade=1, visibility_mode="depth")[1]
         assert float(long_hold[6].sum()) > 0.0, "held light should still shine"
         assert float(short_hold[6].sum()) == 0.0, "unheld light should be gone"
 

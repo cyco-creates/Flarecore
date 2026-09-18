@@ -16,9 +16,12 @@ import json
 import math
 import warnings
 
+from .motion import MOTION_TARGETS, MOTION_DRIVERS
+
 SCHEMA_VERSION = 1
 
 GLOBAL_DEFAULTS = {
+    "master": 1.0,         # linked energy and size; independent base values remain intact
     "intensity": 1.0,
     "scale": 1.0,
     "aspect": 1.0,          # >1 widens every element (anamorphic squeeze look)
@@ -107,6 +110,8 @@ ELEMENT_COMMON_DEFAULTS = {
     "count_falloff": 1.0,   # intensity multiplier per instance step
     "count_scale_step": 1.0,  # scale multiplier per instance step
     "trigger": None,        # see TRIGGER_DEFAULTS
+    "motion": None,         # independent source-driven response curves
+    "screen_blend": "strongest",  # opt-in all-light response for lens plates
 }
 
 # Angular window shared by the circular element types: completion in degrees
@@ -116,25 +121,26 @@ _COMPLETION_DEFAULTS = {"completion": 360.0, "completion_feather": 0.2}
 # The barrel cutting a ghost into a crescent: a clipping disc of the
 # element's own radius slides across it, so 0 leaves the ghost whole and
 # 0.9 leaves a thin arc. Shared by the round element types.
-_CRESCENT_DEFAULTS = {"crescent": 0.0, "crescent_feather": 0.1}
+_CRESCENT_DEFAULTS = {"crescent": 0.0, "crescent_feather": 0.1, "surface_detail": 0.0}
 
 # Per-type params defaults (the "params" sub-dict).
 PARAM_DEFAULTS = {
-    "glow": {"softness": 0.35, "falloff": 1.2},
-    "iris": {"blades": 6, "edge_softness": 0.15, "hollow": 0.0,
-             **_CRESCENT_DEFAULTS},
+    "glow": {"softness": 0.35, "falloff": 1.2, "scatter": 0.0},
+    "iris": {"blades": 6, "edge_softness": 0.15, "hollow": 0.0, "roundness": 0.0, "density_bias": 0.0,
+             "coma": 0.0, "caustic": 0.0, "trefoil": 0.0, **_CRESCENT_DEFAULTS},
     "streak": {"length": 0.8, "thickness": 0.02, "count": 1,
                # a shallow arc instead of a rule, and gaps along it
                "curve": 0.0, "dash": 0.0},
-    "ring": {"radius": 0.5, "thickness": 0.05, **_COMPLETION_DEFAULTS,
+    "ring": {"radius": 0.5, "thickness": 0.05, "edge_bias": 0.0, **_COMPLETION_DEFAULTS,
              **_CRESCENT_DEFAULTS},
     "hoop": {"radius": 0.6, "thickness": 0.15, "angular_falloff": 0.8,
              **_COMPLETION_DEFAULTS, **_CRESCENT_DEFAULTS},
     "glint": {"points": 8, "length": 0.5, "thickness": 0.008, "length_jitter": 0.3,
+              "ray_falloff": 1.0, "fan": 0.0, "ray_taper": 0.0,
               **_COMPLETION_DEFAULTS},
     "spectral": {"shape": "ring", "radius": 0.5, "thickness": 0.08,
-                 "blades": 8, "edge_softness": 0.1, "hollow": 0.0,
-                 **_COMPLETION_DEFAULTS, **_CRESCENT_DEFAULTS},
+                 "blades": 8, "edge_softness": 0.1, "hollow": 0.0, "roundness": 0.0, "density_bias": 0.0,
+                 "coma": 0.0, "caustic": 0.0, "trefoil": 0.0, "edge_bias": 0.0, **_COMPLETION_DEFAULTS, **_CRESCENT_DEFAULTS},
     "texture": {"file": "", "channel": "auto"},
     # procedural out-of-focus spots on the lens, lit by proximity to the light
     "orbs": {"count": 24, "size": 0.12, "size_jitter": 0.6, "spread": 1.0,
@@ -156,7 +162,7 @@ ELEMENT_TYPE_OVERRIDES = {
 ELEMENT_TYPES = tuple(sorted(PARAM_DEFAULTS.keys()))
 
 _TOP_LEVEL_KEYS = {"schema_version", "name", "author", "category",
-                   "subcategory", "global", "elements"}
+                   "subcategory", "global", "elements", "preset_file", "lens_lab"}
 
 # How a preset files itself in the library. The editor's preset menu groups
 # by these, so a browsable library is a property of the presets themselves
@@ -266,6 +272,55 @@ def _validate_trigger(raw, where: str):
     return None if t["mode"] == "none" else t
 
 
+def _validate_motion(raw, where, etype):
+    if raw is None:
+        return None
+    key = f"{where}.motion"
+    if not isinstance(raw, dict):
+        raise ValueError(f"{key} must be an object or null")
+    if set(raw) - {'enabled', 'channels'}:
+        raise ValueError(f"{key} has unknown keys")
+    enabled = raw.get('enabled', True)
+    if not isinstance(enabled, bool):
+        raise ValueError(f"{key}.enabled must be boolean")
+    channels = raw.get('channels', [])
+    if not isinstance(channels, list) or len(channels) > 17:
+        raise ValueError(f"{key}.channels must be a list of at most 17 curves")
+    result, seen = [], set()
+    for i, c in enumerate(channels):
+        ck = f"{key}.channels[{i}]"
+        if not isinstance(c, dict) or set(c) - {'target', 'driver', 'points', 'interpolation'}:
+            raise ValueError(f"{ck} must be a curve object with known keys")
+        target, driver = c.get('target'), c.get('driver', 'radius')
+        if not isinstance(target, str) or target not in MOTION_TARGETS:
+            raise ValueError(f"{ck}.target is unknown")
+        if target in seen:
+            raise ValueError(f"{ck}.target duplicates {target}")
+        seen.add(target)
+        spec = MOTION_TARGETS[target]
+        if 'types' in spec and etype not in spec['types']:
+            raise ValueError(f"{ck}.target {target} is not supported by {etype}")
+        if not isinstance(driver, str) or driver not in MOTION_DRIVERS:
+            raise ValueError(f"{ck}.driver is unknown")
+        interpolation = c.get('interpolation', 'smooth')
+        if interpolation not in ('smooth', 'linear'):
+            raise ValueError(f"{ck}.interpolation must be smooth or linear")
+        points = c.get('points')
+        if not isinstance(points, list) or not 2 <= len(points) <= 16:
+            raise ValueError(f"{ck}.points requires 2..16 [input, output] knots")
+        clean = []
+        for j, point in enumerate(points):
+            if not isinstance(point, (list, tuple)) or len(point) != 2:
+                raise ValueError(f"{ck}.points[{j}] requires [input, output]")
+            x = _require_number(point[0], f"{ck}.points[{j}].input", lo=-100., hi=100.)
+            y = _require_number(point[1], f"{ck}.points[{j}].output", lo=spec['min'], hi=spec['max'])
+            if clean and x <= clean[-1][0]:
+                raise ValueError(f"{ck}.points inputs must be strictly increasing")
+            clean.append([x, y])
+        result.append(dict(target=target, driver=driver, points=clean, interpolation=interpolation))
+    return dict(enabled=enabled, channels=result)
+
+
 def _validate_element(raw: dict, index: int) -> dict:
     where = f"elements[{index}]"
     if not isinstance(raw, dict):
@@ -358,9 +413,19 @@ def _validate_element(raw: dict, index: int) -> dict:
         elem["count_scale_step"], f"{where}.count_scale_step", lo=0.05, hi=10.0
     )
     elem["trigger"] = _validate_trigger(elem["trigger"], where)
+    elem["motion"] = _validate_motion(elem["motion"], where, etype)
+    if elem["screen_blend"] not in ("strongest", "all"):
+        raise ValueError(f"{where}.screen_blend must be strongest or all")
 
     # Validate per-type params.
     p = elem["params"]
+    if "surface_detail" in p:
+        p["surface_detail"] = _require_number(p["surface_detail"], f"{where}.params.surface_detail", lo=0., hi=1.)
+    if "density_bias" in p:
+        p["density_bias"] = _require_number(p["density_bias"], f"{where}.params.density_bias", lo=-1., hi=1.)
+    for key,lo,hi in [('scatter',0.,1.),('coma',-1.,1.),('caustic',0.,1.),('trefoil',0.,1.),('edge_bias',-.4,1.)]:
+        if key in p:
+            p[key] = _require_number(p[key], f"{where}.params.{key}", lo=lo, hi=hi)
     if etype in ("ring", "hoop", "glint", "spectral"):
         p["completion"] = _require_number(p["completion"], f"{where}.params.completion",
                                           lo=0.0, hi=360.0)
@@ -411,6 +476,9 @@ def _validate_element(raw: dict, index: int) -> dict:
         p["length_jitter"] = _require_number(
             p["length_jitter"], f"{where}.params.length_jitter", lo=0.0, hi=1.0
         )
+        p["ray_falloff"] = _require_number(p["ray_falloff"], f"{where}.params.ray_falloff", lo=1., hi=4.)
+        p["ray_taper"] = _require_number(p["ray_taper"], f"{where}.params.ray_taper", lo=0., hi=1.)
+        p["fan"] = _require_number(p["fan"], f"{where}.params.fan", lo=0., hi=.5)
     elif etype == "texture":
         p["file"] = normalize_texture_ref(p["file"], f"{where}.params.file")
         if p["channel"] not in ("auto", "rgb", "luminance"):
@@ -450,6 +518,10 @@ def _validate_element(raw: dict, index: int) -> dict:
         )
         p["hollow"] = _require_number(p["hollow"], f"{where}.params.hollow",
                                       lo=0.0, hi=1.0, hi_exclusive=True)
+
+    if etype in ("iris", "spectral"):
+        p["roundness"] = _require_number(
+            p["roundness"], f"{where}.params.roundness", lo=0.0, hi=1.0)
 
     return elem
 
@@ -499,6 +571,8 @@ def validate_preset(raw: dict) -> dict:
         )
 
     raw_global = raw.get("global", {})
+    if "preset_file" in raw:
+        out["preset_file"] = str(raw["preset_file"])
     if not isinstance(raw_global, dict):
         raise ValueError("preset key 'global' must be an object")
     for key, value in raw_global.items():
@@ -508,6 +582,7 @@ def validate_preset(raw: dict) -> dict:
         out["global"][key] = value
     g = out["global"]
     g["intensity"] = _require_number(g["intensity"], "global.intensity", lo=0.0, hi=1000.0)
+    g["master"] = _require_number(g["master"], "global.master", lo=0.0, hi=100.0)
     g["scale"] = _require_number(g["scale"], "global.scale", lo=1e-6, hi=100.0)
     g["aspect"] = _require_number(g["aspect"], "global.aspect", lo=0.2, hi=5.0)
     g["tint"] = _require_vec(g["tint"], "global.tint", 3, lo=0.0, hi=100.0)
@@ -524,6 +599,10 @@ def validate_preset(raw: dict) -> dict:
 
     for i, raw_elem in enumerate(raw["elements"]):
         out["elements"].append(_validate_element(raw_elem, i))
+
+    if "lens_lab" in raw:
+        from .lens_lab import validate_settings
+        out["lens_lab"] = validate_settings(raw["lens_lab"])
 
     return out
 

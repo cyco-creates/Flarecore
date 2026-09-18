@@ -1,0 +1,1323 @@
+{
+  "schema_version": 1,
+  "name": "ARRI Signature Prime 35mm T2.8 · study",
+  "author": "Flarecore",
+  "category": "Spherical",
+  "subcategory": "Reference studies · Spherical",
+  "elements": [
+    {
+      "type": "glow",
+      "label": "Source · white core",
+      "offset": 0,
+      "scale": 0.1,
+      "intensity": 0.15,
+      "color": [
+        1,
+        1,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.38,
+        "falloff": 2.1
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-00",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Source · scatter halo",
+      "offset": 0,
+      "scale": 0.4732,
+      "intensity": 0.16128000000000003,
+      "color": [
+        1.3629459159770012,
+        1.5291598571953773,
+        1.6621294624307155
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.35,
+        "falloff": 1.65,
+        "scatter": 0
+      },
+      "irregular": 0.22,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-01",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Source · fine diffraction",
+      "offset": 0,
+      "scale": 1,
+      "intensity": 0.7,
+      "color": [
+        0.85,
+        0.95,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "file": "glows/study_photographic_scatter.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "rotation": 13,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-02",
+      "blur": 0.015,
+      "stretch": [
+        1,
+        1
+      ],
+      "shade": 0
+    },
+    {
+      "type": "glint",
+      "label": "Source · long rays",
+      "offset": 0,
+      "scale": 0.37760000000000005,
+      "intensity": 0.00043200000000000004,
+      "color": [
+        13.12,
+        14.72,
+        16
+      ],
+      "auto_rotate": false,
+      "params": {
+        "points": 12,
+        "length": 0.65,
+        "thickness": 0.004,
+        "length_jitter": 0.6,
+        "ray_falloff": 1.7,
+        "fan": 0.008,
+        "ray_taper": 0.8
+      },
+      "irregular": 0.5,
+      "rotation": 23,
+      "slot": "rays",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-03",
+      "blur": 0.035,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Sparse coated ghost 1",
+      "offset": 1.65,
+      "scale": 0.08,
+      "intensity": 0.00026250000000000004,
+      "color": [
+        0.00275,
+        0.0125,
+        0.05
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.4,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.4
+              ],
+              [
+                2.4,
+                0.4
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-04",
+      "shade": 0.35,
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Sparse coated ghost 1 · rim",
+      "offset": 1.65,
+      "scale": 0.08,
+      "intensity": 0.000052500000000000016,
+      "color": [
+        0.00275,
+        0.0125,
+        0.05
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.4,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.4
+              ],
+              [
+                2.4,
+                0.4
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-05",
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Sparse coated ghost 2",
+      "offset": 2.02,
+      "scale": 0.033,
+      "intensity": 0.012,
+      "color": [
+        3.827885,
+        2.411567,
+        1.531154
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.25,
+        "surface_detail": 0.55,
+        "density_bias": 0.48
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-06",
+      "shade": 0.35,
+      "blur": 0.03
+    },
+    {
+      "type": "iris",
+      "label": "Sparse coated ghost 2 · rim",
+      "offset": 2.02,
+      "scale": 0.033,
+      "intensity": 0.0024,
+      "color": [
+        8,
+        5.04,
+        3.2
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-07",
+      "blur": 0.03
+    },
+    {
+      "type": "iris",
+      "label": "Sparse coated ghost 3",
+      "offset": 2.32,
+      "scale": 0.15,
+      "intensity": 0.000063,
+      "color": [
+        0.44,
+        2,
+        8
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.4,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.4
+              ],
+              [
+                2.4,
+                0.4
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-08",
+      "shade": 0.35,
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Sparse coated ghost 3 · rim",
+      "offset": 2.32,
+      "scale": 0.15,
+      "intensity": 0.000012600000000000001,
+      "color": [
+        0.44,
+        2,
+        8
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.4,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.4
+              ],
+              [
+                2.4,
+                0.4
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-09",
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Sparse coated ghost 4",
+      "offset": 0.42,
+      "scale": 0.014,
+      "intensity": 0.012,
+      "color": [
+        0.488211,
+        1.375866,
+        2.219139
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.25,
+        "surface_detail": 0.55,
+        "density_bias": 0.48
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-10",
+      "shade": 0.35,
+      "blur": 0.03
+    },
+    {
+      "type": "iris",
+      "label": "Sparse coated ghost 4 · rim",
+      "offset": 0.42,
+      "scale": 0.014,
+      "intensity": 0.0024,
+      "color": [
+        1.76,
+        4.96,
+        8
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-11",
+      "blur": 0.03
+    },
+    {
+      "type": "iris",
+      "label": "Broken blue far caustic",
+      "offset": 2.3,
+      "scale": 0.17,
+      "intensity": 0.00063,
+      "color": [
+        0.080416,
+        0.365526,
+        1.462106
+      ],
+      "auto_rotate": true,
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.9,
+        "coma": 0.65,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "stretch": [
+        1,
+        0.65
+      ],
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.5,
+                0.2
+              ],
+              [
+                1.1,
+                1
+              ],
+              [
+                1.8,
+                0.6
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.9
+              ],
+              [
+                1.7,
+                0.9
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.65
+              ],
+              [
+                2.4,
+                0.65
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-12",
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Blue focused reflection",
+      "offset": 1.86,
+      "scale": 0.11,
+      "intensity": 0.048,
+      "color": [
+        0.333368,
+        1.041768,
+        4.167076
+      ],
+      "auto_rotate": true,
+      "blur": 0.07,
+      "params": {
+        "blades": 5,
+        "roundness": 0.18,
+        "hollow": 0.6,
+        "edge_softness": 0.5,
+        "density_bias": 0.6
+      },
+      "irregular": 0.45,
+      "rotation": 17,
+      "shade": 0.8,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-13",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Blue focused reflection · focus",
+      "offset": 1.65,
+      "scale": 0.0264,
+      "intensity": 0.072,
+      "color": [
+        0.066713,
+        0.208478,
+        0.833913
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.55,
+        "falloff": 1.8
+      },
+      "irregular": 0.25,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-14",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Far blue folded reflection",
+      "offset": 2.32,
+      "scale": 0.12,
+      "intensity": 0.009600000000000001,
+      "color": [
+        0.8,
+        0.96,
+        8
+      ],
+      "auto_rotate": true,
+      "blur": 0.07,
+      "params": {
+        "blades": 3,
+        "roundness": 0.18,
+        "hollow": 0.6,
+        "edge_softness": 0.5,
+        "density_bias": 0.6
+      },
+      "irregular": 0.45,
+      "rotation": 17,
+      "shade": 0.8,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-15",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Far blue folded reflection · focus",
+      "offset": 2.32,
+      "scale": 0.0288,
+      "intensity": 0.0144,
+      "color": [
+        0.8,
+        0.96,
+        8
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.55,
+        "falloff": 1.8
+      },
+      "irregular": 0.25,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_signature-16",
+      "stretch": [
+        1,
+        1
+      ]
+    }
+  ],
+  "global": {
+    "seed": 2709,
+    "edge_fade_start": 0.25,
+    "edge_fade_range": 0.65
+  }
+}

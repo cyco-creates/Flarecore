@@ -1,0 +1,1406 @@
+{
+  "schema_version": 1,
+  "name": "Canon K35 50mm T2.8 · study",
+  "author": "Flarecore",
+  "category": "Spherical",
+  "subcategory": "Reference studies · Spherical",
+  "elements": [
+    {
+      "type": "glow",
+      "label": "Source · white core",
+      "offset": 0,
+      "scale": 0.1,
+      "intensity": 0.15,
+      "color": [
+        1,
+        1,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.38,
+        "falloff": 2.1
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-00",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Source · scatter halo",
+      "offset": 0,
+      "scale": 0.6688240000000001,
+      "intensity": 0.370944,
+      "color": [
+        0.7254230329076328,
+        0.8138897111976758,
+        0.8846626394885191
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.35,
+        "falloff": 1.65,
+        "scatter": 0
+      },
+      "irregular": 0.22,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-01",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Source · fine diffraction",
+      "offset": 0,
+      "scale": 1,
+      "intensity": 0.7,
+      "color": [
+        0.85,
+        0.95,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "file": "glows/study_photographic_scatter.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "rotation": 13,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-02",
+      "blur": 0.015,
+      "stretch": [
+        1,
+        1
+      ],
+      "shade": 0
+    },
+    {
+      "type": "glint",
+      "label": "Source · long rays",
+      "offset": 0,
+      "scale": 0.32000000000000006,
+      "intensity": 0.0008160000000000001,
+      "color": [
+        0.041,
+        0.046,
+        0.05
+      ],
+      "auto_rotate": false,
+      "params": {
+        "points": 12,
+        "length": 0.65,
+        "thickness": 0.004,
+        "length_jitter": 0.6,
+        "ray_falloff": 1.7,
+        "fan": 0.008,
+        "ray_taper": 0.8
+      },
+      "irregular": 0.5,
+      "rotation": 23,
+      "slot": "rays",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-03",
+      "blur": 0.035,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Front rose pupil",
+      "offset": -0.12,
+      "scale": 0.5583760000000001,
+      "intensity": 0.01815,
+      "color": [
+        9.540001161737067,
+        2.289600278816896,
+        3.816000464694827
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "file": "ghosts/smeared_disc.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-04",
+      "shade": 0,
+      "blur": 0.14
+    },
+    {
+      "type": "iris",
+      "label": "Front rose pupil · rim",
+      "offset": -0.12,
+      "scale": 0.5583760000000001,
+      "intensity": 0.00117975,
+      "color": [
+        9.540001161737067,
+        2.289600278816896,
+        3.816000464694827
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-05",
+      "blur": 0.14
+    },
+    {
+      "type": "texture",
+      "label": "Near soft pupil",
+      "offset": 0.32,
+      "scale": 0.35220640000000003,
+      "intensity": 0.0165,
+      "color": [
+        7.905508345856161,
+        7.905508345856161,
+        11.293583351223088
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "file": "ghosts/polygon_ghost_02.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-06",
+      "shade": 0,
+      "blur": 0.14
+    },
+    {
+      "type": "iris",
+      "label": "Near soft pupil · rim",
+      "offset": 0.32,
+      "scale": 0.35220640000000003,
+      "intensity": 0.001340625,
+      "color": [
+        7.905508345856161,
+        7.905508345856161,
+        11.293583351223088
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-07",
+      "blur": 0.14
+    },
+    {
+      "type": "iris",
+      "label": "Small blue ghost",
+      "offset": 1.68,
+      "scale": 0.12,
+      "intensity": 0.05,
+      "color": [
+        0.12633350675725938,
+        0.5742378231081963,
+        2.296951292432785
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.25,
+        "surface_detail": 0.55,
+        "density_bias": 0.48
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-08",
+      "shade": 0.35
+    },
+    {
+      "type": "iris",
+      "label": "Small blue ghost · rim",
+      "offset": 1.68,
+      "scale": 0.12,
+      "intensity": 0.0325,
+      "color": [
+        0.2954671305706501,
+        1.3430338815279008,
+        5.372135526111603
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-09"
+    },
+    {
+      "type": "texture",
+      "label": "Green focused ghost",
+      "offset": 1.98,
+      "scale": 0.15,
+      "intensity": 0.4,
+      "color": [
+        0.12,
+        1,
+        0.4
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1.18,
+        1.18
+      ],
+      "params": {
+        "file": "caustics/caustic_fold_03.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-10",
+      "shade": 0,
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Green focused ghost · rim",
+      "offset": 1.98,
+      "scale": 0.10900000000000001,
+      "intensity": 0.007280000000000002,
+      "color": [
+        0.07899239158630371,
+        0.6582699298858643,
+        0.2633079719543457
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1.18,
+        1.18
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.55,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.55
+              ],
+              [
+                2.4,
+                0.55
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-11",
+      "blur": 0.012
+    },
+    {
+      "type": "texture",
+      "label": "Violet rear disc",
+      "offset": 2.05,
+      "scale": 0.354,
+      "intensity": 0.00133,
+      "color": [
+        30.101386928229935,
+        10.75049533151069,
+        71.66996887673794
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1.2862,
+        1.0738
+      ],
+      "params": {
+        "file": "ghosts/polygon_ghost_02.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-12",
+      "shade": 0
+    },
+    {
+      "type": "iris",
+      "label": "Violet rear disc · rim",
+      "offset": 2.05,
+      "scale": 0.354,
+      "intensity": 0.0000648375,
+      "color": [
+        30.101386928229935,
+        10.75049533151069,
+        71.66996887673794
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1.2862,
+        1.0738
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0.75,
+        "hollow": 0.94,
+        "crescent": 0.32,
+        "coma": 0.55,
+        "caustic": 0.35
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-13"
+    },
+    {
+      "type": "ring",
+      "label": "Far prismatic arc",
+      "offset": 2.45,
+      "scale": 0.3068,
+      "intensity": 0.08,
+      "color": [
+        0.8572460403666666,
+        3.4289809238820337,
+        5.714968206470056
+      ],
+      "auto_rotate": true,
+      "params": {
+        "radius": 1,
+        "thickness": 0.04,
+        "surface_detail": 0.12,
+        "completion": 115,
+        "completion_feather": 0.5
+      },
+      "dispersion": 2,
+      "dispersion_samples": 7,
+      "slot": "rings",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-14",
+      "stretch": [
+        1,
+        1.18
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Cool-warm veiling reflection",
+      "offset": 0.79,
+      "scale": 3.8586000000000005,
+      "intensity": 0.00351,
+      "color": [
+        9.30220195506272,
+        10.335779950069691,
+        20.671559900139382
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.8,
+        "falloff": 1.6
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-15",
+      "stretch": [
+        1.2862,
+        0.7462000000000001
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Green focal knot",
+      "offset": 1.84,
+      "scale": 0.1,
+      "intensity": 0.0504,
+      "color": [
+        0.2,
+        1,
+        0.55
+      ],
+      "auto_rotate": true,
+      "blur": 0.012,
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.35,
+        "trefoil": 0.08,
+        "surface_detail": 0.55,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "rotation": 17,
+      "shade": 0.8,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.35
+              ],
+              [
+                2.4,
+                0.35
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-16",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Green focal knot · focus",
+      "offset": 2.05,
+      "scale": 0.024,
+      "intensity": 0.54,
+      "color": [
+        0.2,
+        1,
+        0.55
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.55,
+        "falloff": 1.8
+      },
+      "irregular": 0.25,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-17",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Far spectral folded knot",
+      "offset": 2.45,
+      "scale": 0.1,
+      "intensity": 0.00504,
+      "color": [
+        0.035,
+        0.0375,
+        0.05
+      ],
+      "auto_rotate": true,
+      "blur": 0.012,
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.35,
+        "trefoil": 0.08,
+        "surface_detail": 0.55,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "rotation": 17,
+      "shade": 0.8,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.35
+              ],
+              [
+                2.4,
+                0.35
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-18",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Far spectral folded knot · focus",
+      "offset": 2.45,
+      "scale": 0.024,
+      "intensity": 0.054,
+      "color": [
+        1.015329,
+        1.087853,
+        1.45047
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.55,
+        "falloff": 1.8
+      },
+      "irregular": 0.25,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "canon_k35-19",
+      "stretch": [
+        1,
+        1
+      ]
+    }
+  ],
+  "global": {
+    "seed": 2709,
+    "edge_fade_start": 0.25,
+    "edge_fade_range": 0.65
+  }
+}

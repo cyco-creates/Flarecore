@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "name": "Realism - Coated Spherical",
+  "author": "flarecore",
+  "category": "Spherical",
+  "subcategory": "Realism Studies",
+  "global": {
+    "seed": 27,
+    "edge_fade_start": 0.05,
+    "edge_fade_range": 0.6
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "source_core",
+      "label": "source core",
+      "slot": "glows",
+      "scale": 0.055,
+      "intensity": 2.3,
+      "params": {
+        "softness": 0.3,
+        "falloff": 2.2
+      }
+    },
+    {
+      "type": "glow",
+      "id": "source_scatter",
+      "label": "source scatter",
+      "slot": "glows",
+      "scale": 0.28,
+      "intensity": 0.12,
+      "color": [
+        1,
+        0.91,
+        0.77
+      ],
+      "params": {
+        "softness": 0.4,
+        "falloff": 1.8
+      }
+    },
+    {
+      "type": "iris",
+      "id": "rounded_ghost_chain",
+      "label": "rounded ghost chain",
+      "slot": "ghosts",
+      "offset": 0.65,
+      "count": 3,
+      "spread": 0.48,
+      "scale": 0.08,
+      "count_scale_step": 1.48,
+      "count_falloff": 0.72,
+      "intensity": 0.055,
+      "color": [
+        0.55,
+        0.8,
+        0.63
+      ],
+      "dispersion": 0.1,
+      "irregular": 0.12,
+      "params": {
+        "blades": 9,
+        "roundness": 0.6,
+        "edge_softness": 0.2
+      }
+    },
+    {
+      "type": "texture",
+      "id": "coated_aperture",
+      "label": "coated aperture",
+      "slot": "ghosts",
+      "offset": 1.8,
+      "scale": 0.45,
+      "intensity": 0.1,
+      "params": {
+        "file": "ghosts/realism_coated_aperture.png",
+        "channel": "rgb"
+      }
+    }
+  ]
+}

@@ -1,0 +1,903 @@
+{
+  "schema_version": 1,
+  "name": "Atlas Orion 50mm T2.8 · study",
+  "author": "Flarecore",
+  "category": "Anamorphic",
+  "subcategory": "Reference studies · Anamorphic",
+  "elements": [
+    {
+      "type": "glow",
+      "label": "Source · white core",
+      "offset": 0,
+      "scale": 0.1,
+      "intensity": 0.15,
+      "color": [
+        1,
+        1,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.38,
+        "falloff": 2.1
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_orion-00",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Source · scatter halo",
+      "offset": 0,
+      "scale": 0.6136,
+      "intensity": 0.17740800000000004,
+      "color": [
+        1.353945565341711,
+        1.5190608573585151,
+        1.6511529201680422
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.35,
+        "falloff": 1.65,
+        "scatter": 0
+      },
+      "irregular": 0.22,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_orion-01",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Source · fine diffraction",
+      "offset": 0,
+      "scale": 1,
+      "intensity": 0.7,
+      "color": [
+        0.85,
+        0.95,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "file": "glows/study_photographic_scatter.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "rotation": 13,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_orion-02",
+      "blur": 0.015,
+      "stretch": [
+        1,
+        1
+      ],
+      "shade": 0
+    },
+    {
+      "type": "glint",
+      "label": "Source · long rays",
+      "offset": 0,
+      "scale": 0.32000000000000006,
+      "intensity": 0.00072,
+      "color": [
+        0.041,
+        0.046,
+        0.05
+      ],
+      "auto_rotate": false,
+      "params": {
+        "points": 12,
+        "length": 0.65,
+        "thickness": 0.004,
+        "length_jitter": 0.6,
+        "ray_falloff": 1.7,
+        "fan": 0.008,
+        "ray_taper": 0.8
+      },
+      "irregular": 0.5,
+      "rotation": 23,
+      "slot": "rays",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_orion-03",
+      "blur": 0.035,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "streak",
+      "label": "Fine blue primary streak",
+      "offset": 0.07,
+      "scale": 4.887560000000001,
+      "intensity": 0.2,
+      "color": [
+        0.10865560598683587,
+        0.49389049654541994,
+        1.9755606077582415
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.0025,
+        "curve": 0.03
+      },
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "atlas_orion-04",
+      "stretch": [
+        1.18,
+        1.2862
+      ]
+    },
+    {
+      "type": "streak",
+      "label": "Offset blue ghost streak",
+      "offset": 1.4,
+      "scale": 0.855,
+      "intensity": 0.0675,
+      "color": [
+        0.035118,
+        0.159626,
+        0.638506
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.018,
+        "curve": 0.18
+      },
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                1.5
+              ],
+              [
+                1.5,
+                -1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0
+      ],
+      "id": "atlas_orion-05",
+      "irregular": 0.65,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "streak",
+      "label": "Short cyan line segment",
+      "offset": 0.79,
+      "scale": 0.8044200000000001,
+      "intensity": 0.055,
+      "color": [
+        8.001402026615372,
+        22.549405711370596,
+        36.37000921188806
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.003,
+        "curve": 0.03
+      },
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -1.5
+              ],
+              [
+                1.5,
+                1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0
+      ],
+      "id": "atlas_orion-06",
+      "stretch": [
+        0.8938000000000001,
+        1.2862
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Lower compressed blue ghost",
+      "offset": 1.6,
+      "scale": 0.13,
+      "intensity": 0.034,
+      "color": [
+        0.029356,
+        0.133438,
+        0.533754
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        3.5,
+        0.25
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.25,
+        "surface_detail": 0.55,
+        "density_bias": 0.48,
+        "coma": 0.5
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                1.5
+              ],
+              [
+                1.5,
+                -1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "id": "atlas_orion-07",
+      "shade": 0.35,
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0
+      ],
+      "blur": 0.035
+    },
+    {
+      "type": "iris",
+      "label": "Lower compressed blue ghost · rim",
+      "offset": 1.6,
+      "scale": 0.13,
+      "intensity": 0.0034000000000000002,
+      "color": [
+        0.44,
+        2,
+        8
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        3.5,
+        0.25
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94,
+        "coma": 0.5
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                1.5
+              ],
+              [
+                1.5,
+                -1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "id": "atlas_orion-08",
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0
+      ],
+      "blur": 0.035
+    },
+    {
+      "type": "streak",
+      "label": "Blue double-line reflection",
+      "offset": 1.04,
+      "scale": 1.4760000000000002,
+      "intensity": 0.09,
+      "color": [
+        0.2690708924999322,
+        1.435044759999638,
+        17.93805949999548
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.0018,
+        "curve": 0.03
+      },
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -1.5
+              ],
+              [
+                1.5,
+                1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        -0.018
+      ],
+      "id": "atlas_orion-09",
+      "stretch": [
+        1,
+        0.7462000000000001
+      ]
+    },
+    {
+      "type": "streak",
+      "label": "Blue double-line reflection",
+      "offset": 1.04,
+      "scale": 1.4760000000000002,
+      "intensity": 0.06,
+      "color": [
+        0.2690708924999322,
+        1.435044759999638,
+        17.93805949999548
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.0018,
+        "curve": 0.03
+      },
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                -1.5
+              ],
+              [
+                1.5,
+                1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0.015
+      ],
+      "id": "atlas_orion-10",
+      "stretch": [
+        1,
+        0.7462000000000001
+      ]
+    },
+    {
+      "type": "streak",
+      "label": "Lower ghost vertical glint",
+      "offset": 1.3,
+      "scale": 0.32,
+      "intensity": 0.011,
+      "color": [
+        0.48,
+        3.2,
+        8
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.009,
+        "curve": 0.03
+      },
+      "rotation": 90,
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                1.5
+              ],
+              [
+                1.5,
+                -1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0
+      ],
+      "id": "atlas_orion-11",
+      "stretch": [
+        1,
+        1
+      ]
+    }
+  ],
+  "global": {
+    "seed": 2709,
+    "edge_fade_start": 0.25,
+    "edge_fade_range": 0.65
+  }
+}

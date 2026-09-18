@@ -32,6 +32,7 @@ from .axis import axis_angle, element_center
 from .depth import blur_depth
 from .elements import ELEMENT_FUNCTIONS
 from .grid import make_grid
+from .motion import apply_motion
 
 K_DISPERSION = 0.05
 
@@ -251,6 +252,15 @@ def _accumulate_element(out, x, y, elem, passes, light, theta, global_scale,
     light_rgb: optional (3,) tensor multiplying this light's colour into the
     element (scene-sampled light colour).
     """
+    dynamic, opacity = apply_motion(elem, light, frame_aspect)
+    if opacity <= 0.0:
+        return
+    if dynamic is not elem:
+        # Dispersion and coating transmission may also have changed. The
+        # cached passes still serve every legacy/static element unchanged.
+        elem = dynamic
+        passes = _element_passes(elem, out.device, out.dtype)
+    light_weight *= opacity
     fn = ELEMENT_FUNCTIONS[elem["type"]]
     px, py = light["x"], light["y"]
     ax = light.get("ax", 0.0)
@@ -424,13 +434,30 @@ def render_stack(preset, lights, height, width, device, dtype,
     Returns (height, width, 3) linear RGB; genuinely zero where no element
     contributes.
     """
+    optical = preset.get("lens_lab", {})
+    if optical.get("enabled", False):
+        from .lens_lab import render_lens
+        physical = render_lens(optical, lights, height, width, device, dtype)
+        g = preset["global"]
+        physical *= torch.as_tensor(g["tint"], device=device, dtype=dtype)
+        physical *= g["intensity"] * g.get("master", 1.) * intensity
+        if out is None:
+            out = torch.zeros_like(physical)
+        if optical.get("include_artistic", False):
+            artistic = {k: v for k, v in preset.items() if k != "lens_lab"}
+            render_stack(artistic, lights, height, width, device, dtype,
+                         extra_seed, intensity, scale, grid, out, scene_mask,
+                         glow_mask, frame)
+        out.add_(physical)
+        return out
     if grid is None:
         grid = make_grid(height, width, device, dtype)
     x, y = grid
 
     g = preset["global"]
-    g_intensity = g["intensity"] * intensity
-    g_scale = g["scale"] * scale
+    master = g.get("master", 1.0)
+    g_intensity = g["intensity"] * intensity * master
+    g_scale = g["scale"] * scale * master
     base_seed = g["seed"] + extra_seed
 
     if out is None:
@@ -483,19 +510,25 @@ def render_stack(preset, lights, height, width, device, dtype,
     # dirt lights up with the light, it does not duplicate per light).
     if screen_elems and weights:
         k_best = max(range(len(weights)), key=lambda k: weights[k])
-        strongest = weights[k_best]
-        if strongest > 0.0:
-            best = lights[k_best]
-            lens_light = {"x": 0.0, "y": 0.0, "ax": 0.0, "ay": 0.0,
-                          "occlusion": 0.0,
-                          "lx": best["x"], "ly": best["y"]}
-            rgb = best.get("color")
-            light_rgb = (torch.tensor(rgb, device=device, dtype=dtype)
-                         if rgb is not None else None)
-            for idx, elem in screen_elems:
+        for idx, elem in screen_elems:
+            indices = range(len(lights)) if elem.get("screen_blend") == "all" else [k_best]
+            for k in indices:
+                if weights[k] <= 0.0:
+                    continue
+                best = lights[k]
+                # Same coordinates and seed on every pass: illumination
+                # adds, while the dirt pattern remains fixed to the lens.
+                lens_light = {"x": 0.0, "y": 0.0, "ax": 0.0, "ay": 0.0,
+                              "occlusion": 0.0,
+                              "source_occlusion": best.get("occlusion", 0.0),
+                              "source_brightness": best.get("brightness", 1.0),
+                              "lx": best["x"], "ly": best["y"]}
+                rgb = best.get("color")
+                light_rgb = (torch.tensor(rgb, device=device, dtype=dtype)
+                             if rgb is not None else None)
                 _accumulate_element(out, x, y, elem, passes_by_idx[idx],
                                     lens_light, 0.0, g_scale, base_seed, idx,
-                                    strongest, scene_mask=scene_mask,
+                                    weights[k], scene_mask=scene_mask,
                                     glow_mask=glow_mask,
                                     global_aspect=g_aspect,
                                     frame_aspect=frame_aspect,

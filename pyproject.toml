@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-flarecore"
-version = "0.1.0"
+version = "0.1.2b1"
 description = "Procedural, physically-plausible lens flare rendering nodes for ComfyUI. Pure PyTorch, no GL, no models."
 authors = [{ name = "cyco.creates" }]
 readme = "README.md"
@@ -10,9 +10,9 @@ dependencies = ["torch", "numpy", "Pillow"]
 keywords = ["comfyui", "lens-flare", "compositing", "vfx"]
 
 [project.urls]
-Repository = "https://github.com/cyco-creates/comfyui-flarecore"
+Repository = "https://github.com/cyco-creates/Flarecore"
 
 [tool.comfy]
 PublisherId = ""
-DisplayName = "FlareCore"
+DisplayName = "Flarecore"
 Icon = ""

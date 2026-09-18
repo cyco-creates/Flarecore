@@ -1,0 +1,606 @@
+{
+  "schema_version": 1,
+  "name": "ARRI Master Anamorphic 50mm T2.8 · study",
+  "author": "Flarecore",
+  "category": "Anamorphic",
+  "subcategory": "Reference studies · Anamorphic",
+  "elements": [
+    {
+      "type": "glow",
+      "label": "Source · white core",
+      "offset": 0,
+      "scale": 0.1,
+      "intensity": 0.15,
+      "color": [
+        1,
+        1,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.38,
+        "falloff": 2.1
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_master_anamorphic-00",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Source · scatter halo",
+      "offset": 0,
+      "scale": 0.52,
+      "intensity": 0.16128000000000003,
+      "color": [
+        1.687709,
+        1.893527,
+        2.058182
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.35,
+        "falloff": 1.65,
+        "scatter": 0
+      },
+      "irregular": 0.22,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_master_anamorphic-01",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Source · fine diffraction",
+      "offset": 0,
+      "scale": 1,
+      "intensity": 0.7,
+      "color": [
+        0.85,
+        0.95,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "file": "glows/study_photographic_scatter.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "rotation": 13,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_master_anamorphic-02",
+      "blur": 0.015,
+      "stretch": [
+        1,
+        1
+      ],
+      "shade": 0
+    },
+    {
+      "type": "glint",
+      "label": "Source · long rays",
+      "offset": 0,
+      "scale": 0.34361600000000003,
+      "intensity": 0.00043200000000000004,
+      "color": [
+        26.24,
+        29.44,
+        32
+      ],
+      "auto_rotate": false,
+      "params": {
+        "points": 12,
+        "length": 0.65,
+        "thickness": 0.004,
+        "length_jitter": 0.6,
+        "ray_falloff": 1.7,
+        "fan": 0.008,
+        "ray_taper": 0.8
+      },
+      "irregular": 0.5,
+      "rotation": 23,
+      "slot": "rays",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_master_anamorphic-03",
+      "blur": 0.035,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "streak",
+      "label": "Very faint blue ghost streak",
+      "offset": 1.9,
+      "scale": 0.48999999999999994,
+      "intensity": 0.019799999999999998,
+      "color": [
+        0.434872,
+        0.407693,
+        2.717952
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.016,
+        "curve": 0.03
+      },
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                1.5
+              ],
+              [
+                1.5,
+                -1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0
+      ],
+      "id": "arri_master_anamorphic-04",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Restrained blue envelope",
+      "offset": 0.08999999999999997,
+      "scale": 1.1811800000000001,
+      "intensity": 0.015600000000000001,
+      "color": [
+        1.2560156768125854,
+        2.5818098278183705,
+        6.280078384062926
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.7,
+        "falloff": 2
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_master_anamorphic-05",
+      "stretch": [
+        1.2862,
+        0.7462000000000001
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Faint upright violet pupil",
+      "offset": 2.03,
+      "scale": 0.15,
+      "intensity": 0.008,
+      "color": [
+        1.06487,
+        0.517223,
+        3.042487
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        0.4,
+        1.2
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.25,
+        "surface_detail": 0.55,
+        "density_bias": -0.8,
+        "coma": 0.35
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_master_anamorphic-06",
+      "shade": 0.35,
+      "blur": 0.03
+    },
+    {
+      "type": "iris",
+      "label": "Faint upright violet pupil · rim",
+      "offset": 2.03,
+      "scale": 0.15,
+      "intensity": 0.0008,
+      "color": [
+        2.8,
+        1.36,
+        8
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        0.4,
+        1.2
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": -0.8,
+        "hollow": 0.94,
+        "coma": 0.35
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "arri_master_anamorphic-07",
+      "blur": 0.03
+    },
+    {
+      "type": "streak",
+      "label": "Vertical violet ghost glint",
+      "offset": 1.9,
+      "scale": 0.31,
+      "intensity": 0.015,
+      "color": [
+        1.098842,
+        0.464895,
+        4.226316
+      ],
+      "auto_rotate": false,
+      "params": {
+        "length": 0.9,
+        "thickness": 0.01,
+        "curve": 0.03
+      },
+      "rotation": 90,
+      "slot": "streaks",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "shift_y",
+            "driver": "y",
+            "points": [
+              [
+                -1.5,
+                1.5
+              ],
+              [
+                1.5,
+                -1.5
+              ]
+            ],
+            "interpolation": "linear"
+          }
+        ]
+      },
+      "move": [
+        1,
+        0
+      ],
+      "shift": [
+        0,
+        0
+      ],
+      "id": "arri_master_anamorphic-08",
+      "stretch": [
+        1,
+        1
+      ]
+    }
+  ],
+  "global": {
+    "seed": 2709,
+    "edge_fade_start": 0.25,
+    "edge_fade_range": 0.65
+  }
+}

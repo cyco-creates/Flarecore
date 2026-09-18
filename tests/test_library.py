@@ -182,5 +182,9 @@ class TestSlotsSuitTheirType:
     def test_slots_match_their_element_type(self, path):
         for i, elem in enumerate(preset(path)["elements"]):
             allowed = self.SENSIBLE[elem["type"]]
+            # A mapped pupil forms actual folded caustics; its replacement
+            # family differs from an ordinary aperture silhouette.
+            if elem["type"] in ("iris", "spectral") and elem["params"].get("caustic", 0)>0:
+                allowed = allowed | {"caustics"}
             assert elem["slot"] in allowed, \
                 f"element {i}: {elem['type']} filed under {elem['slot']!r}"

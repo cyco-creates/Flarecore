@@ -4,3 +4,27 @@ __pycache__/
 .pytest_cache/
 tests/out/
 .venv/
+
+# Local credentials, exports, and test/development state
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.log
+*.bak
+*.bak[0-9]*
+.qa-*/
+dist/
+private/
+.DS_Store
+Thumbs.db
+
+# Generated render output from the opt-in test scripts
+tests/out/
+
+# Personal saved presets (yours, not library content)
+presets/Luka.json
+presets/Test.json

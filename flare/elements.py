@@ -9,6 +9,7 @@ here.
 """
 
 import math
+from functools import lru_cache
 
 import torch
 import torch.nn.functional as F
@@ -53,6 +54,37 @@ def _harmonic_noise(x: torch.Tensor, seed: int, salt: int = 0) -> torch.Tensor:
 
 def _irregular(p: dict) -> float:
     return float(p.get("irregular", 0.0))
+
+
+@lru_cache(maxsize=128)
+def _surface_noise(seed, size):
+    generator = torch.Generator(device='cpu')
+    generator.manual_seed((int(seed) ^ 0x35A724D1) & 0x7FFFFFFFFFFFFFFF)
+    return torch.rand((1,1,size,size), generator=generator) * 2. - 1.
+
+
+def _surface_detail(field, u, v, p):
+    """Seeded, band-limited density variation, not measured coating data.
+
+    Defaults to an exact no-op. Filtering depends on the local pixel footprint
+    so the fine structure fades rather than aliasing as a ghost gets smaller.
+    """
+    amount = float(p.get('surface_detail', 0.0))
+    if amount <= 0:
+        return field
+    seed = int(p.get('seed', 0))
+    px = float(p.get('_px', 0.0))
+    output_dtype = field.dtype
+    if u.dtype in (torch.float16, torch.bfloat16):
+        u, v = u.float(), v.float()
+    detail = torch.zeros_like(u)
+    grid = torch.stack((u,v),dim=-1).unsqueeze(0)
+    for size, weight in ((8,.25),(48,.35),(192,.40)):
+        attenuation = math.exp(-.5*(size*px)**2)
+        noise = _surface_noise(seed,size).to(device=u.device,dtype=u.dtype)
+        sampled = F.grid_sample(noise,grid,mode='bilinear',padding_mode='reflection',align_corners=False)[0,0]
+        detail += sampled * (weight * attenuation)
+    return field * (1. + amount * detail).clamp(min=0.).to(output_dtype)
 
 
 def _completion_mask(phi: torch.Tensor, p: dict):
@@ -128,7 +160,27 @@ def glow(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
         r2 = (u * u + v * v) * wobble * wobble
     else:
         r2 = u * u + v * v
-    return (1.0 + r2 / (softness * softness)) ** (-falloff)
+    field = (1.0 + r2 / (softness * softness)) ** (-falloff)
+    scatter = float(p.get('scatter', 0.0))
+    if scatter > 0:
+        # A continuous, seeded angular spectrum: broad fans with finer fibres,
+        # not uniformly spaced spokes. Filter angular frequencies by the local
+        # pixel footprint to avoid sparkle at the source or on small previews.
+        radius = r2.sqrt().clamp_min(1e-6)
+        phi = torch.atan2(v, u)
+        seed = int(p.get('seed', 0))
+        bend = .15 * torch.log1p(radius / softness)
+        phase = phi + bend * _harmonic_noise(phi, seed, 31)
+        detail = torch.zeros_like(u)
+        for frequency, weight in ((13,.35),(37,.35),(91,.2),(173,.1)):
+            arg = phase * frequency + 2.4 * _harmonic_noise(phi, seed, frequency)
+            filtered = torch.exp(-.5 * (frequency * float(p.get('_px',0)) / radius).square())
+            fibre = (.5 + .5 * torch.cos(arg)).pow(6)
+            detail += weight * (.225 + (fibre-.225)*filtered)
+        # Keep a connecting envelope beneath the rays; no frame-varying noise.
+        reach=torch.exp(-(radius/(softness*1.5)).square())
+        field = field * (1-scatter + scatter*(.12 + 3.4*detail)*reach)
+    return field
 
 
 def iris(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
@@ -140,15 +192,33 @@ def iris(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     (kept deliberately; see docs/DECISIONS.md). hollow in [0,1) punches an
     inner n-gon, producing ring ghosts.
     """
+    if float(p.get('caustic',0)) > 0:
+        from .pupil import pupil_caustic
+        field=pupil_caustic(u,v,p)
+        mask=_crescent_mask(u,v,p)
+        return field*mask if mask is not None else field
     blades = max(int(p["blades"]), 3)
     edge_softness = max(float(p["edge_softness"]), 1e-4)
     hollow = float(p["hollow"])
+
+    # Polynomial pupil shear and concave caustic boundary are authored shape
+    # controls, not recovered lens prescriptions. Zero preserves the old iris.
+    coma = float(p.get('coma', 0.0))
+    if coma:
+        # Bound the warp outside the pupil to keep half-precision coordinates
+        # finite; those distant pixels cannot contribute to this finite shape.
+        u = u + coma * .55*v.clamp(-8,8).square()
 
     r = torch.sqrt(u * u + v * v)
     phi = torch.atan2(v, u)
     sector = 2.0 * math.pi / blades
     phi_folded = torch.remainder(phi + sector / 2.0, sector) - sector / 2.0
     r_edge = math.cos(math.pi / blades) / torch.cos(phi_folded)
+    # Artist approximation of curved blades, distinct from edge blur.
+    # Zero preserves the legacy polygon; one gives a circular aperture.
+    roundness = float(p.get("roundness", 0.0))
+    if roundness > 0.0:
+        r_edge = r_edge + roundness * (1.0 - r_edge)
     d = r / r_edge
 
     irr = _irregular(p)
@@ -163,9 +233,19 @@ def iris(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
         inner = _smoothstep(hollow, hollow * (1.0 - edge_softness), d)
         field = (field - inner).clamp(min=0.0)
 
+    # Authored pupil illumination: positive values concentrate density at
+    # the boundary; negative values make a soft focused center. This is not
+    # an optical prescription. Zero leaves every existing preset unchanged.
+    bias = float(p.get('density_bias', 0.0))
+    if bias != 0.0:
+        radial = d.clamp(0.0, 1.0).square()
+        profile = radial if bias > 0 else (1.0-radial).square()
+        field = field * (1.0-abs(bias) + abs(bias)*profile)
+
     if irr > 0.0:
         shade = 1.0 + irr * 0.45 * _harmonic_noise(phi, seed, 3) * d.clamp(0.0, 1.0)
         field = field * shade.clamp(min=0.0)
+    field = _surface_detail(field, u, v, p)
     mask = _crescent_mask(u, v, p)
     return field * mask if mask is not None else field
 
@@ -230,7 +310,14 @@ def ring(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
         seed = int(p.get("seed", 0))
         radius = radius * (1.0 + irr * 0.03 * _harmonic_noise(phi, seed, 5))
         gain = gain * (1.0 + irr * 0.6 * _harmonic_noise(phi, seed, 6)).clamp(min=0.0)
+    edge_bias = float(p.get('edge_bias',0.0))
+    if edge_bias:
+        # Independently steeper inner edge / broader outer skirt (or reverse).
+        # This gives a reflected annulus its dark cavity rather than a neon tube.
+        thickness = thickness * torch.where(r < radius,1-.8*edge_bias,1+2*edge_bias)
+        thickness = thickness.clamp_min(max(float(p.get('_px',0))*.8,1e-6))
     field = torch.exp(-(((r - radius) / thickness) ** 2)) * gain
+    field = _surface_detail(field, u, v, p)
     mask = _completion_mask(phi, p) if phi is not None else None
     if mask is not None:
         field = field * mask
@@ -264,7 +351,7 @@ def hoop(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     crescent = _crescent_mask(u, v, p)
     if crescent is not None:
         angular = angular * crescent
-    return radial * angular
+    return _surface_detail(radial * angular, u, v, p)
 
 
 def glint(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
@@ -273,7 +360,7 @@ def glint(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
     Deterministic for a given seed: jitter comes from a CPU torch.Generator
     seeded from params, independent of the tensor device.
     """
-    points = max(int(p["points"]), 2)
+    points = max(int(p["points"]), 1)
     length = p["length"]
     thickness, gain = _aa_thickness(p["thickness"], p)
     jitter = p["length_jitter"]
@@ -298,7 +385,18 @@ def glint(u: torch.Tensor, v: torch.Tensor, p: dict) -> torch.Tensor:
         uu = u * ca + v * sa
         vv = -u * sa + v * ca
         li = max(float(lengths[i]), 1e-4)
-        ray = torch.exp(-uu.clamp(min=0.0) / li) * torch.exp(-((vv / thickness) ** 2))
+        distance = uu.clamp(min=0.0)
+        falloff = float(p.get('ray_falloff', 1.0))
+        fan = float(p.get('fan', 0.0))
+        # The legacy exponential/parallel ray remains bit-for-bit unchanged.
+        decay = distance / li
+        if falloff != 1.:
+            decay = decay.pow(falloff)
+        width = thickness + fan * distance if fan else thickness
+        ray = torch.exp(-decay) * torch.exp(-((vv / width) ** 2))
+        taper = float(p.get('ray_taper', 0.0))
+        if taper:
+            ray = ray * (1.0-taper + taper/(1.0+(distance/(li*.22)).square()))
         field = field + ray * (uu > 0.0) * max(float(gains[i]), 0.1)
     if gain != 1.0:
         field = field * gain

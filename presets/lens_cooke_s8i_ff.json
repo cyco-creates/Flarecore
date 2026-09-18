@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "name": "Cooke S8-i FF · inspired",
+  "author": "Flarecore · independent artistic lens study",
+  "category": "Spherical",
+  "subcategory": "Lens inspired · Modern",
+  "global": {
+    "seed": 904,
+    "aspect": 1,
+    "fringe": 0.018,
+    "edge_fade_start": 0.1,
+    "edge_fade_range": 0.65,
+    "flicker_amount": 0
+  },
+  "elements": [
+    {
+      "type": "glow",
+      "id": "source_core",
+      "label": "source core",
+      "slot": "glows",
+      "scale": 0.0325,
+      "intensity": 3.2,
+      "color": [
+        1,
+        0.91,
+        0.77
+      ],
+      "params": {
+        "softness": 0.24,
+        "falloff": 2.4
+      }
+    },
+    {
+      "type": "glow",
+      "id": "source_inner_light",
+      "label": "source inner light",
+      "slot": "glows",
+      "scale": 0.09425,
+      "intensity": 0.42,
+      "color": [
+        1,
+        0.98,
+        0.94
+      ],
+      "params": {
+        "softness": 0.48,
+        "falloff": 1.95
+      }
+    },
+    {
+      "type": "glow",
+      "id": "source_envelope",
+      "label": "source envelope",
+      "slot": "glows",
+      "scale": 0.20246,
+      "intensity": 0.154,
+      "color": [
+        1,
+        0.91,
+        0.77
+      ],
+      "irregular": 0.1,
+      "params": {
+        "softness": 0.65,
+        "falloff": 1.8
+      }
+    },
+    {
+      "type": "glint",
+      "id": "fine_source_rays",
+      "label": "fine source rays",
+      "slot": "rays",
+      "scale": 0.34,
+      "intensity": 0.07744,
+      "color": [
+        1,
+        0.91,
+        0.77
+      ],
+      "irregular": 0.22,
+      "rotation": 46,
+      "params": {
+        "points": 12,
+        "length": 0.316,
+        "thickness": 0.004,
+        "length_jitter": 0.68
+      }
+    },
+    {
+      "type": "iris",
+      "id": "reflection_1",
+      "label": "reflection 1",
+      "slot": "ghosts",
+      "scale": 0.033,
+      "intensity": 0.037,
+      "color": [
+        0.68,
+        0.88,
+        0.67
+      ],
+      "offset": 0.84,
+      "stretch": [
+        1,
+        1
+      ],
+      "rotation": 21,
+      "blur": 0.015,
+      "shade": 0.12,
+      "params": {
+        "blades": 9,
+        "roundness": 0.32,
+        "edge_softness": 0.12
+      }
+    },
+    {
+      "type": "iris",
+      "id": "reflection_2",
+      "label": "reflection 2",
+      "slot": "ghosts",
+      "scale": 0.11,
+      "intensity": 0.024,
+      "color": [
+        1,
+        0.72,
+        0.43
+      ],
+      "offset": 1.61,
+      "stretch": [
+        1,
+        1
+      ],
+      "rotation": 38,
+      "blur": 0.027,
+      "shade": 0.3,
+      "params": {
+        "blades": 64,
+        "roundness": 0.32,
+        "edge_softness": 0.175
+      }
+    },
+    {
+      "type": "iris",
+      "id": "reflection_3",
+      "label": "reflection 3",
+      "slot": "ghosts",
+      "scale": 0.28,
+      "intensity": 0.007,
+      "color": [
+        0.78,
+        0.84,
+        1
+      ],
+      "offset": 2.3,
+      "stretch": [
+        1,
+        1
+      ],
+      "rotation": 55,
+      "blur": 0.039,
+      "shade": 0.48,
+      "params": {
+        "blades": 64,
+        "roundness": 0.32,
+        "edge_softness": 0.23,
+        "crescent": 0.33,
+        "crescent_feather": 0.18
+      }
+    },
+    {
+      "type": "glow",
+      "id": "broad_veiling_light",
+      "label": "broad veiling light",
+      "slot": "glows",
+      "scale": 2,
+      "intensity": 0.002,
+      "color": [
+        1,
+        0.91,
+        0.77
+      ],
+      "offset": 0.12,
+      "params": {
+        "softness": 0.9,
+        "falloff": 1.1
+      },
+      "trigger": {
+        "mode": "border",
+        "source": "light",
+        "inner": 0,
+        "outer": 0.6,
+        "falloff": "smooth",
+        "brightness": 0.0013000000000000002
+      }
+    },
+    {
+      "type": "iris",
+      "id": "reflection_edge",
+      "label": "soft coating edge",
+      "slot": "ghosts",
+      "scale": 0.11,
+      "intensity": 0.0048,
+      "color": [
+        1,
+        0.72,
+        0.43
+      ],
+      "offset": 1.61,
+      "stretch": [
+        1,
+        1
+      ],
+      "rotation": 38,
+      "blur": 0.025,
+      "shade": 0.3,
+      "params": {
+        "blades": 64,
+        "roundness": 0.32,
+        "edge_softness": 0.2,
+        "hollow": 0.84
+      }
+    }
+  ]
+}

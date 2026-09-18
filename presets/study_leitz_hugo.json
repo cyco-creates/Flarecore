@@ -1,0 +1,687 @@
+{
+  "schema_version": 1,
+  "name": "Leitz HUGO 35mm T2.8 · study",
+  "author": "Flarecore",
+  "category": "Spherical",
+  "subcategory": "Reference studies · Spherical",
+  "elements": [
+    {
+      "type": "glow",
+      "label": "Source · white core",
+      "offset": 0,
+      "scale": 0.1,
+      "intensity": 0.15,
+      "color": [
+        1,
+        1,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.38,
+        "falloff": 2.1
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "leitz_hugo-00",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Source · scatter halo",
+      "offset": 0,
+      "scale": 0.42640000000000006,
+      "intensity": 0.14515200000000003,
+      "color": [
+        1.5629166046028138,
+        1.7535158599972724,
+        1.9059962499012948
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.35,
+        "falloff": 1.65,
+        "scatter": 0
+      },
+      "irregular": 0.22,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "leitz_hugo-01",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Source · fine diffraction",
+      "offset": 0,
+      "scale": 1,
+      "intensity": 0.7,
+      "color": [
+        0.85,
+        0.95,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "file": "glows/study_photographic_scatter.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "rotation": 13,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "leitz_hugo-02",
+      "blur": 0.015,
+      "stretch": [
+        1,
+        1
+      ],
+      "shade": 0
+    },
+    {
+      "type": "glint",
+      "label": "Source · long rays",
+      "offset": 0,
+      "scale": 0.41158400000000006,
+      "intensity": 0.000552,
+      "color": [
+        26.24,
+        29.44,
+        32
+      ],
+      "auto_rotate": false,
+      "params": {
+        "points": 12,
+        "length": 0.65,
+        "thickness": 0.004,
+        "length_jitter": 0.6,
+        "ray_falloff": 1.7,
+        "fan": 0.008,
+        "ray_taper": 0.8
+      },
+      "irregular": 0.5,
+      "rotation": 23,
+      "slot": "rays",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "leitz_hugo-03",
+      "blur": 0.035,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Green focused cusp",
+      "offset": 2.02,
+      "scale": 0.23,
+      "intensity": 0.012,
+      "color": [
+        0.08,
+        1,
+        0.32
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        0.2,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.85,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                4
+              ],
+              [
+                0.5,
+                4
+              ],
+              [
+                1.2,
+                2
+              ],
+              [
+                1.9,
+                0.08
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                5
+              ],
+              [
+                0.42,
+                5
+              ],
+              [
+                1.1,
+                1
+              ],
+              [
+                2.4,
+                0.4
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "rotation",
+            "driver": "x",
+            "points": [
+              [
+                -1,
+                25
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                -25
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.85
+              ],
+              [
+                2.4,
+                0.85
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "leitz_hugo-04",
+      "shade": 0.7,
+      "blur": 0.018
+    },
+    {
+      "type": "iris",
+      "label": "Green focused cusp · rim",
+      "offset": 2.02,
+      "scale": 0.23,
+      "intensity": 0.0015,
+      "color": [
+        0.08,
+        1,
+        0.32
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        0.2,
+        1
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.85,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                4
+              ],
+              [
+                0.5,
+                4
+              ],
+              [
+                1.2,
+                2
+              ],
+              [
+                1.9,
+                0.08
+              ],
+              [
+                2.5,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "stretch_x",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                5
+              ],
+              [
+                0.42,
+                5
+              ],
+              [
+                1.1,
+                1
+              ],
+              [
+                2.4,
+                0.4
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "rotation",
+            "driver": "x",
+            "points": [
+              [
+                -1,
+                25
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                -25
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.85
+              ],
+              [
+                2.4,
+                0.85
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "leitz_hugo-05",
+      "shade": 0.7,
+      "blur": 0.018
+    },
+    {
+      "type": "ring",
+      "label": "Faint enclosing blue pupil",
+      "offset": 1.98,
+      "scale": 0.48,
+      "intensity": 0.0013750000000000001,
+      "color": [
+        0.189415,
+        1.420616,
+        3.314771
+      ],
+      "auto_rotate": false,
+      "params": {
+        "radius": 1,
+        "thickness": 0.045,
+        "surface_detail": 0.65
+      },
+      "slot": "rings",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "leitz_hugo-06",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "ring",
+      "label": "Small front amber crescent",
+      "offset": -0.32,
+      "scale": 0.12,
+      "intensity": 0.06300000000000001,
+      "color": [
+        0.035,
+        0.033,
+        0.01
+      ],
+      "auto_rotate": false,
+      "params": {
+        "radius": 1,
+        "thickness": 0.055,
+        "surface_detail": 0.12
+      },
+      "slot": "rings",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.6,
+                0.3
+              ],
+              [
+                1.1,
+                1
+              ],
+              [
+                1.8,
+                0.4
+              ],
+              [
+                2.7,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "crescent",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.6
+              ],
+              [
+                1,
+                0.8
+              ],
+              [
+                2,
+                0.94
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "leitz_hugo-07",
+      "stretch": [
+        1,
+        1
+      ]
+    }
+  ],
+  "global": {
+    "seed": 2709,
+    "edge_fade_start": 0.25,
+    "edge_fade_range": 0.65
+  }
+}

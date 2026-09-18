@@ -9,6 +9,7 @@ The engine itself never generates anything.
 """
 
 import json
+import logging
 import re
 from pathlib import Path
 
@@ -218,13 +219,25 @@ class FlareTexturePrepare:
         }
 
     def prepare(self, image, mode, black_point, autocenter, feather, size,
-                margin=0.25, frame="square", category=""):
+                margin=0.25, frame="auto", category=""):
         if frame == "auto":
             # a lens plate covers the whole front element; everything else is
             # a shape on black that needs room to breathe
-            frame = ("wide_16_9"
-                     if str(category).strip().lower() in LENS_PLATE_CATEGORIES
-                     else "square")
+            cat = str(category).strip().lower()
+            if not cat:
+                # auto with nothing to read silently produced a square element
+                # with margins -- correct for eight families, badly wrong for
+                # a lens plate, and indistinguishable from success until the
+                # dirt shows up boxed in the middle of the frame.
+                logging.warning(
+                    "Flarecore: Prepare Texture is set to frame='auto' but its "
+                    "'category' input is not connected, so it cannot tell a lens "
+                    "plate from a shape on black and is falling back to 'square'. "
+                    "Connect the prompt node's 'category' output, or set 'frame' "
+                    "explicitly. Lens dirt prepared this way comes out square "
+                    "with black margins instead of a full-frame 16:9 plate."
+                )
+            frame = "wide_16_9" if cat in LENS_PLATE_CATEGORIES else "square"
         dtype = image.dtype if image.dtype.is_floating_point else torch.float32
         frames = [
             prepare_element(f[..., :3].to(dtype), mode=mode,
@@ -258,6 +271,20 @@ class FlareElementSave:
     def save(self, texture, category, name, overwrite):
         cat = _sanitize(category, "custom")
         base = _sanitize(name, "element")
+        # Where the category IS known, a square plate is not a preference -- it
+        # is a texture that will render boxed with its own black margins across
+        # a frame it is supposed to cover. Refuse it here rather than let it
+        # into the library looking like every other element.
+        if cat in LENS_PLATE_CATEGORIES:
+            h, w = int(texture.shape[1]), int(texture.shape[2])
+            if h <= 0 or abs((w / h) - (16 / 9)) > 0.02:
+                raise ValueError(
+                    f"'{cat}' elements are lens plates and must be 16:9, but this "
+                    f"texture is {w}x{h} (aspect {w / max(h, 1):.3f}). Set Prepare "
+                    "Texture's 'frame' to 'auto' with its 'category' input "
+                    "connected, or to 'wide_16_9'. A square plate renders with "
+                    "black margins across the frame it should cover."
+                )
         folder = ELEMENTS_DIR / cat
         folder.mkdir(parents=True, exist_ok=True)
 

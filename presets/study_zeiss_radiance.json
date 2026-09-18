@@ -1,0 +1,1729 @@
+{
+  "schema_version": 1,
+  "name": "ZEISS Supreme Radiance 35mm T2.8 · study",
+  "author": "Flarecore",
+  "category": "Spherical",
+  "subcategory": "Reference studies · Spherical",
+  "elements": [
+    {
+      "type": "glow",
+      "label": "Source · white core",
+      "offset": 0,
+      "scale": 0.1,
+      "intensity": 3,
+      "color": [
+        1,
+        1,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.38,
+        "falloff": 2.1
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-00",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Source · scatter halo",
+      "offset": 0,
+      "scale": 0.52,
+      "intensity": 0.038707200000000004,
+      "color": [
+        4.648578,
+        5.215478,
+        5.668998
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.35,
+        "falloff": 1.65,
+        "scatter": 0
+      },
+      "irregular": 0.22,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-01",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glint",
+      "label": "Source · fine diffraction",
+      "offset": 0,
+      "scale": 0.1785,
+      "intensity": 1.0321920000000002,
+      "color": [
+        0.288948,
+        0.335986,
+        0.24863
+      ],
+      "auto_rotate": false,
+      "params": {
+        "points": 18,
+        "length": 0.68,
+        "thickness": 0.025,
+        "length_jitter": 0.12,
+        "ray_falloff": 2.1,
+        "fan": 0.035,
+        "ray_taper": 0
+      },
+      "irregular": 0.1,
+      "rotation": 13,
+      "slot": "rays",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-02",
+      "blur": 0.03,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glint",
+      "label": "Source · long rays",
+      "offset": 0,
+      "scale": 0.32000000000000006,
+      "intensity": 0.0006720000000000002,
+      "color": [
+        6.56,
+        7.36,
+        8
+      ],
+      "auto_rotate": false,
+      "params": {
+        "points": 12,
+        "length": 0.65,
+        "thickness": 0.004,
+        "length_jitter": 0.6,
+        "ray_falloff": 1.7,
+        "fan": 0.008,
+        "ray_taper": 0.8
+      },
+      "irregular": 0.5,
+      "rotation": 23,
+      "slot": "rays",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "edge",
+            "points": [
+              [
+                -0.25,
+                0
+              ],
+              [
+                -0.03,
+                0.12
+              ],
+              [
+                0.07,
+                0.9
+              ],
+              [
+                0.25,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-03",
+      "blur": 0.035,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Front blue pupil",
+      "offset": -0.46,
+      "scale": 0.9974999999999999,
+      "intensity": 0.26825,
+      "color": [
+        0.012619984975301604,
+        0.014197369779340453,
+        0.15775117200575628
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.07,
+        "surface_detail": 0.1,
+        "density_bias": 0.05,
+        "hollow": 0
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                0.45,
+                1
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.4,
+                0.55
+              ],
+              [
+                1.7,
+                0.1
+              ],
+              [
+                2.4,
+                0.1
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "crescent",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                1.7,
+                0
+              ],
+              [
+                2.4,
+                0.4
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-04",
+      "shade": 0.35
+    },
+    {
+      "type": "iris",
+      "label": "Front blue pupil · rim",
+      "offset": -0.46,
+      "scale": 0.9974999999999999,
+      "intensity": 0.009013199999999997,
+      "color": [
+        0.003626171963307695,
+        0.004079443458721157,
+        0.04532714954134619
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.07,
+        "surface_detail": 0.1,
+        "density_bias": 0.05,
+        "hollow": 0
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                0.45,
+                1
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.4,
+                0.55
+              ],
+              [
+                1.7,
+                0.1
+              ],
+              [
+                2.4,
+                0.1
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "crescent",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                1.7,
+                0
+              ],
+              [
+                2.4,
+                0.4
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-05"
+    },
+    {
+      "type": "iris",
+      "label": "Rear blue outer pupil",
+      "offset": 2.15,
+      "scale": 0.5798800000000001,
+      "intensity": 0.03353999999999999,
+      "color": [
+        0.2328040295847519,
+        1.0581981406559424,
+        4.23279256262377
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 1,
+        "edge_softness": 0.14,
+        "density_bias": 0.55,
+        "surface_detail": 0.5
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                0.5,
+                1
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.7,
+                1.45
+              ],
+              [
+                2.4,
+                1.7
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-06",
+      "shade": 0,
+      "blur": 0.04
+    },
+    {
+      "type": "iris",
+      "label": "Rear blue outer pupil · rim",
+      "offset": 2.15,
+      "scale": 0.5798800000000001,
+      "intensity": 0.009029999999999998,
+      "color": [
+        0.038575795262843236,
+        0.17534476318043907,
+        0.7013781754408669
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0.8,
+        "hollow": 0.94
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                0.5,
+                1
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.7,
+                1.45
+              ],
+              [
+                2.4,
+                1.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "crescent",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                1.7,
+                0
+              ],
+              [
+                2.4,
+                0.4
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-07"
+    },
+    {
+      "type": "iris",
+      "label": "Rear offset pupil",
+      "offset": 2.08,
+      "scale": 0.41496,
+      "intensity": 0.01755,
+      "color": [
+        0.45026945612751074,
+        2.046680627783674,
+        8.18672452531254
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 1,
+        "edge_softness": 0.14,
+        "density_bias": 0.55,
+        "surface_detail": 0.5
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                0.5,
+                1
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.7,
+                1.45
+              ],
+              [
+                2.4,
+                1.7
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-08",
+      "shade": 0,
+      "shift": [
+        0.09,
+        -0.03
+      ],
+      "blur": 0.04
+    },
+    {
+      "type": "iris",
+      "label": "Rear offset pupil · rim",
+      "offset": 2.08,
+      "scale": 0.41496,
+      "intensity": 0.0037799999999999995,
+      "color": [
+        0.10520856529351105,
+        0.478224230368592,
+        1.912898935652208
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94,
+        "coma": 0.25
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1
+              ],
+              [
+                0.5,
+                1
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.7,
+                1.45
+              ],
+              [
+                2.4,
+                1.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "crescent",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                1.7,
+                0
+              ],
+              [
+                2.4,
+                0.4
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-09",
+      "shift": [
+        0.09,
+        -0.03
+      ]
+    },
+    {
+      "type": "texture",
+      "label": "Rear focused pupil",
+      "offset": 1.91,
+      "scale": 0.55,
+      "intensity": 0.5,
+      "color": [
+        0.25,
+        0.55,
+        1
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "file": "ghosts/study_nested_pupil.png",
+        "channel": "luminance"
+      },
+      "irregular": 0,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.3
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.7,
+                1.45
+              ],
+              [
+                2.4,
+                1.7
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-10",
+      "shade": 0,
+      "blur": 0.015
+    },
+    {
+      "type": "iris",
+      "label": "Rear focused pupil · rim",
+      "offset": 1.91,
+      "scale": 0.22419999999999998,
+      "intensity": 0,
+      "color": [
+        0.02140480677332986,
+        0.0972945049460495,
+        0.3891788040441465
+      ],
+      "auto_rotate": true,
+      "stretch": [
+        0.9,
+        1.298
+      ],
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.4,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "scale",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                1.3
+              ],
+              [
+                0.4,
+                1.3
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.7,
+                1.45
+              ],
+              [
+                2.4,
+                1.7
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "crescent",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                1.7,
+                0
+              ],
+              [
+                2.4,
+                0.4
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.4
+              ],
+              [
+                2.4,
+                0.4
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-11",
+      "blur": 0.012
+    },
+    {
+      "type": "iris",
+      "label": "Edge-only middle pupil",
+      "offset": 0.5800000000000001,
+      "scale": 0.42,
+      "intensity": 0.07500000000000001,
+      "color": [
+        0.013661752009391783,
+        0.06209709379673004,
+        0.2483869774222374
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.25,
+        "surface_detail": 0.55,
+        "density_bias": 0.48
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.5,
+                0.35
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-12",
+      "shade": 0.35
+    },
+    {
+      "type": "iris",
+      "label": "Edge-only middle pupil · rim",
+      "offset": 0.5800000000000001,
+      "scale": 0.42,
+      "intensity": 0.0225,
+      "color": [
+        0.003843852877616882,
+        0.017472058534622192,
+        0.06988823413848877
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.5,
+                0.35
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-13"
+    },
+    {
+      "type": "iris",
+      "label": "Edge-only near pupil",
+      "offset": 0.17,
+      "scale": 0.22,
+      "intensity": 0.07500000000000001,
+      "color": [
+        0.10514227689772844,
+        0.4779190036091208,
+        1.9116760144364833
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1.18,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.25,
+        "surface_detail": 0.55,
+        "density_bias": 0.48
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.5,
+                0.35
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-14",
+      "shade": 0.35
+    },
+    {
+      "type": "iris",
+      "label": "Edge-only near pupil · rim",
+      "offset": 0.17,
+      "scale": 0.22,
+      "intensity": 0.0225,
+      "color": [
+        0.14027203138536215,
+        0.6376011036979556,
+        2.550403453754604
+      ],
+      "auto_rotate": false,
+      "stretch": [
+        1.18,
+        1
+      ],
+      "params": {
+        "blades": 9,
+        "roundness": 0.9,
+        "edge_softness": 0.08,
+        "surface_detail": 0.55,
+        "density_bias": 0,
+        "hollow": 0.94
+      },
+      "irregular": 0.14,
+      "slot": "ghosts",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.9,
+                0
+              ],
+              [
+                1.7,
+                1
+              ],
+              [
+                2.5,
+                0.35
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-15"
+    },
+    {
+      "type": "glow",
+      "label": "Blue veiling field",
+      "offset": 1.07,
+      "scale": 2.5370800000000004,
+      "intensity": 0.01755,
+      "color": [
+        0.35075731501624213,
+        1.5943505052128861,
+        6.3774020208515445
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.9,
+        "falloff": 2
+      },
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-16",
+      "stretch": [
+        1,
+        0.7462000000000001
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Focused cyan edge",
+      "offset": 1.98,
+      "scale": 0.15,
+      "intensity": 0.0028000000000000004,
+      "color": [
+        0.011,
+        0.031,
+        0.05
+      ],
+      "auto_rotate": true,
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.85,
+        "coma": 0.3,
+        "trefoil": 0.08,
+        "surface_detail": 0.65,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.85
+              ],
+              [
+                1.7,
+                0.85
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.3
+              ],
+              [
+                2.4,
+                0.3
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-17",
+      "blur": 0.012,
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "iris",
+      "label": "Focused blue pupil knot",
+      "offset": 1.98,
+      "scale": 0.09,
+      "intensity": 0.02,
+      "color": [
+        0.3,
+        0.6,
+        1
+      ],
+      "auto_rotate": true,
+      "blur": 0.012,
+      "params": {
+        "blades": 3,
+        "roundness": 0.95,
+        "edge_softness": 0.24,
+        "caustic": 0.8,
+        "coma": 0.35,
+        "trefoil": 0.08,
+        "surface_detail": 0.55,
+        "hollow": 0
+      },
+      "irregular": 0.35,
+      "rotation": 17,
+      "shade": 0.8,
+      "slot": "caustics",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "caustic",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.001
+              ],
+              [
+                0.45,
+                0.001
+              ],
+              [
+                0.85,
+                0.8
+              ],
+              [
+                1.7,
+                0.8
+              ]
+            ],
+            "interpolation": "smooth"
+          },
+          {
+            "target": "coma",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0.4,
+                0
+              ],
+              [
+                1.5,
+                0.35
+              ],
+              [
+                2.4,
+                0.35
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-18",
+      "stretch": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "glow",
+      "label": "Focused blue pupil knot · focus",
+      "offset": 1.98,
+      "scale": 0.021599999999999998,
+      "intensity": 0.18,
+      "color": [
+        0.3,
+        0.6,
+        1
+      ],
+      "auto_rotate": false,
+      "params": {
+        "softness": 0.55,
+        "falloff": 1.8
+      },
+      "irregular": 0.25,
+      "slot": "glows",
+      "motion": {
+        "enabled": true,
+        "channels": [
+          {
+            "target": "opacity",
+            "driver": "radius",
+            "points": [
+              [
+                0,
+                0.35
+              ],
+              [
+                0.4,
+                0.8
+              ],
+              [
+                0.9,
+                1
+              ],
+              [
+                1.8,
+                0.85
+              ],
+              [
+                2.5,
+                0.18
+              ],
+              [
+                3.6,
+                0
+              ]
+            ],
+            "interpolation": "smooth"
+          }
+        ]
+      },
+      "id": "zeiss_radiance-19",
+      "stretch": [
+        1,
+        1
+      ]
+    }
+  ],
+  "global": {
+    "seed": 2709,
+    "edge_fade_start": 0.25,
+    "edge_fade_range": 0.65
+  }
+}
