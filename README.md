@@ -7,6 +7,36 @@ static demo images.
 
 ![Flarecore cover](Flarecore_cover.png)
 
+## What's new in V2
+
+**0.2.0 beta 1.** Existing work is unaffected: presets without a `lens_lab`
+object render exactly as they did in 0.1.2, node IDs, inputs and outputs are
+unchanged, and every new parameter defaults to its previous behaviour.
+
+- **Lens Lab** — an experimental spherical lens tracer as a mode of Flarecore
+  Render. It traces refractions and two-reflection ghosts through a reference
+  prescription, with a glass cutaway you can click into, per-surface and
+  per-path controls, and three output modes: lens only, lens plus your
+  elements, or your artistic stack alone. A constant-index prototype: no
+  diffraction, anamorphic optics or zoom.
+- **33 new presets, 41 to 74** — fifteen *Lens inspired* artistic studies and
+  fifteen *Reference studies* built against 153 paired reference screenshots
+  across 15 lens families. Authored interpretations, not measured replicas; no
+  reference imagery ships with the extension.
+- **New appearance controls** — density bias, surface detail, ray falloff, fan
+  and taper, scatter, pupil shear, caustic fold, trefoil and edge bias, plus
+  three new optical-response targets. All default to the previous output.
+- **11 new library elements**, 182 to 193.
+- **Fix: image visibility no longer extinguishes extended sources.** When the
+  measuring annulus contained the emitter itself, the background estimate could
+  subtract nearly the whole reference and drive a small flux loss to zero.
+- **Fix: the Element Forge node can be made smaller again**, not only larger.
+- **Fix: lens dirt is prepared as a full-frame 16:9 plate** instead of a square
+  with black margins, and a square plate is now refused rather than saved.
+- Contextual **i** help tags throughout, reachable by keyboard.
+
+Full detail and limits: [RELEASE_NOTES.md](RELEASE_NOTES.md).
+
 ## What Flarecore is
 
 Flarecore renders an element stack from a light source toward a movable flare
